@@ -19,7 +19,7 @@ The project is **static-only** — a single deployment, zero servers.
 - **Frontend (Vercel):**
   - Vercel auto-deploys on every push to `main` from the `frontend/` directory.
   - Vercel detects pnpm from `pnpm-lock.yaml`; pnpm then switches to the version pinned in the `packageManager` field of `frontend/package.json` (the build log shows which version ran).
-  - Verification runs locally before pushing through `.husky/pre-push` (`pnpm lint`, `pnpm test` and `pnpm build`); there are no GitHub Actions workflows.
+  - Verification runs locally before pushing through `.husky/pre-push`: it refuses to push anything but HEAD, or with uncommitted or untracked files, restores the dependencies from `frontend/pnpm-lock.yaml`, runs `pnpm lint`, `pnpm test` and `pnpm build`, and checks the tree again; there are no GitHub Actions workflows.
   - esbuild's install script is approved in-repo by `allowBuilds: { esbuild: true }` in `frontend/pnpm-workspace.yaml`, the build-approval setting of pnpm 11 and later; every other dependency's install script stays blocked. Vercel needs no extra configuration.
   - Vercel dashboard: set Install Command to `pnpm install` and Build Command to `pnpm run build`.
 

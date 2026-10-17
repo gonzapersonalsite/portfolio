@@ -19,7 +19,7 @@ El proyecto es **solo estático**: un único despliegue, cero servidores.
 - **Frontend (Vercel):**
   - Vercel despliega automáticamente en cada push a `main` desde el directorio `frontend/`.
   - Vercel detecta pnpm por `pnpm-lock.yaml`; después pnpm cambia a la versión fijada en el campo `packageManager` de `frontend/package.json` (el log del build muestra qué versión se ejecutó).
-  - La verificación se ejecuta en local antes de subir mediante `.husky/pre-push` (`pnpm lint`, `pnpm test` y `pnpm build`); no hay workflows de GitHub Actions.
+  - La verificación se ejecuta en local antes de subir mediante `.husky/pre-push`: rechaza empujar algo que no sea HEAD, o con cambios sin commitear o ficheros sin versionar, restaura las dependencias desde `frontend/pnpm-lock.yaml`, ejecuta `pnpm lint`, `pnpm test` y `pnpm build` y vuelve a comprobar el árbol; no hay workflows de GitHub Actions.
   - El script de instalación de esbuild se aprueba en el repo con `allowBuilds: { esbuild: true }` en `frontend/pnpm-workspace.yaml`, el ajuste de aprobación de builds de pnpm 11 y posteriores; el script de instalación de cualquier otra dependencia sigue bloqueado. Vercel no necesita configuración extra.
   - Panel de Vercel: Install Command `pnpm install` y Build Command `pnpm run build`.
 

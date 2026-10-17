@@ -29,6 +29,7 @@ fi
 
 (
   cd frontend
+  pnpm install --frozen-lockfile --prefer-offline
   pnpm lint
   pnpm test
   pnpm build

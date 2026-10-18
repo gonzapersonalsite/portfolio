@@ -16,6 +16,7 @@ import type { ColorMode } from '@/shared/config'
 import { getLocalizedText, useContent, usePageMeta } from '@/shared/lib'
 import { ImageWithFallback, RichTextRenderer, EmptyState, StatusBadge } from '@/shared/ui'
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch'
+import { PixelGoblin } from '@/widgets/pixel-goblin'
 
 const float = keyframes`
   0% { transform: translateY(0px); }
@@ -126,12 +127,14 @@ const HomePage: React.FC = () => {
                   '@media (prefers-reduced-motion: no-preference)': {
                     animation: `${float} 6s ease-in-out infinite`,
                     animationPlayState: 'var(--decorative-animation-state, paused)',
+                    willChange: 'transform',
                   },
                   '@media print': { animation: 'none' },
                   position: 'relative',
                   zIndex: 1,
                 }}
               >
+                <PixelGoblin />
                 <Box
                   sx={{
                     p: 4,

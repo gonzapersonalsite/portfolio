@@ -26,6 +26,7 @@ const resources = {
       home: {
         cta: 'View Projects',
         resume: 'Download CV',
+        goblinLabel: 'A pixel goblin pulls a laptop from behind its back, codes for a while, looks around and runs off',
         chips: {
           frontend: 'Frontend Developer',
           backend: 'Backend Architect',
@@ -211,6 +212,8 @@ const resources = {
       home: {
         cta: 'Ver proyectos',
         resume: 'Descargar CV',
+        goblinLabel:
+          'Un duende pixelado saca un portátil de detrás de la espalda, programa un rato, mira a los lados y sale corriendo',
         chips: {
           frontend: 'Desarrollador Frontend',
           backend: 'Arquitecto Backend',

@@ -11,7 +11,7 @@ por identidad).
 - **El orden de trabajo, en una línea.** Los números son IDENTIDAD, no
   secuencia; aquí solo entran fases con número:
 
-  **F0 ✔**
+  **F0 ✔ → F1 (IN PROGRESS)**
 
   Esta línea es la única que enuncia la secuencia y lleva el cursor: en negrita,
   las fases unidas por `→` (o por `·`, que separa igual), y nada que no sea una
@@ -48,3 +48,22 @@ por identidad).
 ## F0 — Línea base del portafolio estático bilingüe (DONE)
 
 - Cuerpo y entregas archivados en `archive/ROADMAP.md`.
+
+## F1 — Escena del duende pixelado en el hero de Inicio (IN PROGRESS)
+
+- **F1.1 — Duende pixelado sobre la tarjeta del hero de Inicio — DONE.**
+  Personaje y animación de `gonzapersonalsite` integrados sobre el borde
+  superior de la tarjeta del hero, sincronizados con su oscilación vertical y
+  con pose de reposo al pausar o reducir el movimiento
+  (`#hero-card-hosts-the-profile-pixel-goblin`,
+  `#hero-goblin-scene-and-resting-pose`,
+  `#2026-10-19-hero-card-pixel-goblin`).
+- **F1.2 — Portales pixel 2D de entrada/salida y reutilización en Contacto — DONE.**
+  Portales laterales de perfil que abren y cierran al paso del duende con
+  recorte `<clipPath>`, y traslado del slice a
+  `../frontend/src/widgets/pixel-goblin/` para compartirlo sin duplicación entre
+  la tarjeta del hero de Inicio y el panel del formulario de Contacto
+  (`#pixel-goblin-portals-and-contact-panel`,
+  `#2026-10-19-pixel-goblin-portals-and-contact-panel`).
+- Siguientes partes de `F1`, si las hubiera, y cierre de la fase: los decide el
+  dueño tras revisar `F1.1` y `F1.2` y confirmar las decisiones provisionales.

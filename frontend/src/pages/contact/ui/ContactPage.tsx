@@ -10,6 +10,7 @@ import { useNotification } from '@/features/notifications'
 import { useLanguage } from '@/features/language-switch'
 import { getProfile } from '@/entities/profile'
 import { getLocalizedText, useContent, usePageMeta } from '@/shared/lib'
+import { PixelGoblin } from '@/widgets/pixel-goblin'
 
 // Fixed 48px circles: padding around an inline SVG made them taller than wide.
 const iconCircleSx = {
@@ -130,17 +131,20 @@ const ContactPage: React.FC = () => {
           </Grid>
 
           <Grid size={{ xs: 12, md: 7 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: { xs: 3, md: 5 },
-                borderRadius: 4,
-                bgcolor: theme.palette.mode === 'dark' ? 'background.paper' : 'grey.50',
-                border: `1px solid ${theme.palette.divider}`,
-              }}
-            >
-              <ContactForm onShowNotification={showNotification} />
-            </Paper>
+            <Box sx={{ position: 'relative', mt: { xs: 4, md: 2 } }}>
+              <PixelGoblin />
+              <Paper
+                elevation={0}
+                sx={{
+                  p: { xs: 3, md: 5 },
+                  borderRadius: 4,
+                  bgcolor: theme.palette.mode === 'dark' ? 'background.paper' : 'grey.50',
+                  border: `1px solid ${theme.palette.divider}`,
+                }}
+              >
+                <ContactForm onShowNotification={showNotification} />
+              </Paper>
+            </Box>
           </Grid>
         </Grid>
       </Container>

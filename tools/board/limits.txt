@@ -1,0 +1,46 @@
+# Caps of the board's gates. EACH ONE CARRIES ITS MOTIVE WRITTEN NEXT TO IT: a
+# cap without a motive is a number nobody dares to lower because nobody knows
+# what it counts. The motive is the comment block that opens the group; a
+# blank line closes it.
+#
+# --- KEYS ---
+# The keys the parser accepts are the ones this legend lists.
+# startup  : how many bytes, at most, the reading every session starts with
+#            may weigh (the `startup` rows of documents.txt).
+# line     : how many characters, at most, a line of a record body may have.
+# identity : how many characters, at most, a record id may have (its file name
+#            without .md).
+# index    : how many bytes, at most, each index of the registry a session
+#            consults before it touches anything may weigh: the main ones
+#            (docs/registry/DECISIONS.md and docs/registry/NOTES.md) and the one
+#            of the decisions that name no phase
+#            (docs/registry/index/decisions-none.md).
+
+# A MAXIMUM, not an equality: it bounds a cost that grows every time someone
+# writes a useful line. Raising it is a DECISION and is recorded; lowering it
+# needs no permission. When it runs out, the right question is not how much to
+# raise it but which document leaves the list, or which prose moves to a record.
+startup 60000
+
+# A 5 KB line is what makes a record dangerous to read and to edit with text
+# tools. Bodies run at about 88 columns; the cap leaves room for one long quoted
+# code fragment, which is not wrapped.
+line 240
+
+# An id is a file name, and under a clone's path a long one goes past the 260
+# characters that git on Windows refuses without core.longpaths ("Filename too
+# long"). 80 fits the ids the origin repository wrote over its first 1500
+# records but one, and leaves the rest of the path to the clone.
+identity 80
+
+# A session consults the main indexes before it opens records, so each one is a
+# cost per session, like the startup reading. They list in full only what asks
+# for work (open decisions, live debts, provisional ones, recent notes), so they
+# grow with the work in flight, not with history; running out means work to
+# close, not a cap to raise. Half the startup budget. The per-phase and
+# per-month indexes are not capped: each keeps the history of something that
+# closes, and capping history schedules the next crisis. The `none` index is the
+# exception: it never closes, and a session consults it before touching
+# anything, so it has the same cap; when it runs out, how it splits is decided
+# then, with the data of that registry.
+index 30000

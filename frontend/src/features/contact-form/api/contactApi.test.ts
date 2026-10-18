@@ -9,7 +9,9 @@ const message = { name: 'Ada', email: 'ada@example.com', message: 'Hello' }
 // A per-test module factory keeps the actual dynamic import in the test, including its wait.
 const delaySdkLoad = () => {
   let finish: () => void
-  const loaded = new Promise<typeof sdk>((resolve) => { finish = () => resolve(sdk) })
+  const loaded = new Promise<typeof sdk>((resolve) => {
+    finish = () => resolve(sdk)
+  })
   vi.doMock('@emailjs/browser', () => loaded)
   return () => finish()
 }

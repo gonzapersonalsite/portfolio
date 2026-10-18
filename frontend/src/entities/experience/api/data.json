@@ -56,10 +56,6 @@
     "endDate": "2022-06-16",
     "descriptionEn": "During my internship at Informática JJ I worked on the following tasks:\\n\\n● Repair, diagnosis and maintenance of hardware and software on desktop and laptop computers.\\n● Development of skills in troubleshooting technical issues and customer support.\\n● Remote support for incident resolution using AnyDesk.",
     "descriptionEs": "Durante mis prácticas en Informática JJ realicé las siguientes tareas:\\n\\n● Reparación, diagnóstico y mantenimiento de hardware y software en ordenadores y portátiles.\\n● Desarrollo de habilidades en resolución de problemas técnicos y atención al cliente.\\n● Atención remota para la resolución de incidencias mediante AnyDesk.",
-    "technologies": [
-      "Linux",
-      "Windows",
-      "AnyDesk"
-    ]
+    "technologies": ["Linux", "Windows", "AnyDesk"]
   }
 ]

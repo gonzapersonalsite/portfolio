@@ -1,2 +1,2 @@
-export { getAllSpokenLanguages } from './api/languageApi';
-export type { SpokenLanguage } from './model/types';
+export { getAllSpokenLanguages } from './api/languageApi'
+export type { SpokenLanguage } from './model/types'

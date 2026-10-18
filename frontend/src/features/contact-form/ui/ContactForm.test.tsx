@@ -52,7 +52,9 @@ describe('ContactForm', () => {
     { outcome: 'failure', result: () => Promise.reject(new Error('network unavailable')) },
   ])('keeps fields read-only and focusable until sending ends in $outcome', async ({ result }) => {
     let finish: () => void
-    const pending = new Promise<void>((resolve) => { finish = resolve }).then(result)
+    const pending = new Promise<void>((resolve) => {
+      finish = resolve
+    }).then(result)
     vi.mocked(sendContactMessage).mockReturnValueOnce(pending)
     const { container } = renderForm()
     fireEvent.change(screen.getByRole('textbox', { name: /Nombre/ }), { target: { value: 'Ada' } })
@@ -71,7 +73,9 @@ describe('ContactForm', () => {
     expect(fields.every((field) => field.readOnly && !field.disabled)).toBe(true)
     expect(document.activeElement).toBe(message)
 
-    await act(async () => { finish() })
+    await act(async () => {
+      finish()
+    })
 
     expect(fields.every((field) => !field.readOnly && !field.disabled)).toBe(true)
     expect(formOf(container).getAttribute('aria-busy')).toBe('false')

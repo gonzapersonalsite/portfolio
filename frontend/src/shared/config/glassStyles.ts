@@ -19,7 +19,7 @@ export const glassColors = {
   border: 'rgba(255, 255, 255, 0.12)',
   innerShadow: 'rgba(255, 255, 255, 0.1)',
   outerShadow: 'rgba(0, 0, 0, 0.6)',
-};
+}
 
 export const glassEffects = {
   // Reserve backdrop blur for surfaces that can overlap content, not each chip or button.
@@ -28,4 +28,4 @@ export const glassEffects = {
   innerBoxShadow: `inset 0 0 0 0.5px ${glassColors.innerShadow}`,
   outerBoxShadow: `0 20px 40px ${glassColors.outerShadow}`,
   textShadow: (color: string) => `0 0 30px ${color}`,
-};
+}

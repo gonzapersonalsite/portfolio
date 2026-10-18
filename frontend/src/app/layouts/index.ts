@@ -1,1 +1,1 @@
-export { default as PublicLayout } from './ui/PublicLayout';
+export { default as PublicLayout } from './ui/PublicLayout'

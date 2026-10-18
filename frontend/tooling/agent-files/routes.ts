@@ -1,32 +1,32 @@
-import { getProfile } from '../../src/entities/profile/api/profileApi.ts';
-import { getAllProjects } from '../../src/entities/project/api/projectApi.ts';
-import { projectCoverSources } from '../../src/entities/project/model/projectImages.ts';
-import { APP_ROUTES, markdownTwinPath, type RouteId } from '../../src/shared/config/routes.ts';
+import { getProfile } from '../../src/entities/profile/api/profileApi.ts'
+import { getAllProjects } from '../../src/entities/project/api/projectApi.ts'
+import { projectCoverSources } from '../../src/entities/project/model/projectImages.ts'
+import { APP_ROUTES, markdownTwinPath, type RouteId } from '../../src/shared/config/routes.ts'
 
-export { absoluteUrl } from '../../src/shared/config/site.ts';
+export { absoluteUrl } from '../../src/shared/config/site.ts'
 
-export type Locale = 'en' | 'es';
+export type Locale = 'en' | 'es'
 
-export type { RouteId };
+export type { RouteId }
 
 export interface ImagePreload {
-  src: string;
-  srcSet?: string;
-  sizes?: string;
+  src: string
+  srcSet?: string
+  sizes?: string
 }
 
 export interface RouteSpec {
-  id: RouteId;
-  path: string;
-  shellTitle: string;
-  shellDescription: string;
+  id: RouteId
+  path: string
+  shellTitle: string
+  shellDescription: string
   // The route's LCP image when it sits above the fold. The shell preloads it so the request
   // starts with the HTML instead of after the JavaScript renders the <img>; the sources must
   // be exactly the ones that <img> uses.
-  lcpImage?: () => ImagePreload;
+  lcpImage?: () => ImagePreload
 }
 
-type RouteShell = Omit<RouteSpec, 'id' | 'path'>;
+type RouteShell = Omit<RouteSpec, 'id' | 'path'>
 
 // The shell metadata mirrors what each page applies at runtime through
 // usePageMeta (seo.<route> in shared/config/i18n.ts); a test keeps them in sync.
@@ -65,15 +65,15 @@ const SHELLS: Record<RouteId, RouteShell> = {
     shellDescription:
       'Get in touch with Gonzalo Martínez for professional opportunities, collaborations, or project inquiries. Based in Palma de Mallorca, Spain.',
   },
-};
+}
 
 // Same routes and order as the SPA router (shared/config/routes.ts).
-export const ROUTES: readonly RouteSpec[] = APP_ROUTES.map(({ id, path }) => ({ id, path, ...SHELLS[id] }));
+export const ROUTES: readonly RouteSpec[] = APP_ROUTES.map(({ id, path }) => ({ id, path, ...SHELLS[id] }))
 
-export const HOME_ROUTE: RouteSpec = ROUTES[0];
+export const HOME_ROUTE: RouteSpec = ROUTES[0]
 
 export const htmlFileOf = (route: RouteSpec): string =>
-  route.path === '/' ? 'index.html' : `${route.path.slice(1)}/index.html`;
+  route.path === '/' ? 'index.html' : `${route.path.slice(1)}/index.html`
 
 // Same file names as the markdown alternates the SPA points at after a navigation.
-export const twinPathOf = (route: RouteSpec, locale: Locale): string => markdownTwinPath(route.path, locale);
+export const twinPathOf = (route: RouteSpec, locale: Locale): string => markdownTwinPath(route.path, locale)

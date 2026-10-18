@@ -1,4 +1,4 @@
-import languagesData from './data.json' with { type: 'json' };
-import type { SpokenLanguage } from '../model/types.ts';
+import languagesData from './data.json' with { type: 'json' }
+import type { SpokenLanguage } from '../model/types.ts'
 
-export const getAllSpokenLanguages = (): SpokenLanguage[] => languagesData as SpokenLanguage[];
+export const getAllSpokenLanguages = (): SpokenLanguage[] => languagesData as SpokenLanguage[]

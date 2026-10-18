@@ -1,0 +1,8 @@
+# Prettier formats the product's code and nothing else: the documents are
+# prose, the lockfile is pnpm's, and the inline script in index.html is hashed
+# in vercel.json's CSP.
+/*
+!/src/
+!/tooling/
+!/*.ts
+!/*.js

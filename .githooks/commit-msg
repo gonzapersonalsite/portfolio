@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+# commit-msg: the message of a commit is checked before the commit exists, by
+# tools/board/commit_message.py, with the rules of hard rule 3 of AGENTS.md and
+# the data of tools/board/commits.txt. Activated with pre-push, once per clone:
+#   git config core.hooksPath .githooks
+# git commit --no-verify skips it, and nothing records that it happened.
+set -eu
+HOOKS="$(cd "$(dirname "$0")" && pwd)"
+# The message's path is made absolute before moving, in the form a Windows
+# Python can open (Git Bash's `pwd -W`); elsewhere `pwd` is already that.
+MESSAGE="$(cd "$(dirname "$1")" && (pwd -W 2>/dev/null || pwd))/$(basename "$1")"
+cd "$HOOKS/.."
+. "$HOOKS/python.sh"
+if ! FOUND="$(find_python)"; then
+  echo "commit-msg: ningun interprete de Python 3.8 o posterior funciona (probados: PYTHON, python3, py -3, python)." >&2
+  echo "commit-msg: instala Python 3 o exporta PYTHON con el interprete. Sin comprobar el mensaje no hay commit." >&2
+  exit 1
+fi
+exec $FOUND tools/board/commit_message.py "$MESSAGE"

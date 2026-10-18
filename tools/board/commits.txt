@@ -1,0 +1,52 @@
+# What the commit-msg hook (tools/board/commit_message.py) reads: the types a
+# commit subject may start with and the names that mark a line as an agent's
+# signature. Hard rule 3 of AGENTS.md states the rule; this file is its data.
+#
+# --- KEYS ---
+# type  : a type a subject may open with, as in 'type(scope): subject'.
+#         Adding one is adding a row.
+# agent : a name or an address of an AI agent, matched whole and ignoring
+#         case. A trailer ('...-by:') or a 'generated', 'written' or
+#         'created' 'with/by' line that names one is a signature, and no
+#         message carries one. A trailer of a '[bot]' account is one too,
+#         whatever its name.
+#
+# The scope of a subject is in lower case (letters, digits, spaces, '/', '_',
+# '-') or the id of a phase or a part (F6, H0.1); the hook says which part of
+# a subject is wrong.
+#
+# The types of a repository born from the scaffold.
+type feat
+type fix
+type docs
+type test
+type refactor
+type chore
+
+# The agents whose signature or co-authorship a tool may add on its own.
+agent claude
+agent anthropic
+agent codex
+agent openai
+agent copilot
+agent gpt
+agent gemini
+agent cursor agent
+agent cursoragent
+agent aider
+agent opencode
+agent junie
+agent windsurf
+agent codeium
+agent kiro
+agent kimi
+agent trae
+agent antigravity
+agent qwen
+
+# Agents whose name is also a common first name (Amp, Devin, Jules) enter by
+# their address or their account, so that a human co-author called so passes;
+# Jules signs as a '[bot]' account.
+agent ampcode
+agent devin ai
+agent devin-ai-integration

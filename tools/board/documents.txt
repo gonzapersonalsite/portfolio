@@ -1,0 +1,103 @@
+# What the board's validator reads. It is DATA: it changes when the authority
+# table of AGENTS.md §4 or the shape of the repository changes, not when the
+# code does. Adding a document, a plan or a kind of source is adding a row.
+#
+# --- KEYS ---
+# The keys the parser accepts are the ones this legend lists; what each one
+# means is code (board.py), and tools/board/README.md explains it.
+# live       : a LIVE document. A broken citation in it is a defect.
+# closed     : a CLOSED archive, declared so that it does not look forgotten.
+# axis       : '<LETTER> <path>': a plan and the letter of its axis (F product
+#              phases, H tooling milestones); it is read with the same grammar
+#              and is a live document without being declared twice.
+# decisions  : the directory of DECISION records, one file per decision.
+# lessons    : the directory of LESSON records.
+# deliveries : the directory of DELIVERY records.
+# startup    : the reading every session starts with (AGENTS.md §5), in
+#              order; its total weight is capped in limits.txt.
+# adapter    : '<path> [<startup document its tool reads by itself>...]': the
+#              file through which one tool loads the startup reading, the
+#              '@' lines of a markdown file or the 'instructions' of a JSON
+#              one. With what the tool reads by itself, it loads the whole
+#              startup reading, once and in order, within the same cap.
+# timeless   : a document that carries no dates: its history lives in records
+#              it cites by id.
+# code       : '<suffix> <comment prefix>': source files whose comments may
+#              cite records by id.
+# skills     : a directory of project skills: '<dir>/<name>/SKILL.md', with a
+#              YAML header that names it and says when to use it, and a line
+#              in the contract's index of skills. Every markdown under it has a
+#              home, and its citations and links are checked.
+# generated  : a tree that does NOT exist in a fresh clone.
+# extension  : a suffix that makes a quoted fragment read as a path.
+
+# --- Live documents (AGENTS.md §4, minus the CLOSED archives) ---
+live AGENTS.md
+live README.md
+live docs/registry/README.md
+live tools/board/README.md
+
+# --- Plans: one axis per row ---
+axis F docs/ROADMAP.md
+axis H docs/TOOLING.md
+
+# --- Records ---
+decisions docs/registry/decisions
+lessons docs/registry/lessons
+deliveries docs/registry/deliveries
+
+# --- Startup reading (AGENTS.md §5.1), in this order ---
+startup STATUS.txt
+startup AGENTS.md
+startup docs/ROADMAP.md
+startup docs/TOOLING.md
+
+# --- Adapters: how each tool reaches the startup reading. Claude Code reads
+# CLAUDE.md and its imports; OpenCode reads AGENTS.md by itself and the rest
+# through its instructions. A tool that reads only AGENTS.md is sent to the
+# rest by §5.1 of the contract ---
+adapter CLAUDE.md
+adapter opencode.json AGENTS.md
+
+# --- Project skills: execution aids, indexed in AGENTS.md §9 ---
+skills .agents/skills
+
+# --- Timeless documents: rules without dates ---
+timeless AGENTS.md
+timeless docs/registry/README.md
+timeless tools/board/README.md
+
+# --- Code whose comments cite records ---
+code .py #
+
+# --- CLOSED archives: the bodies of what the plans closed ---
+closed docs/archive/ROADMAP.md
+closed docs/archive/TOOLING.md
+closed ARCHITECTURE.md
+closed OPERATIONS.md
+closed docs/MIGRATION_PLAN.md
+closed docs/es/README.md
+closed docs/es/ARCHITECTURE.md
+closed docs/es/OPERATIONS.md
+
+# --- GENERATED trees: they do not exist until someone builds ---
+generated frontend/dist
+
+# --- Extensions that make a fragment a path ---
+extension .md
+extension .txt
+extension .py
+
+# --- The react-vite layer ---
+code .ts //
+code .tsx //
+code .js //
+extension .ts
+extension .tsx
+extension .js
+extension .json
+extension .yaml
+extension .html
+extension .css
+live docs/ARCHITECTURE.md
+timeless docs/ARCHITECTURE.md

@@ -6,13 +6,21 @@ import { i18n } from '@/shared/config'
 
 const Trigger: React.FC<{ message: string }> = ({ message }) => {
   const { showNotification } = useNotification()
-  return <button type="button" onClick={() => showNotification(message, 'error', 5000)}>notify</button>
+  return (
+    <button type="button" onClick={() => showNotification(message, 'error', 5000)}>
+      notify
+    </button>
+  )
 }
 
 describe('NotificationProvider', () => {
   it('announces the message as an alert with the requested severity', async () => {
     await i18n.changeLanguage('en')
-    render(<NotificationProvider><Trigger message="Could not send" /></NotificationProvider>)
+    render(
+      <NotificationProvider>
+        <Trigger message="Could not send" />
+      </NotificationProvider>,
+    )
 
     act(() => screen.getByRole('button', { name: 'notify' }).click())
 
@@ -23,7 +31,11 @@ describe('NotificationProvider', () => {
 
   it('names the close button in the site language', async () => {
     await i18n.changeLanguage('es')
-    render(<NotificationProvider><Trigger message="No se pudo enviar" /></NotificationProvider>)
+    render(
+      <NotificationProvider>
+        <Trigger message="No se pudo enviar" />
+      </NotificationProvider>,
+    )
 
     act(() => screen.getByRole('button', { name: 'notify' }).click())
 
@@ -32,7 +44,9 @@ describe('NotificationProvider', () => {
 
   it('throws when used outside provider', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    expect(() => renderHook(() => useNotification())).toThrow('useNotification must be used within a NotificationProvider')
+    expect(() => renderHook(() => useNotification())).toThrow(
+      'useNotification must be used within a NotificationProvider',
+    )
     spy.mockRestore()
   })
 })

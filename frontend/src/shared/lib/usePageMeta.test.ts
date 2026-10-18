@@ -24,9 +24,7 @@ describe('usePageMeta', () => {
     document.head.innerHTML = '<meta name="description" content="Previous description" />'
     document.title = 'Previous title'
 
-    const { unmount } = renderHook(() =>
-      usePageMeta({ title: 'Skills', description: 'Skills page' }),
-    )
+    const { unmount } = renderHook(() => usePageMeta({ title: 'Skills', description: 'Skills page' }))
     unmount()
 
     expect(document.title).toBe('Previous title')
@@ -34,9 +32,7 @@ describe('usePageMeta', () => {
   })
 
   it('removes metadata created by the hook when there was nothing to restore', () => {
-    const { unmount } = renderHook(() =>
-      usePageMeta({ title: 'Contact', description: 'Contact page' }),
-    )
+    const { unmount } = renderHook(() => usePageMeta({ title: 'Contact', description: 'Contact page' }))
     unmount()
 
     expect(document.title).toBe('Default title')

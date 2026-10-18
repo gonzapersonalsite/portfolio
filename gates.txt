@@ -1,0 +1,58 @@
+# The gates of the repository: the executable list, and the only one.
+# `verify.py` runs all of it, each gate in its own process, watched from the
+# outside.
+#
+# Shape: label | reference seconds | command.
+# - A test runner tags its label '[harness]': it prints every guard declared
+#   below, verify.py demands to see them printed and the board demands their
+#   names in a file the command runs. A runner that cannot print them runs
+#   through an adapter of tools/guards/ that reads its report.
+# - The reference seconds are what the gate takes, measured with the machine in
+#   the foreground and under no other load; `-` says they are not measured
+#   yet. The budget of a gate is 4 times its reference and never under 60 s;
+#   without a reference, its budget is 120 s, and no reference goes over
+#   3600 s. The 4 is margin for a machine that slows background processes
+#   down (Windows moves them to slow cores and coarsens their clock).
+# - Past its budget, the watchdog kills the gate and what it started, and the
+#   report says only what it checked of that death. `verify.py` prints the
+#   seconds against the budget and how much the gate grew (x1.00 = as measured).
+# - A gate that comes out TIMEOUT without being hung, and passes again with the
+#   machine at rest, has grown: it is measured again, and its new reference is
+#   declared in the same change, with the why in its delivery. The budget is
+#   never raised blindly. A reference belongs to the machine that measured it.
+# - `{python}` is replaced by the interpreter running verify.py, and
+#   `{local:gradlew}` by the way this system runs a script of the root
+#   (`.\gradlew` on Windows, `./gradlew` elsewhere). The command runs through
+#   the system's shell from the root of the repository, with no input and
+#   without the variables that point git at another repository (GIT_LOCATION in
+#   `verify.py`), and its verdict is its exit code.
+# - The old two-column shape (label | command) still parses, with a warning on
+#   every run; it is being retired.
+# - A label is a name, so it is English.
+#
+# Adding a gate is adding a row; the order is the order of execution: the
+# cheapest first, and the board's build right before its validator, so that
+# adding a record costs a single run.
+#
+# The guards every harness prints, by their canonical names (the whole row).
+# Each compares two counts reached by different paths: declared against
+# started, started against finished, finished against with-checks.
+guard finished
+guard registered
+guard silent
+#
+# The three of the scaffold:
+board: tests [harness] | 75.0 | {python} tools/board/test_board.py
+board: build           | 0.1  | {python} tools/board/board.py build
+board: documents       | 0.1  | {python} tools/board/board.py check
+#
+# The product's go here, with the stack layer that brings them: tests, lint,
+# build. Each enters in the change that makes it green.
+#
+# The react-vite layer:
+dependencies    | 0.2 | pnpm --dir frontend install --frozen-lockfile --offline
+format          | 0.6 | pnpm --dir frontend run format:check
+lint            | 3.3 | pnpm --dir frontend run lint
+typecheck       | 1.3 | pnpm --dir frontend run typecheck
+tests [harness] | 7.2 | {python} tools/guards/junit.py --report frontend/reports/vitest -- pnpm --dir frontend run test --reporter=default --reporter=junit --outputFile.junit=reports/vitest/junit.xml
+build           | 1.6 | pnpm --dir frontend run build

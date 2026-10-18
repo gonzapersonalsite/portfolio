@@ -1,0 +1,48 @@
+# The words of the team language that the board reads in prose. Names and keys
+# are English (AGENTS.md §6); the prose of documents and records is in the team
+# language, Spanish by default. A team that writes in another language declares
+# its words here, and the code does not change. The texts the scaffold itself
+# writes (its messages and the derivatives) are Spanish.
+#
+# --- KEYS ---
+# The keys the parser accepts are the ones this legend lists.
+# authority  : the heading of the contract's section that says where each
+#              thing lives (AGENTS.md §4); the board reads its table.
+# checklist  : the heading of the section of tools/board/README.md that numbers
+#              the checks the board runs.
+# fields     : the heading of the section of docs/registry/README.md that holds
+#              the table of record fields.
+# state-word : a word of the team language that names a state; a decision body
+#              that opens with it in its bold name repeats its state. The
+#              states of the schema, in capitals, count without a row.
+# skills     : the heading of the contract's section that indexes the project
+#              skills; required once documents.txt declares a skills directory.
+# standards  : the heading of the contract's section of code standards, where
+#              a stack layer adds its bullets (tools/board/instantiate.py).
+# pending    : the heading of the contract's section where instantiating an
+#              existing repository leaves the AGENTS.md it had, to merge
+#              (tools/board/instantiate.py); the board finds the contract
+#              while it keeps that section.
+
+# --- The headings the board reads by name: each one, exactly once ---
+authority 4. Dónde vive cada cosa
+checklist Qué comprueba
+fields Campos
+skills 9. Skills del proyecto
+standards 3. Estándares de código
+pending Por fusionar: el AGENTS.md que tenía el repositorio
+
+# --- Words that name the state of a decision, in the team language ---
+state-word CONFIRMADA
+state-word CONFIRMADO
+state-word PROVISIONAL
+state-word ABIERTA
+state-word ABIERTO
+state-word RESUELTA
+state-word RESUELTO
+state-word POSTERGADA
+state-word POSTERGADO
+state-word DESCARTADA
+state-word DESCARTADO
+state-word RETIRADA
+state-word RETIRADO

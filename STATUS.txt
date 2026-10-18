@@ -1,0 +1,19 @@
+ESTADO DEL PROYECTO
+GENERADO por tools/board desde el repositorio. No editar a mano: se reescribe.
+board-fingerprint:41976b2d8cc34d43 — su contenido cambió por última vez el 2026-10-18.
+Esto es un resumen derivado. Manda el documento o el registro, no este fichero.
+------------------------------------------------------------------------------
+PUERTAS      9 de 9 en verde (sin cambios desde 2026-10-18)
+ORDEN F      F0 ✔
+ORDEN H      H0 ✔ > H1 ✔
+
+FRENTES ABIERTOS  0 vivos (0 resueltos que conservan su rastro)
+  Cada frente es una decision abierta; la fase es la que su registro declara. La
+  lista entera, en el indice de decisiones (seccion ABIERTAS).
+  POR FASE (0):
+  SIN FASE PENDIENTE (0) — su registro dice `none`, o solo nombra fases ya hechas:
+
+DEUDAS       0 vivas, 0 pagadas
+------------------------------------------------------------------------------
+NO DERIVABLE
+  · Estado del árbol de trabajo y último commit: se miran con `git status`.

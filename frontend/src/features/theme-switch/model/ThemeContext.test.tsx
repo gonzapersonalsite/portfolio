@@ -11,7 +11,10 @@ const fakeSystemScheme = (prefersLight: boolean) => {
     addEventListener: (_type: string, listener: () => void) => listeners.add(listener),
     removeEventListener: (_type: string, listener: () => void) => listeners.delete(listener),
   }
-  vi.stubGlobal('matchMedia', vi.fn(() => query))
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn(() => query),
+  )
   return {
     switchTo: (light: boolean) => {
       query.matches = light

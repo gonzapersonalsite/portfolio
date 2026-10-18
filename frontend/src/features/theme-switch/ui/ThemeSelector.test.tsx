@@ -17,13 +17,18 @@ const fakeReducedMotion = (reduced: boolean) => {
     addEventListener: (_type: string, listener: () => void) => listeners.add(listener),
     removeEventListener: (_type: string, listener: () => void) => listeners.delete(listener),
   }
-  vi.stubGlobal('matchMedia', vi.fn((query: string) =>
-    query === '(prefers-reduced-motion: reduce)' ? motionQuery : {
-      matches: false,
-      addEventListener: () => {},
-      removeEventListener: () => {},
-    },
-  ))
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn((query: string) =>
+      query === '(prefers-reduced-motion: reduce)'
+        ? motionQuery
+        : {
+            matches: false,
+            addEventListener: () => {},
+            removeEventListener: () => {},
+          },
+    ),
+  )
   return {
     setReduced: (next: boolean) => {
       motionQuery.matches = next
@@ -57,11 +62,11 @@ describe('ThemeSelector', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Theme: Dark' }))
 
     const menu = screen.getByRole('menu', { name: 'Theme: Dark' })
-    expect(within(menu).getAllByRole('menuitemradio').map((item) => item.getAttribute('aria-checked'))).toEqual([
-      'false',
-      'true',
-      'false',
-    ])
+    expect(
+      within(menu)
+        .getAllByRole('menuitemradio')
+        .map((item) => item.getAttribute('aria-checked')),
+    ).toEqual(['false', 'true', 'false'])
 
     fireEvent.click(screen.getByRole('menuitemradio', { name: 'Light' }))
 

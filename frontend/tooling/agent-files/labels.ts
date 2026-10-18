@@ -1,30 +1,30 @@
-import type { ProjectLinkKind } from '../../src/entities/project/model/projectLinks.ts';
-import type { Project } from '../../src/entities/project/model/types.ts';
-import type { SkillCategory } from '../../src/entities/skill/model/categories.ts';
-import type { Locale, RouteId } from './routes.ts';
+import type { ProjectLinkKind } from '../../src/entities/project/model/projectLinks.ts'
+import type { Project } from '../../src/entities/project/model/types.ts'
+import type { SkillCategory } from '../../src/entities/skill/model/categories.ts'
+import type { Locale, RouteId } from './routes.ts'
 
 export interface TwinLabels {
-  technologies: string;
-  pages: string;
-  openToWork: string;
-  nav: Record<RouteId, string>;
-  featuredProjects: string;
-  links: Record<ProjectLinkKind, string>;
-  types: Record<Project['type'], string>;
-  aboutCoreCompetencies: string;
-  aboutLanguages: string;
-  aboutSentenceTitle: string;
-  downloadCv: string;
-  skillsHeading: string;
-  skillCategories: Record<SkillCategory, string>;
-  experienceHeading: string;
-  present: string;
-  projectsHeading: string;
-  contactHeading: string;
-  contactDescription: string;
-  contactEmail: string;
-  contactLocation: string;
-  contactSocial: string;
+  technologies: string
+  pages: string
+  openToWork: string
+  nav: Record<RouteId, string>
+  featuredProjects: string
+  links: Record<ProjectLinkKind, string>
+  types: Record<Project['type'], string>
+  aboutCoreCompetencies: string
+  aboutLanguages: string
+  aboutSentenceTitle: string
+  downloadCv: string
+  skillsHeading: string
+  skillCategories: Record<SkillCategory, string>
+  experienceHeading: string
+  present: string
+  projectsHeading: string
+  contactHeading: string
+  contactDescription: string
+  contactEmail: string
+  contactLocation: string
+  contactSocial: string
 }
 
 // Labels that exist behind an i18n key mirror it exactly (a test enforces the
@@ -130,4 +130,4 @@ export const TWIN_LABELS: Record<Locale, TwinLabels> = {
     contactLocation: 'Ubicación',
     contactSocial: 'SÍGUEME',
   },
-};
+}

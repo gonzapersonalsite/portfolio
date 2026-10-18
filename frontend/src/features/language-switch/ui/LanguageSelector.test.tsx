@@ -35,7 +35,9 @@ describe('LanguageSelector', () => {
 
     const menu = screen.getByRole('menu', { name: 'Language: English (EN)' })
     const options = within(menu).getAllByRole('menuitemradio')
-    expect(options.map((option) => [option.textContent, option.getAttribute('lang'), option.getAttribute('aria-checked')])).toEqual([
+    expect(
+      options.map((option) => [option.textContent, option.getAttribute('lang'), option.getAttribute('aria-checked')]),
+    ).toEqual([
       ['English', 'en', 'true'],
       ['Español', 'es', 'false'],
     ])

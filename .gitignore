@@ -14,3 +14,17 @@
 
 # User rules
 user_rules.md
+
+# From the agentic scaffold
+__pycache__/
+*.pyc
+.venv/
+Thumbs.db
+.DS_Store
+*.tmp
+
+# From the agentic scaffold
+node_modules/
+dist/
+reports/
+frontend/reports/

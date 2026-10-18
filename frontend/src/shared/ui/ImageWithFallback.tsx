@@ -1,96 +1,83 @@
-import React, { useState } from 'react';
-import { Box, Skeleton } from '@mui/material';
-import type { BoxProps } from '@mui/material';
+import React, { useState } from 'react'
+import { Box, Skeleton } from '@mui/material'
+import type { BoxProps } from '@mui/material'
 
 const FALLBACK_URLS = {
-    profile: '/profile-fallback.webp',
-    project: '/images/no-image.svg',
-} as const;
+  profile: '/profile-fallback.webp',
+  project: '/images/no-image.svg',
+} as const
 
 interface ImageWithFallbackProps extends BoxProps<'img'> {
-    src?: string;
-    alt: string;
-    type: keyof typeof FALLBACK_URLS;
-    // Reserves the box before the image loads, so nothing shifts (CLS).
-    aspectRatio: string;
+  src?: string
+  alt: string
+  type: keyof typeof FALLBACK_URLS
+  // Reserves the box before the image loads, so nothing shifts (CLS).
+  aspectRatio: string
 }
 
-const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
-    src,
-    alt,
-    type,
-    aspectRatio,
-    sx,
-    srcSet,
-    ...props
-}) => {
-    const [hasError, setHasError] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
+const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({ src, alt, type, aspectRatio, sx, srcSet, ...props }) => {
+  const [hasError, setHasError] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
-    const onImageRef = (img: HTMLImageElement | null) => {
-        if (img) {
-            setIsLoading(!img.complete);
-        }
-    };
+  const onImageRef = (img: HTMLImageElement | null) => {
+    if (img) {
+      setIsLoading(!img.complete)
+    }
+  }
 
-    const handleError = () => {
-        if (!hasError) {
-            setHasError(true);
-            setIsLoading(false);
-        }
-    };
+  const handleError = () => {
+    if (!hasError) {
+      setHasError(true)
+      setIsLoading(false)
+    }
+  }
 
-    const handleLoad = () => {
-        setIsLoading(false);
-    };
+  const handleLoad = () => {
+    setIsLoading(false)
+  }
 
-    const showFallback = hasError || !src;
-    const finalSrc = showFallback ? FALLBACK_URLS[type] : src;
-    // A srcset wins over src, so it has to go as well for the fallback to show.
-    const finalSrcSet = showFallback ? undefined : srcSet;
+  const showFallback = hasError || !src
+  const finalSrc = showFallback ? FALLBACK_URLS[type] : src
+  // A srcset wins over src, so it has to go as well for the fallback to show.
+  const finalSrcSet = showFallback ? undefined : srcSet
 
-    return (
-        <Box
-            sx={[
-                {
-                    position: 'relative',
-                    width: '100%',
-                    aspectRatio,
-                    overflow: 'hidden'
-                },
-                ...(Array.isArray(sx) ? sx : [sx])
-            ]}
-        >
-            {isLoading && (
-                <Skeleton
-                    variant="rectangular"
-                    width="100%"
-                    height="100%"
-                    sx={{ position: 'absolute', top: 0, left: 0 }}
-                />
-            )}
-            <Box
-                component="img"
-                src={finalSrc}
-                alt={alt}
-                onError={handleError}
-                onLoad={handleLoad}
-                ref={onImageRef}
-                srcSet={finalSrcSet}
-                {...props}
-                sx={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    opacity: isLoading ? 0 : 1,
-                    transition: 'opacity 0.3s ease-in-out',
-                }}
-            />
-        </Box>
-    );
-};
+  return (
+    <Box
+      sx={[
+        {
+          position: 'relative',
+          width: '100%',
+          aspectRatio,
+          overflow: 'hidden',
+        },
+        ...(Array.isArray(sx) ? sx : [sx]),
+      ]}
+    >
+      {isLoading && (
+        <Skeleton variant="rectangular" width="100%" height="100%" sx={{ position: 'absolute', top: 0, left: 0 }} />
+      )}
+      <Box
+        component="img"
+        src={finalSrc}
+        alt={alt}
+        onError={handleError}
+        onLoad={handleLoad}
+        ref={onImageRef}
+        srcSet={finalSrcSet}
+        {...props}
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          opacity: isLoading ? 0 : 1,
+          transition: 'opacity 0.3s ease-in-out',
+        }}
+      />
+    </Box>
+  )
+}
 
-export default ImageWithFallback;
+export default ImageWithFallback

@@ -1,0 +1,26 @@
+# Exceptions of the board's validator. EACH ONE CARRIES ITS MOTIVE WRITTEN NEXT
+# TO IT, and never inside the checker's code: an exception hidden in code stops
+# being auditable.
+#
+# The motive is the comment block that opens the group; a blank line closes
+# it. An exception WITHOUT a motive is a finding, and so is one no longer
+# needed: an orphan exception is the signature of a rule that went soft.
+#
+# --- KEYS ---
+# The keys the parser accepts are the ones this legend lists.
+# citation : a quoted fragment that looks like a path and is not one.
+# marker   : a phase header without its canonical marker.
+# order    : a contradiction between the order line and the headers.
+# shape    : a document without its title, a section the validator reads that
+#            no longer exists, a date in a timeless document, a cap of
+#            limits.txt over its limit, or a contract that keeps the section
+#            instantiation left to merge.
+# slug     : a repeated id, or a `#<id>` citation that does not resolve.
+# encoding : a declared code source (`code`) that is not UTF-8 and cannot be
+#            converted yet; its comments are read with replacements.
+# engine   : a file of the template's engine (MANIFEST.txt) changed in this
+#            copy on purpose, a local patch an upgrade has to merge by hand.
+#
+# The [record], [derived] and [data] findings are NOT excused, on purpose: a
+# malformed record is fixed in its header, a stale derivative is rebuilt and a
+# broken data file is corrected.

@@ -19,8 +19,12 @@ const Layout: React.FC = () => {
   useCanonicalLinks()
   return (
     <>
-      <button type="button" onClick={() => navigate('/projects')}>projects</button>
-      <button type="button" onClick={() => navigate('/nowhere')}>nowhere</button>
+      <button type="button" onClick={() => navigate('/projects')}>
+        projects
+      </button>
+      <button type="button" onClick={() => navigate('/nowhere')}>
+        nowhere
+      </button>
     </>
   )
 }

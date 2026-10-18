@@ -1,27 +1,23 @@
-import { getProfile } from '../../src/entities/profile/api/profileApi.ts';
-import { getCoreSkills } from '../../src/entities/skill/api/skillApi.ts';
-import { getAllSpokenLanguages } from '../../src/entities/spoken-language/api/languageApi.ts';
-import { absoluteUrl, HOME_ROUTE, twinPathOf, type ImagePreload, type Locale, type RouteSpec } from './routes.ts';
+import { getProfile } from '../../src/entities/profile/api/profileApi.ts'
+import { getCoreSkills } from '../../src/entities/skill/api/skillApi.ts'
+import { getAllSpokenLanguages } from '../../src/entities/spoken-language/api/languageApi.ts'
+import { absoluteUrl, HOME_ROUTE, twinPathOf, type ImagePreload, type Locale, type RouteSpec } from './routes.ts'
 
-const LOCALES: readonly Locale[] = ['en', 'es'];
+const LOCALES: readonly Locale[] = ['en', 'es']
 
-const HEAD_END = '</head>';
-const APP_ROOT = '<div id="root">';
+const HEAD_END = '</head>'
+const APP_ROOT = '<div id="root">'
 
 const escapeHtml = (value: string): string =>
-  value
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
-const WEBSITE_ID = absoluteUrl('/#website');
-const PERSON_ID = absoluteUrl('/#person');
+const WEBSITE_ID = absoluteUrl('/#website')
+const PERSON_ID = absoluteUrl('/#person')
 
 // The site and the person it presents, linked by @id. knowsAbout holds the core competencies,
 // the same skills the About page lists.
 const structuredData = (): string => {
-  const profile = getProfile();
+  const profile = getProfile()
 
   const graph = {
     '@context': 'https://schema.org',
@@ -50,14 +46,14 @@ const structuredData = (): string => {
         sameAs: [profile.githubUrl, profile.linkedinUrl],
       },
     ],
-  };
+  }
 
   // '<' never reaches the HTML parser, so no text can close the <script> element early.
-  return JSON.stringify(graph).replace(/</g, '\\u003c');
-};
+  return JSON.stringify(graph).replace(/</g, '\\u003c')
+}
 
 const htmlAttribute = (name: string, value: string | undefined): string[] =>
-  value === undefined ? [] : [`${name}="${escapeHtml(value)}"`];
+  value === undefined ? [] : [`${name}="${escapeHtml(value)}"`]
 
 // imagesrcset/imagesizes make the preload pick the same candidate the <img> srcset will.
 const preloadImageLink = (image: ImagePreload): string =>
@@ -67,7 +63,7 @@ const preloadImageLink = (image: ImagePreload): string =>
     ...htmlAttribute('imagesrcset', image.srcSet),
     ...htmlAttribute('imagesizes', image.sizes),
     'fetchpriority="high">',
-  ].join(' ');
+  ].join(' ')
 
 const headBlock = (route: RouteSpec): string =>
   [
@@ -78,13 +74,13 @@ const headBlock = (route: RouteSpec): string =>
     ),
     ...(route.lcpImage === undefined ? [] : [preloadImageLink(route.lcpImage())]),
     `<script type="application/ld+json">${structuredData()}</script>`,
-  ].join('\n');
+  ].join('\n')
 
 // Without JavaScript the SPA renders nothing; say who this is and link the page's markdown twins.
 const noscriptBlock = (route: RouteSpec): string => {
-  const profile = getProfile();
-  const english = twinPathOf(route, 'en');
-  const spanish = twinPathOf(route, 'es');
+  const profile = getProfile()
+  const english = twinPathOf(route, 'en')
+  const spanish = twinPathOf(route, 'es')
 
   return [
     '<noscript>',
@@ -96,25 +92,25 @@ const noscriptBlock = (route: RouteSpec): string => {
     `<p><a href="mailto:${escapeHtml(profile.email)}">${escapeHtml(profile.email)}</a></p>`,
     '</div>',
     '</noscript>',
-  ].join('\n');
-};
+  ].join('\n')
+}
 
 // index.html is the only HTML source; a shell is wrong the moment a marker it expects
 // disappears, so every edit refuses anything but one match.
 const replaceOnce = (html: string, pattern: RegExp, replacement: string, what: string): string => {
-  const flags = pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`;
-  const matches = html.match(new RegExp(pattern.source, flags)) ?? [];
+  const flags = pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`
+  const matches = html.match(new RegExp(pattern.source, flags)) ?? []
   if (matches.length !== 1) {
-    throw new Error(`agent-files: expected exactly one ${what}, found ${matches.length}`);
+    throw new Error(`agent-files: expected exactly one ${what}, found ${matches.length}`)
   }
 
-  return html.replace(pattern, () => replacement);
-};
+  return html.replace(pattern, () => replacement)
+}
 
-const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 const insertBefore = (html: string, marker: string, block: string): string =>
-  replaceOnce(html, new RegExp(escapeRegExp(marker)), `${block}\n${marker}`, marker);
+  replaceOnce(html, new RegExp(escapeRegExp(marker)), `${block}\n${marker}`, marker)
 
 const updateMeta = (
   html: string,
@@ -122,40 +118,47 @@ const updateMeta = (
   name: string,
   update: (content: string) => string,
 ): string => {
-  const matches = [...html.matchAll(new RegExp(`<meta ${attribute}="${name}" content="([^"]*)"\\s*/>`, 'g'))];
+  const matches = [...html.matchAll(new RegExp(`<meta ${attribute}="${name}" content="([^"]*)"\\s*/>`, 'g'))]
   if (matches.length !== 1) {
-    throw new Error(`agent-files: expected exactly one meta ${name}, found ${matches.length}`);
+    throw new Error(`agent-files: expected exactly one meta ${name}, found ${matches.length}`)
   }
 
-  const [tag, content] = matches[0];
-  return html.replace(tag, () => `<meta ${attribute}="${name}" content="${escapeHtml(update(content))}" />`);
-};
+  const [tag, content] = matches[0]
+  return html.replace(tag, () => `<meta ${attribute}="${name}" content="${escapeHtml(update(content))}" />`)
+}
 
 // index.html names the social image by its path, so the site address has one source (SITE_URL).
-const absoluteImagePath = (name: string) => (path: string): string => {
-  if (!path.startsWith('/')) {
-    throw new Error(`agent-files: ${name} must be a root-relative path, found "${path}"`);
+const absoluteImagePath =
+  (name: string) =>
+  (path: string): string => {
+    if (!path.startsWith('/')) {
+      throw new Error(`agent-files: ${name} must be a root-relative path, found "${path}"`)
+    }
+    return absoluteUrl(path)
   }
-  return absoluteUrl(path);
-};
 
 // The title, description and social metadata of every shell, the home page included, come from
 // routes.ts; the values in index.html only serve the dev server.
 const applyRouteMeta = (html: string, route: RouteSpec): string => {
-  let result = replaceOnce(html, /<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(route.shellTitle)}</title>`, '<title>');
-  result = updateMeta(result, 'name', 'description', () => route.shellDescription);
-  result = updateMeta(result, 'property', 'og:title', () => route.shellTitle);
-  result = updateMeta(result, 'property', 'og:description', () => route.shellDescription);
-  result = updateMeta(result, 'property', 'og:url', () => absoluteUrl(route.path));
-  result = updateMeta(result, 'property', 'og:image', absoluteImagePath('og:image'));
-  return updateMeta(result, 'name', 'twitter:image', absoluteImagePath('twitter:image'));
-};
+  let result = replaceOnce(
+    html,
+    /<title>[\s\S]*?<\/title>/,
+    `<title>${escapeHtml(route.shellTitle)}</title>`,
+    '<title>',
+  )
+  result = updateMeta(result, 'name', 'description', () => route.shellDescription)
+  result = updateMeta(result, 'property', 'og:title', () => route.shellTitle)
+  result = updateMeta(result, 'property', 'og:description', () => route.shellDescription)
+  result = updateMeta(result, 'property', 'og:url', () => absoluteUrl(route.path))
+  result = updateMeta(result, 'property', 'og:image', absoluteImagePath('og:image'))
+  return updateMeta(result, 'name', 'twitter:image', absoluteImagePath('twitter:image'))
+}
 
 export const buildRouteShell = (template: string, route: RouteSpec): string =>
   applyRouteMeta(
     insertBefore(insertBefore(template, HEAD_END, headBlock(route)), APP_ROOT, noscriptBlock(route)),
     route,
-  );
+  )
 
 // Served by Vercel with status 404 for any other address. It is not a page of the site, so it has
 // no canonical link or markdown alternates; with JavaScript the router sends the visitor home.
@@ -167,4 +170,4 @@ export const buildNotFoundPage = (template: string): string =>
       noscriptBlock(HOME_ROUTE),
     ),
     HOME_ROUTE,
-  );
+  )

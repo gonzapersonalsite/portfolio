@@ -28,10 +28,13 @@ const finishLoading = (image = currentImage()) => {
 
 describe('ProjectGallery', () => {
   beforeEach(async () => {
-    vi.stubGlobal('ResizeObserver', class {
-      observe() {}
-      disconnect() {}
-    })
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe() {}
+        disconnect() {}
+      },
+    )
     await i18n.changeLanguage('en')
   })
 
@@ -201,17 +204,21 @@ describe('ProjectGallery', () => {
   it('allows Escape during a failed load and restores focus to the gallery opener', async () => {
     function Example() {
       const [open, setOpen] = useState(false)
-      return <>
-        <button onClick={() => setOpen(true)}>Open gallery</button>
-        {open && <ProjectGallery title="Example project" slides={slides} onClose={() => setOpen(false)} />}
-      </>
+      return (
+        <>
+          <button onClick={() => setOpen(true)}>Open gallery</button>
+          {open && <ProjectGallery title="Example project" slides={slides} onClose={() => setOpen(false)} />}
+        </>
+      )
     }
     render(<Example />)
     const opener = screen.getByRole('button', { name: 'Open gallery' })
     opener.focus()
     fireEvent.click(opener)
     fireEvent.error(currentImage())
-    fireEvent.keyDown(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close gallery' }), { key: 'Escape' })
+    fireEvent.keyDown(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close gallery' }), {
+      key: 'Escape',
+    })
 
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(document.activeElement).toBe(opener)

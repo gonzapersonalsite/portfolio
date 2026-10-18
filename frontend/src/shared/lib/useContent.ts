@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState } from 'react'
 
 export function useContent<T>(loader: () => T): { data: T } {
-    const [data] = useState<T>(loader);
-    return { data };
+  const [data] = useState<T>(loader)
+  return { data }
 }

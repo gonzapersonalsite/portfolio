@@ -9,10 +9,18 @@ const Layout: React.FC = () => {
   useRouteChangeFocus('main')
   return (
     <>
-      <button type="button" onClick={() => navigate('/about')}>about</button>
-      <button type="button" onClick={() => navigate('/about#main')}>skip</button>
-      <button type="button" onClick={() => navigate(-1)}>back</button>
-      <main id="main" tabIndex={-1}>Content</main>
+      <button type="button" onClick={() => navigate('/about')}>
+        about
+      </button>
+      <button type="button" onClick={() => navigate('/about#main')}>
+        skip
+      </button>
+      <button type="button" onClick={() => navigate(-1)}>
+        back
+      </button>
+      <main id="main" tabIndex={-1}>
+        Content
+      </main>
     </>
   )
 }

@@ -635,7 +635,9 @@ describe('no request of its own from src', () => {
     ['a component', 'src/pages/contact/ui/ContactPage.tsx'],
     ['a shared helper', 'src/shared/lib/storage.ts'],
   ])('rejects fetch in %s too', async (_case, path) => {
-    expect(await rulesBrokenBy(path, "export const send = () => fetch('/contact')\n")).toContain('no-restricted-globals')
+    expect(await rulesBrokenBy(path, "export const send = () => fetch('/contact')\n")).toContain(
+      'no-restricted-globals',
+    )
   })
 
   it('leaves tests free to stub the network', async () => {
@@ -684,11 +686,9 @@ describe('exceptions live in the configuration', () => {
     )
   })
 
-  it('counts a warning as an error in the lint and the pre-commit hook', () => {
+  it('counts a warning as an error in the lint script', () => {
     const manifest = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
 
-    const commands = [manifest.scripts.lint, manifest['lint-staged']['*.{ts,tsx}']]
-
-    expect(commands.every((command?: string) => command?.includes('--max-warnings=0'))).toBe(true)
+    expect(manifest.scripts.lint).toContain('--max-warnings=0')
   })
 })

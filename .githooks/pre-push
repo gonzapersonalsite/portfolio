@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+# pre-push: what leaves this machine passes the gates first, and it must be
+# what the gates verify: tools/board/pre_push.py says how. The list of gates is
+# gates.txt's, not this file's. Activate once per clone:
+#   git config core.hooksPath .githooks
+# git push --no-verify skips it, and nothing records that it happened.
+set -eu
+HOOKS="$(cd "$(dirname "$0")" && pwd)"
+cd "$HOOKS/.."
+. "$HOOKS/python.sh"
+if ! FOUND="$(find_python)"; then
+  echo "pre-push: ningun interprete de Python 3.8 o posterior funciona (probados: PYTHON, python3, py -3, python)." >&2
+  echo "pre-push: instala Python 3 o exporta PYTHON con el interprete. Sin puertas no hay verde: push rechazado." >&2
+  exit 1
+fi
+exec $FOUND tools/board/pre_push.py

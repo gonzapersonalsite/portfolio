@@ -79,15 +79,18 @@ describe('index.html pre-paint theme', () => {
     ['glass', 'dark'],
     [null, 'light'],
     [null, 'dark'],
-  ] as const)('agrees with ThemeProvider (saved %s, %s system), which then takes over the page colours', (saved, scheme) => {
-    stubSystemScheme(scheme)
-    if (saved !== null) window.localStorage.setItem('themeMode', saved)
+  ] as const)(
+    'agrees with ThemeProvider (saved %s, %s system), which then takes over the page colours',
+    (saved, scheme) => {
+      stubSystemScheme(scheme)
+      if (saved !== null) window.localStorage.setItem('themeMode', saved)
 
-    runPrePaintScript()
-    const painted = themeColor()
-    render(<ThemeProvider>content</ThemeProvider>)
+      runPrePaintScript()
+      const painted = themeColor()
+      render(<ThemeProvider>content</ThemeProvider>)
 
-    expect(themeColor()).toBe(painted)
-    expect(document.documentElement.getAttribute('style') ?? '').toBe('')
-  })
+      expect(themeColor()).toBe(painted)
+      expect(document.documentElement.getAttribute('style') ?? '').toBe('')
+    },
+  )
 })

@@ -1,4 +1,4 @@
-import profileData from './data.json' with { type: 'json' };
-import type { Profile } from '../model/types.ts';
+import profileData from './data.json' with { type: 'json' }
+import type { Profile } from '../model/types.ts'
 
-export const getProfile = (): Profile => profileData as Profile;
+export const getProfile = (): Profile => profileData as Profile

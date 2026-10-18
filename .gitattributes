@@ -1,3 +1,6 @@
+# From the agentic scaffold: defaults first; the rules below, the repository's, win.
+*.bat text eol=crlf
+
 # LF in the repository and in every working tree, whatever core.autocrlf says on the machine.
 # Browsers hash inline scripts after normalising line breaks to LF, so the CSP hash in
 # frontend/vercel.json only matches an index.html checked out with LF.

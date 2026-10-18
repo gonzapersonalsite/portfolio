@@ -28,8 +28,17 @@ describe('Navbar', () => {
 
     const nav = within(screen.getByRole('banner')).getByRole('navigation', { name: 'Main navigation' })
     const links = within(nav).getAllByRole('link')
-    expect(links.map((link) => link.textContent)).toEqual(['Home', 'About', 'Skills', 'Experience', 'Projects', 'Contact'])
-    expect(links.filter((link) => link.getAttribute('aria-current') === 'page').map((link) => link.textContent)).toEqual(['Skills'])
+    expect(links.map((link) => link.textContent)).toEqual([
+      'Home',
+      'About',
+      'Skills',
+      'Experience',
+      'Projects',
+      'Contact',
+    ])
+    expect(
+      links.filter((link) => link.getAttribute('aria-current') === 'page').map((link) => link.textContent),
+    ).toEqual(['Skills'])
     expect(within(nav).getByRole('link', { current: 'page' }).getAttribute('href')).toBe('/skills')
   })
 

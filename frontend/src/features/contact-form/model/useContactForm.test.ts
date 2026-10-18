@@ -31,8 +31,7 @@ const { email } = getProfile()
 const mockedSendContactMessage = vi.mocked(sendContactMessage)
 const submitEvent = { preventDefault: vi.fn() } as unknown as FormEvent<HTMLFormElement>
 
-const change = (name: string, value: string) =>
-  ({ target: { name, value } }) as ChangeEvent<HTMLInputElement>
+const change = (name: string, value: string) => ({ target: { name, value } }) as ChangeEvent<HTMLInputElement>
 
 const renderFilledForm = () => {
   const hook = renderHook(() => useContactForm(showNotification))
@@ -57,7 +56,11 @@ describe('useContactForm', () => {
       await result.current.handleSubmit(submitEvent)
     })
 
-    expect(mockedSendContactMessage).toHaveBeenCalledWith({ name: 'Ada', email: 'ada@example.com', message: 'Hello there' })
+    expect(mockedSendContactMessage).toHaveBeenCalledWith({
+      name: 'Ada',
+      email: 'ada@example.com',
+      message: 'Hello there',
+    })
     expect(showNotification).toHaveBeenCalledWith('contact.form.success', 'success', 6000)
     expect(result.current.formData).toEqual({ name: '', email: '', message: '' })
   })
@@ -111,7 +114,12 @@ describe('useContactForm', () => {
 
   it('sends only once when submitted twice before the first send finishes', async () => {
     let finish: () => void = () => {}
-    mockedSendContactMessage.mockImplementationOnce(() => new Promise<void>((resolve) => { finish = resolve }))
+    mockedSendContactMessage.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve
+        }),
+    )
     const { result } = renderFilledForm()
 
     await act(async () => {

@@ -1,0 +1,48 @@
+# The engine of this copy of the scaffold: the version of the template it came
+# from, and the files that are the template's with the sha256 of their content
+# as the template shipped them (line ends folded to LF). The board reports an
+# engine file that changed, an `engine` finding. A copy does not edit its
+# engine: a local change is declared in exceptions.txt, with its motive, so
+# that an upgrade knows what to merge by hand. In the template, the change
+# that touches the engine reseals this file with `board.py seal`.
+#
+# A copy is upgraded by the template's tools/board/upgrade.py, run from a
+# clone of the template's repository against the copy: it rewrites this file,
+# so this pointer reaches every copy. Its plan says what it takes, what it
+# keeps and what is left to merge by hand, and its `-h` says how to run it.
+# What a copy incorporated beyond the engine (its stack layers, the pieces of
+# the stack template it was created from) is recorded in components.txt,
+# which the same tool keeps in step.
+#
+# --- KEYS ---
+# version  : the version of the template (X.Y.Z), exactly once.
+# engine   : '<path> <sha256>': a file of the engine; '-' until it is sealed.
+# template : a path only the template has: instantiate.py does not copy it,
+#            and the board asks no home for its markdown but checks its
+#            citations. These rows are what tells the template from a copy:
+#            instantiate.py writes a copy's manifest without them, adopt.py
+#            refuses where they are and seal where they are not.
+#
+version 0.3.2
+
+# The runner, the board, their tests and the tools around them.
+engine verify.py 2aaedf0013b3ee8162d5d894bf796c76f11210710b9b28801e3acc5d75422807
+engine tools/board/board.py a63680c2575e44e3a4fa20610d891673a73896a7758f6cfcde3e97f5d4c8722a
+engine tools/board/test_board.py d47a402a508917a70cdf6a16831db25928a52f68b8e42f2511fe3b2e55fbfbff
+engine tools/board/adopt.py dc02435edf0ce6b57c4887c53acbc11dee932ba5214f471139224e90b8160318
+engine tools/board/instantiate.py 6e5ab18a8845d5c27d1b706fc7ac102220954e2ac18f73d3ac940bd49dedecdf
+engine tools/board/components.py bd9dd4628752cf91cafbb7ba262d30a81170db705f74994b9d78e4f5888f7740
+engine tools/board/commit_message.py 9497e180e4e9156e7aaca3351aba635f79f0ce55297b41709c0fa6e8efc1f669
+engine tools/board/pre_push.py 6075738ef29a7c2e1bf11fc0193e0f75d54d6b0a7aa8808289dd12754b3d598a
+engine tools/board/README.md 38ce113d2e48144e91f920b39311cd13f4e0bb5454cc18e292af0e2fee024a51
+engine docs/registry/README.md 77c65c5996fc7b449b42625894645dd91d9b43a45816af66a1e985820e2351ce
+
+# The adapters that print the guards of runners other than the board's.
+engine tools/guards/python_unittest.py cd42a705023b625245854563000bab3343e645a34e73252e6492a3985ae9ad42
+engine tools/guards/junit.py 8d79b56b523c9a2857216bfe015b0b017afb7561a1a0c1f67336e060aefbfe9a
+engine tools/guards/dart_test.py 9816ce419c546b242b5a224b4fcf07ba0c0ca62f67dd26be1a504bed1d3170de
+
+# The hooks and what they share.
+engine .githooks/pre-push 265a3f7b7282fbe133cc96f52bfba7d26fb2bfbf7968b3c0800aee6da8ef2077
+engine .githooks/commit-msg 6d8858de19d51cdce2f8de952010f1cf6ac4692166848e32dfdba1bf6fdbcd03
+engine .githooks/python.sh f749b127abaa20434b5f73094617644fdc99c2747fc20f57e859db8873ad80bb

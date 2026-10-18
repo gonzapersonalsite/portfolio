@@ -5,17 +5,19 @@ para saber qué trajo una fase y con qué criterio se cerró, nunca para decidir
 trabajo futuro. Manda `../ROADMAP.md`, donde cada fase conserva su cabecera, su
 marcador y la lápida que apunta aquí. Solo crece por el final.
 
-## F0 — Existing static bilingual portfolio baseline (DONE)
+## F0 — Línea base del portafolio estático bilingüe (DONE)
 
-- **Scope:** Static bilingual (English and Spanish) portfolio application in
-  `../../frontend/` with three visual themes (`light`, `dark`, `glass`), static
-  JSON content model with integrity tests, interactive project gallery, contact
-  form via EmailJS, and build-time per-route HTML shells, bilingual Markdown
-  twins, and agent-readable files (llms.txt, robots.txt, sitemap.xml).
-- **Governance:** Feature-Sliced Design boundaries are defined in
-  `../ARCHITECTURE.md` and enforced by `../../frontend/eslint.config.js` and
+- **Alcance:** aplicación web de portafolio estático bilingüe (inglés y español)
+  en `../../frontend/` con tres temas visuales (`light`, `dark`, `glass`),
+  modelo de contenido en JSON estático con tests de integridad, galería
+  interactiva de proyectos, formulario de contacto vía EmailJS y generación en
+  build de páginas HTML por ruta, gemelos Markdown bilingües y ficheros para
+  agentes (llms.txt, robots.txt, sitemap.xml).
+- **Gobernanza:** los límites de Feature-Sliced Design viven en
+  `../ARCHITECTURE.md` y los hacen cumplir `../../frontend/eslint.config.js` y
   `../../frontend/eslint-fsd-gaps.js`.
-- **Adoption baseline:** existing product adopted under the shared scaffold and
-  `react-fsd` stack at `#this-repository-uses-the-agentic-scaffold` and
-  verified in `#2026-10-18-adopt-agentic-scaffold-and-react-fsd`. No next
-  product phase is currently open.
+- **Línea base de adopción:** producto existente adoptado bajo el andamio
+  compartido y el stack `react-fsd` en
+  `#this-repository-uses-the-agentic-scaffold` y verificado en
+  `#2026-10-18-adopt-agentic-scaffold-and-react-fsd`. No hay ninguna fase de
+  producto abierta actualmente.

@@ -19,7 +19,7 @@ El proyecto es **solo estático**: un único despliegue, cero servidores.
 - **Frontend (Vercel):**
   - Vercel despliega automáticamente en cada push a `main` desde el directorio `frontend/`.
   - Vercel detecta pnpm por `pnpm-lock.yaml`; después pnpm cambia a la versión fijada en el campo `packageManager` de `frontend/package.json` (el log del build muestra qué versión se ejecutó).
-  - La verificación se ejecuta en local antes de subir mediante `.husky/pre-push`: rechaza empujar algo que no sea HEAD, o con cambios sin commitear o ficheros sin versionar, restaura las dependencias desde `frontend/pnpm-lock.yaml`, ejecuta `pnpm lint`, `pnpm test` y `pnpm build` y vuelve a comprobar el árbol; no hay workflows de GitHub Actions.
+  - La verificación se ejecuta en local antes de subir mediante `.githooks/pre-push` (`tools/board/pre_push.py`): rechaza empujar algo que no sea HEAD, o con cambios sin commitear o ficheros sin versionar, y ejecuta `python -I verify.py` con las 9 puertas del repositorio y del frontend (`gates.txt`); no hay workflows de GitHub Actions.
   - El script de instalación de esbuild se aprueba en el repo con `allowBuilds: { esbuild: true }` en `frontend/pnpm-workspace.yaml`, el ajuste de aprobación de builds de pnpm 11 y posteriores; el script de instalación de cualquier otra dependencia sigue bloqueado. Vercel no necesita configuración extra.
   - Panel de Vercel: Install Command `pnpm install` y Build Command `pnpm run build`.
 
@@ -49,23 +49,26 @@ Desarrollo local: coloca las tres variables `VITE_EMAILJS_*` en `frontend/.env.l
 
 ### Inicio rápido
 ```bash
-cd frontend
-pnpm install
-pnpm dev
+git config core.hooksPath .githooks
+pnpm --dir frontend install
+pnpm --dir frontend dev
 ```
 
-El servidor de desarrollo solo escucha en `localhost`; ejecuta `pnpm dev --host` para abrirlo desde un móvil en la misma red. También sirve `llms.txt`, `robots.txt`, `sitemap.xml` y las copias markdown; los shells HTML por ruta (títulos, canonical, JSON-LD) y `404.html` solo existen en la salida del build.
+El servidor de desarrollo solo escucha en `localhost`; ejecuta `pnpm --dir frontend dev --host` para abrirlo desde un móvil en la misma red. También sirve `llms.txt`, `robots.txt`, `sitemap.xml` y las copias markdown; los shells HTML por ruta (títulos, canonical, JSON-LD) y `404.html` solo existen en la salida del build.
 
-`pnpm install` ejecuta solo los scripts de instalación de dependencias aprobados en `pnpm-workspace.yaml` (esbuild) y después el script `prepare` del proyecto, que instala los hooks de Git descritos abajo. Con `pnpm install --ignore-scripts` no se ejecuta nada; `pnpm run prepare` instala los hooks después.
+`pnpm --dir frontend install` ejecuta solo los scripts de instalación de dependencias aprobados en `frontend/pnpm-workspace.yaml` (esbuild); con `--ignore-scripts` no se ejecuta nada. Los hooks de Git viven en `.githooks/` y se activan una vez por clon con `git config core.hooksPath .githooks`.
 
 ### Puertas de calidad
 ```bash
-pnpm lint     # ESLint: reglas de arquitectura (FSD) + TS; cualquier aviso lo hace fallar
-pnpm test     # Vitest: unit, integridad del contenido y tests de las reglas de arquitectura
-pnpm build    # Compilación TypeScript + build de producción con Vite
+python verify.py                      # Runner canónico: ejecuta las 9 puertas del repositorio y del frontend
+pnpm --dir frontend run format:check  # Comprobación de formato con Prettier
+pnpm --dir frontend run lint          # ESLint: reglas de arquitectura (FSD) + TS; cualquier aviso lo hace fallar
+pnpm --dir frontend run typecheck     # Comprobación estricta de TypeScript (tsc -b)
+pnpm --dir frontend test              # Vitest: unit, integridad del contenido y tests de las reglas de arquitectura
+pnpm --dir frontend build             # Compilación TypeScript + build de producción con Vite
 ```
 
-`pnpm build` también alimenta `pnpm preview`, que sirve el bundle de producción en local; abre el shell de una ruta en su dirección con barra final (p. ej. `/about/`). Los hooks de Husky instalados por el script `prepare` ejecutan `lint-staged` en `.husky/pre-commit` (ESLint sobre los ficheros `*.ts`/`*.tsx` en stage, que falla con cualquier aviso como `pnpm lint`) y `pnpm lint`, `pnpm test` y `pnpm build` en `.husky/pre-push`. Las reglas de arquitectura y qué hace cumplir cada una están en la [Guía de arquitectura](ARCHITECTURE.md#-reglas-de-feature-sliced-design).
+`pnpm --dir frontend build` también alimenta `pnpm --dir frontend preview`, que sirve el bundle de producción en local; abre el shell de una ruta en su dirección con barra final (p. ej. `/about/`). Los hooks de Git en `.githooks/` comprueban el mensaje de commit en `.githooks/commit-msg` (`tools/board/commit_message.py`) y ejecutan `python -I verify.py` en `.githooks/pre-push` (`tools/board/pre_push.py`). Las reglas de arquitectura y qué hace cumplir cada una están en `docs/ARCHITECTURE.md` y en la [Guía de arquitectura](ARCHITECTURE.md#-reglas-de-feature-sliced-design).
 
 ### Verificación de estados de carga
 

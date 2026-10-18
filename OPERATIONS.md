@@ -19,7 +19,7 @@ The project is **static-only** — a single deployment, zero servers.
 - **Frontend (Vercel):**
   - Vercel auto-deploys on every push to `main` from the `frontend/` directory.
   - Vercel detects pnpm from `pnpm-lock.yaml`; pnpm then switches to the version pinned in the `packageManager` field of `frontend/package.json` (the build log shows which version ran).
-  - Verification runs locally before pushing through `.husky/pre-push`: it refuses to push anything but HEAD, or with uncommitted or untracked files, restores the dependencies from `frontend/pnpm-lock.yaml`, runs `pnpm lint`, `pnpm test` and `pnpm build`, and checks the tree again; there are no GitHub Actions workflows.
+  - Verification runs locally before pushing through `.githooks/pre-push` (`tools/board/pre_push.py`): it refuses to push anything but HEAD, or with uncommitted or untracked files, and runs `python -I verify.py` across all 9 repository and frontend gates (`gates.txt`); there are no GitHub Actions workflows.
   - esbuild's install script is approved in-repo by `allowBuilds: { esbuild: true }` in `frontend/pnpm-workspace.yaml`, the build-approval setting of pnpm 11 and later; every other dependency's install script stays blocked. Vercel needs no extra configuration.
   - Vercel dashboard: set Install Command to `pnpm install` and Build Command to `pnpm run build`.
 
@@ -49,23 +49,26 @@ Local development: place the three `VITE_EMAILJS_*` variables in `frontend/.env.
 
 ### Quick Start
 ```bash
-cd frontend
-pnpm install
-pnpm dev
+git config core.hooksPath .githooks
+pnpm --dir frontend install
+pnpm --dir frontend dev
 ```
 
-The dev server listens on `localhost` only; run `pnpm dev --host` to open it from a phone on the same network. It also serves `llms.txt`, `robots.txt`, `sitemap.xml` and the markdown twins; the per-route HTML shells (titles, canonical links, JSON-LD) and `404.html` only exist in the build output.
+The dev server listens on `localhost` only; run `pnpm --dir frontend dev --host` to open it from a phone on the same network. It also serves `llms.txt`, `robots.txt`, `sitemap.xml` and the markdown twins; the per-route HTML shells (titles, canonical links, JSON-LD) and `404.html` only exist in the build output.
 
-`pnpm install` runs only the dependency install scripts approved in `pnpm-workspace.yaml` (esbuild) and then the project's `prepare` script, which installs the Git hooks below. With `pnpm install --ignore-scripts` nothing runs; `pnpm run prepare` installs the hooks afterwards.
+`pnpm --dir frontend install` runs only the dependency install scripts approved in `frontend/pnpm-workspace.yaml` (esbuild); with `--ignore-scripts` nothing runs. Git hooks live in `.githooks/` and are enabled once per clone with `git config core.hooksPath .githooks`.
 
 ### Quality Gates
 ```bash
-pnpm lint     # ESLint: architecture (FSD) rules + TS rules; any warning fails it
-pnpm test     # Vitest: unit, content-integrity and architecture-rule tests
-pnpm build    # TypeScript compilation + Vite production build
+python verify.py                      # Canonical runner: runs all 9 repository and frontend gates
+pnpm --dir frontend run format:check  # Prettier formatting check
+pnpm --dir frontend run lint          # ESLint: architecture (FSD) rules + TS rules; any warning fails it
+pnpm --dir frontend run typecheck     # TypeScript strict solution check (tsc -b)
+pnpm --dir frontend test              # Vitest: unit, content-integrity and architecture-rule tests
+pnpm --dir frontend build             # TypeScript compilation + Vite production build
 ```
 
-`pnpm build` also powers `pnpm preview`, which serves the production bundle locally; open a route's shell at its trailing-slash address (e.g. `/about/`). Husky hooks installed by the `prepare` script run `lint-staged` on `.husky/pre-commit` (ESLint over staged `*.ts`/`*.tsx` files, failing on any warning like `pnpm lint`) and `pnpm lint`, `pnpm test` and `pnpm build` on `.husky/pre-push`. The architecture rules and what enforces each one are in the [Architecture Guide](ARCHITECTURE.md#-feature-sliced-design-rules).
+`pnpm --dir frontend build` also powers `pnpm --dir frontend preview`, which serves the production bundle locally; open a route's shell at its trailing-slash address (e.g. `/about/`). Git hooks in `.githooks/` check commit messages on `.githooks/commit-msg` (`tools/board/commit_message.py`) and run `python -I verify.py` on `.githooks/pre-push` (`tools/board/pre_push.py`). The architecture rules and what enforces each one are in `docs/ARCHITECTURE.md` and the [Architecture Guide](ARCHITECTURE.md#-feature-sliced-design-rules).
 
 ### Loading-state verification
 

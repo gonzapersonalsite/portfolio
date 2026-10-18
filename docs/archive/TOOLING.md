@@ -5,26 +5,27 @@ nada**: se lee para saber qué entregó un tramo y con qué propiedad se cerró.
 Manda `../TOOLING.md`, donde cada tramo conserva su cabecera, su marcador y la
 lápida que apunta aquí. Solo crece por el final.
 
-## H0 — Adopt the scaffold in the existing application (DONE)
+## H0 — Adoptar el andamio en el repositorio existente (DONE)
 
-- **Property delivered:** the repository explains itself to any agent, its gates
-  are green under `../../verify.py`, and its decisions and deliveries live in
-  `../registry/`.
-- **Parts:**
-  1. **Instantiate the scaffold and layer — DONE.** Official instantiation from
-     `templates` (`39bead6c761666ac5f5648e83bf89a4265d07aaf`), hook activation
-     (`.githooks/commit-msg` and `.githooks/pre-push`), and adoption decision
-     `#this-repository-uses-the-agentic-scaffold` recorded in
-     `#2026-10-18-adopt-agentic-scaffold-and-react-fsd`. Per-clone hook setup
-     remains `#hook-activation-is-a-per-clone-step`.
-  2. **Reconcile project documents and skills — DONE.** Reconciled `../../AGENTS.md`,
-     `../../README.md`, `../ARCHITECTURE.md`, and `../../tools/board/documents.txt`
-     in `#2026-10-18-adopt-agentic-scaffold-and-react-fsd`.
+- **Propiedad entregada:** el repositorio se explica por sí solo ante cualquier
+  agente, sus puertas salen en verde con `../../verify.py`, y sus decisiones y
+  entregas viven en `../registry/`.
+- **Partes:**
+  1. **Instanciar el andamio y la capa — DONE.** Instanciación oficial desde
+     `templates` (`39bead6c761666ac5f5648e83bf89a4265d07aaf`), activación de
+     hooks (`.githooks/commit-msg` y `.githooks/pre-push`) y decisión de
+     adopción `#this-repository-uses-the-agentic-scaffold` registrada en
+     `#2026-10-18-adopt-agentic-scaffold-and-react-fsd`. La activación por clon
+     queda en `#hook-activation-is-a-per-clone-step`.
+  2. **Conciliar documentos y skills del proyecto — DONE.** Conciliados
+     `../../AGENTS.md`, `../../README.md`, `../ARCHITECTURE.md` y
+     `../../tools/board/documents.txt` en
+     `#2026-10-18-adopt-agentic-scaffold-and-react-fsd`.
 
-## H1 — Enter the React product gates and stack (DONE)
+## H1 — Incorporar las puertas y el stack React (DONE)
 
-- **Property delivered:** every standard of `../../AGENTS.md` §3 for the React
-  product is enforced by a gate in `../../gates.txt` (`dependencies`, `format`,
-  `lint`, `typecheck`, `tests`, `build`) and tracked in
-  `../../tools/board/components.txt` (`layer:react-vite` and `stack:react-fsd`),
-  verified in `#2026-10-18-adopt-agentic-scaffold-and-react-fsd`.
+- **Propiedad entregada:** cada estándar del §3 de `../../AGENTS.md` para el
+  producto React lo sostiene una puerta en `../../gates.txt` (`dependencies`,
+  `format`, `lint`, `typecheck`, `tests`, `build`) y queda registrado en
+  `../../tools/board/components.txt` (`layer:react-vite` y `stack:react-fsd`),
+  verificado en `#2026-10-18-adopt-agentic-scaffold-and-react-fsd`.

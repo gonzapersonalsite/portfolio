@@ -23,10 +23,10 @@ y esa frontera es la regla dura 5 de `../AGENTS.md`.
   hueco, con el tramo que tropezaría con él o `none` y el motivo (regla dura 5
   de `../AGENTS.md`); no se cuelga del primero que quede abierto.
 
-## H0 — Adopt the scaffold in the existing application (DONE)
+## H0 — Adoptar el andamio en el repositorio existente (DONE)
 
-- Body and delivery references archived in `archive/TOOLING.md`.
+- Cuerpo y entregas archivados en `archive/TOOLING.md`.
 
-## H1 — Enter the React product gates and stack (DONE)
+## H1 — Incorporar las puertas y el stack React (DONE)
 
-- Body and delivery references archived in `archive/TOOLING.md`.
+- Cuerpo y entregas archivados en `archive/TOOLING.md`.

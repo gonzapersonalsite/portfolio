@@ -46,10 +46,11 @@ El proyecto sigue una **arquitectura de frontend estático** moderna, priorizand
 
 - **Frontend Feature-Sliced:** arquitectura FSD de 6 capas (`app/`, `pages/`, `widgets/`, `features/`, `entities/`, `shared/`) con límites de importación estrictos aplicados por ESLint.
 - **Modelo de contenido estático:** contenido bilingüe en JSON por entidad, validado por tests de integridad de datos.
-- **Despliegue continuo:** Vercel despliega cada push a `main`; GitHub Actions ejecuta lint, tests y el build de producción ante cambios del frontend o del workflow.
+- **Despliegue continuo:** Vercel despliega cada push a `main`; las puertas locales de pre-push ejecutan todas las comprobaciones del repositorio y del frontend antes de publicar.
 - **Salida para agentes y SEO:** una página HTML por ruta con sus propios metadatos y datos estructurados JSON-LD, además de `llms.txt`, robots/sitemap y copias markdown en inglés y español por ruta, todo generado en build desde el mismo contenido JSON.
 - **Cabeceras de seguridad:** una Content-Security-Policy estricta (el único script en línea se permite por su hash) y las cabeceras de endurecimiento habituales en cada respuesta.
 
+📖 **[Contrato de Arquitectura Feature-Sliced Design](../ARCHITECTURE.md)** — Reglas canónicas de capas, slices e imports FSD.
 📖 **[Guía de arquitectura](ARCHITECTURE.md)** — Patrones y decisiones de diseño.
 🛠️ **[Guía de operaciones](OPERATIONS.md)** — Despliegue, CI/CD, variables de entorno, gestión de contenido y setup local.
 
@@ -58,13 +59,13 @@ El proyecto sigue una **arquitectura de frontend estático** moderna, priorizand
 ## 🚀 Ejecución local
 
 ### Requisitos
-- Node.js (ver `frontend/package.json` para la versión gestionada) y pnpm.
+- Node.js (ver `frontend/package.json` para la versión gestionada), pnpm y Python 3.
 
 ### Iniciar la aplicación
 ```bash
-cd frontend
-pnpm install
-pnpm dev
+git config core.hooksPath .githooks
+pnpm --dir frontend install
+pnpm --dir frontend dev
 ```
 
 **Acceso:**
@@ -72,9 +73,12 @@ pnpm dev
 
 ### Puertas de calidad
 ```bash
-pnpm lint     # ESLint: reglas de arquitectura (FSD) + TS; cualquier aviso lo hace fallar
-pnpm test     # Vitest: unit, integridad del contenido y tests de las reglas de arquitectura
-pnpm build    # Compilación TypeScript + build de producción con Vite
+python verify.py                      # Runner canónico: ejecuta las 9 puertas del repositorio y del frontend
+pnpm --dir frontend run format:check  # Comprobación de formato con Prettier
+pnpm --dir frontend run lint          # ESLint: reglas de arquitectura (FSD) + TS; cualquier aviso lo hace fallar
+pnpm --dir frontend run typecheck     # Comprobación estricta de TypeScript (tsc -b)
+pnpm --dir frontend test              # Vitest: unit, integridad del contenido y tests de las reglas de arquitectura
+pnpm --dir frontend build             # Compilación TypeScript + build de producción con Vite
 ```
 
 ---

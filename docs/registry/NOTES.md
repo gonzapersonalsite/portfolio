@@ -1,7 +1,7 @@
 # Notas de desarrollo (índice)
 
 GENERADO por tools/board desde `docs/registry/deliveries/` y `docs/registry/lessons/`. No editar a mano: se reescribe.
-board-fingerprint:941ef5b5f522cf3f — su contenido cambió por última vez el 2026-10-18.
+board-fingerprint:af0e02121185fe8c — su contenido cambió por última vez el 2026-10-18.
 
 Cada entrega es un fichero `docs/registry/deliveries/<fecha>-<tema>.md` con lo que se hizo, cómo se
 verificó y qué costó; cada lección es un fichero `docs/registry/lessons/<identidad>.md` y se cita como
@@ -11,7 +11,7 @@ mes a mes, en su índice del mes.
 
 ## Entregas (1; aquí las 1 más recientes)
 
-- 2026-10-18 `#2026-10-18-adopt-agentic-scaffold-and-react-fsd` Adopt agentic-scaffold, react-vite layer and react-fsd stack
+- 2026-10-18 `#2026-10-18-adopt-agentic-scaffold-and-react-fsd` Adopción de agentic-scaffold, la capa react-vite y el stack react-fsd
 
 ## Lecciones (7; aquí las 7 más recientes)
 

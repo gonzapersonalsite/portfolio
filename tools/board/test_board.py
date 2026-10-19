@@ -169,7 +169,9 @@ def remove_tree(root):
 
 @contextlib.contextmanager
 def scratch_tree():
-    root = tempfile.mkdtemp(prefix="andamio-test-")
+    # By its physical path: the system's temporary folder may be under a link
+    # (TEMP on a junction, /tmp on macOS), and a destination under one is refused.
+    root = os.path.realpath(tempfile.mkdtemp(prefix="andamio-test-"))
     try:
         yield root
     finally:
@@ -435,17 +437,19 @@ def environment(**values):
 
 
 class FakeGate:
-    """A process stand-in for kill_tree: it dies only when told to."""
+    """A process stand-in for kill_tree: `code` is what poll says (None while
+    it runs), and `killed` the code a direct kill gives it while it runs
+    (None: the kill does not reach it)."""
 
-    def __init__(self, dies_on_kill, exited=False):
-        self.pid, self.dies_on_kill, self.code = 4242, dies_on_kill, (0 if exited else None)
+    def __init__(self, code, killed):
+        self.pid, self.code, self.killed = 4242, code, killed
 
     def poll(self):
         return self.code
 
     def kill(self):
-        if self.dies_on_kill:
-            self.code = -9
+        if self.code is None:
+            self.code = self.killed
 
     def wait(self, timeout=None):
         if self.code is None:
@@ -454,20 +458,22 @@ class FakeGate:
 
 
 class FakeTree:
-    """A tree stand-in for kill_tree: whether its kill works and what it says it saw."""
+    """A tree stand-in for kill_tree: `killed` is the code its kill gives the
+    gate while it runs (None: it does not reach it), and `alive` how many of
+    its processes it then sees alive."""
 
     scope = "arbol de prueba"
 
-    def __init__(self, kills, says_empty):
-        self.kills, self.says_empty = kills, says_empty
+    def __init__(self, killed, alive):
+        self.killed, self.alive = killed, alive
 
     def terminate(self, process):
-        if self.kills:
-            process.code = -9
+        if process.code is None:
+            process.code = self.killed
         return "terminado de prueba"
 
     def emptied(self, deadline):
-        return self.says_empty
+        return self.alive == 0
 
 
 class RefusingJob(V.JobTree if os.name == "nt" else object):
@@ -969,9 +975,39 @@ def test_gates_file():
     check(V.parse_gate_row("lenta | 40 | x", 1, "py")["budget"] == 160, "gates: el tope es 4 veces la referencia (visto fallar)")
     blank = V.parse_gate_row("x | - | cmd", 1, "py")
     check(blank["reference"] is None and blank["budget"] == V.DEFAULT_BUDGET_SECONDS, "gates: '-' es sin referencia medida y toma el tope por defecto")
-    legacy = V.parse_gate_row("x | cmd con espacios | otra", 1, "py")
-    check(legacy["legacy"] and legacy["command"] == "cmd con espacios | otra" and legacy["budget"] == V.DEFAULT_BUDGET_SECONDS, "gates: una fila antigua de dos columnas se sigue leyendo, con su '|' en el comando")
+    legacy = V.parse_gate_row("x | {python} t.py --rapido", 1, "py")
+    check(legacy["legacy"] and legacy["command"] == '"py" t.py --rapido' and legacy["budget"] == V.DEFAULT_BUDGET_SECONDS,
+          "gates: una fila antigua de dos columnas se sigue leyendo, con el tope por defecto")
     check(V.parse_gate_row("x | {python} t.py", 1, "py")["legacy"], "gates: 'etiqueta | comando' es la forma antigua")
+    # A chained command's verdict is its last command's: every way of chaining is refused, in both forms of the row.
+    for row, operator in [("x | cmd con espacios | otra", "|"), ("x | 1 | falla | pasa", "|"), ("x | 1 | falla || pasa", "||"),
+                          ("x | 1 | falla & pasa", "&"), ("x | 1 | falla &> log", "&"), ("x | 1 | falla; pasa", ";"),
+                          ("x | 1 | falla\npasa", "salto de linea"), ("x | 1 | {python} -c 'print(1|2)'", "|"), ('x | 1 | "a" | "b"', "|")]:
+        try:
+            V.parse_gate_row(row, 7, "py")
+            check(False, "gates: %r tenia que rechazarse: encadena con '%s'" % (row, operator))
+        except V.GatesFileError as error:
+            check("gates.txt:7" in str(error) and "'%s'" % operator in str(error) and "#lesson-a-script-error-is-not-red" in str(error),
+                  "gates: %r se rechaza con su linea: con '%s' fuera de comillas dobles el veredicto seria el del ultimo comando (visto fallar)" % (row, operator))
+    for row, command in [('x | 1 | {python} -c "print(1|2)"', '"py" -c "print(1|2)"'), ('x | 1 | grep -E "a|b" f.txt', 'grep -E "a|b" f.txt'),
+                         ('x | {python} -c "print(1|2)"', '"py" -c "print(1|2)"'), ('x | {python} -c "import sys; sys.exit(0)"', '"py" -c "import sys; sys.exit(0)"'),
+                         ("x | 1 | uno && dos", "uno && dos"), ("x | 1 | uno 2>&1", "uno 2>&1"), ("x | 1 | uno >&2 > log < entrada", "uno >&2 > log < entrada")]:
+        try:
+            said = V.parse_gate_row(row, 1, "py")["command"]
+        except V.GatesFileError as error:
+            said = str(error)
+        check(said == command, "gates: %r vale: dentro de comillas dobles nada encadena, y '&&' y las redirecciones no esconden un fallo (visto fallar) %s"
+              % (row, "" if said == command else said))
+    import instantiate as I
+    with scratch_tree() as root:
+        write(root, "gates.txt", "uno | - | {python} t.py | tail -1\n")
+        found = B.read_gate_rows(root, B.TreeReader(root))["findings"]
+        check(len(found) == 1 and found[0]["kind"] == B.KIND_DATA and "'|'" in found[0]["message"],
+              "gates: el tablero da una fila que encadena como un hallazgo de datos, sin traceback (visto fallar)")
+        layer = "overlays/encadena/layer.txt"
+        write(root, layer, "# Una capa cuya puerta encadena.\n" + LAYER_LEGEND + "requires 0.0.1\ngate encadena | - | {python} t.py; echo listo\n")
+        problems = I.read_layer(root, "encadena", [layer])["problems"]
+        check(any("encadena" in problem and "';'" in problem for problem in problems), "capas: una fila de puerta que encadena no vale en una capa (visto fallar)")
     for bad, says in [("x | abc | cmd", "'abc'"), ("x | 0 | cmd", "'0'"), ("x | nan | cmd", "'nan'"), ("x |  | cmd", "vacia"), ("sin barra", "se esperaba"),
                       ("tests | 5 s | pytest", "'5 s'"), ("x | 1e9 | cmd", "maximo de %d" % V.MAX_REFERENCE_SECONDS)]:
         try:
@@ -1051,8 +1087,10 @@ def test_run_gate():
         grandchild = pid_in_file(root)
         check(hung["timed_out"] and V.verdict_of(hung) == V.TIMEOUT and hung["seconds"] < 15, "run_gate: una puerta colgada sale TIMEOUT poco despues de su tope, no cuando acaba (visto fallar)")
         check(grandchild > 0 and dead_within(grandchild, 5), "run_gate: muere tambien el nieto que perdio a su padre, al que ningun enlace de padre lleva (visto fallar)")
-        check(hung["kill"]["tree"] and "matada, y no queda vivo nada" in V.last_line(hung) and "el proceso de en medio salio" in hung["lines"],
-              "run_gate: el informe dice que no queda nada vivo porque lo comprobo, y conserva la salida parcial")
+        check(hung["kill"]["tree"] and "matada, y no queda vivo ningun proceso de su" in V.last_line(hung) and "el proceso de en medio salio" in hung["lines"],
+              "run_gate: el informe dice que no queda ningun proceso suyo vivo porque lo comprobo, y conserva la salida parcial")
+        check("(un contenedor de Docker) esta fuera y no se comprobo" in V.last_line(hung),
+              "run_gate: el informe dice que lo que un daemon arranco para la puerta queda fuera de lo que comprobo (visto fallar)")
         stop(grandchild)
         if os.name == "nt":
             os.remove(os.path.join(root, "grandchild.pid"))
@@ -1149,18 +1187,22 @@ def test_gate_environment():
 
 def test_kill_report():
     begin("test_kill_report")
-    alive = V.kill_tree(FakeGate(dies_on_kill=False), FakeTree(kills=False, says_empty=True))
+    alive = V.kill_tree(FakeGate(code=None, killed=None), FakeTree(killed=None, alive=0))
     check(not alive["gone"] and not alive["tree"] and "NO se pudo matar la puerta (pid 4242" in V.kill_said(alive) and "sigue viva" in V.kill_said(alive),
           "matar: si la puerta sigue viva, no se afirma ningun arbol aunque la herramienta diga que esta vacio (visto fallar)")
-    direct = V.kill_tree(FakeGate(dies_on_kill=True), FakeTree(kills=False, says_empty=False))
+    direct = V.kill_tree(FakeGate(code=None, killed=-9), FakeTree(killed=None, alive=1))
     check(direct["gone"] and not direct["tree"] and V.kill_said(direct).startswith("la puerta murio, pero no se pudo comprobar"),
           "matar: si la herramienta del arbol falla, la puerta muere por kill directo y el informe no afirma su arbol (visto fallar)")
-    whole = V.kill_tree(FakeGate(dies_on_kill=False), FakeTree(kills=True, says_empty=True))
-    check(whole["tree"] and not whole["exited"] and V.kill_said(whole) == "matada, y no queda vivo nada de su arbol de prueba", "matar: el arbol entero, comprobado, se dice")
-    before = V.kill_tree(FakeGate(dies_on_kill=False, exited=True), FakeTree(kills=False, says_empty=True))
-    check(before["exited"] and V.kill_said(before).startswith("la puerta ya habia salido, y no queda vivo nada"),
+    whole = V.kill_tree(FakeGate(code=None, killed=None), FakeTree(killed=-9, alive=0))
+    check(whole["tree"] and not whole["exited"] and V.kill_said(whole) == "matada, y no queda vivo ningun proceso de su arbol de prueba; lo que un daemon"
+          " arranco para ella (un contenedor de Docker) esta fuera y no se comprobo",
+          "matar: el arbol entero, comprobado, se dice, y lo que un daemon arranco para la puerta no se afirma (visto fallar)")
+    before = V.kill_tree(FakeGate(code=0, killed=None), FakeTree(killed=None, alive=0))
+    check(before["exited"] and V.kill_said(before).startswith("la puerta ya habia salido, y no queda vivo ningun proceso de su arbol de prueba; lo que un daemon"),
           "matar: si la puerta ya habia salido (un Ctrl+C de consola tambien la alcanza), se dice eso y no que fallo la herramienta")
-    timed = {"timed_out": True, "budget": 1.5, "lines": [], "seconds": 1.6, "code": -1, "kill": whole}
+    check(all("todo lo que lanzo" not in tree.scope for tree in (V.JobTree, V.GroupTree)),
+          "matar: el alcance de cada arbol no dice que abarca todo lo que lanzo la puerta, porque lo que arranca un daemon queda fuera (visto fallar)")
+    timed ={"timed_out": True, "budget": 1.5, "lines": [], "seconds": 1.6, "code": -1, "kill": whole}
     check(V.last_line(timed).startswith("sin veredicto tras su tope de 1.5s:") and V.verdict_of(timed) == V.TIMEOUT, "matar: la linea de TIMEOUT dice el tope de la puerta (visto fallar)")
     check(V.growth_of(10.0, 5.0) == "x2.00" and V.growth_of(3.0, None) == "-", "informe: el crecimiento es lo tardado entre la referencia (visto fallar)")
     stat = "4321 (py (raro) x) S 1 4321 4321 0 -1 4194560 100 0 0 0 0"
@@ -1189,8 +1231,8 @@ def test_verify_main():
         first, said = quietly(V.main, [], root)
         verdict = os.path.join(root, *V.VERDICT_FILE.split(os.sep))
         check(first == 1 and "vuelve a correr" in said and "board: build *" in said and os.path.exists(verdict), "verify: el veredicto cambia, se escribe, se regeneran los derivados y sale 1 (visto fallar)")
-        check(said.strip().splitlines()[-1] == V.result_line(3, [], True),
-              "verify: su ultima linea es result_line, la que lee quien corre verify.py para saber si solo cambio el veredicto (visto fallar)")
+        check(said.strip().splitlines()[-1] == V.changed_result_line(3, []),
+              "verify: su ultima linea es changed_result_line, la que lee quien corre verify.py para saber si solo cambio el veredicto (visto fallar)")
         check("WARNING: gates.txt:3 usa la forma antigua" in said and "/120s" in said and "/60s" in said, "verify: avisa de la fila antigua e imprime segundos frente a tope")
         stored = read_bytes(root, "tools/board/verdict.txt")
         check(b"gate\tuno\tGREEN" in stored and b"gate\tviejo\tGREEN" in stored, "verify: el veredicto guarda cada puerta")
@@ -1223,7 +1265,7 @@ def test_verify_main():
             grandchild = pid_in_file(root)
             check(result == 130 and waited < 15 and read_bytes(root, "tools/board/verdict.txt") == before,
                   "verify: un %s acaba enseguida con 130 y no escribe el veredicto (visto fallar)" % name)
-            check("RESULT: interrumpido (%s: matada, y no queda vivo nada" % name in said and "el veredicto no se escribe" in said,
+            check("RESULT: interrumpido (%s: matada, y no queda vivo ningun proceso" % name in said and "el veredicto no se escribe" in said,
                   "verify: el informe del %s dice que lo paro y lo que comprobo de la muerte del arbol" % name)
             check(grandchild > 0 and dead_within(grandchild, 5), "verify: tras un %s no queda vivo el nieto de la puerta (visto fallar)" % name)
             stop(grandchild)
@@ -2110,6 +2152,11 @@ CASES = {
     "crash": '<testsuite tests="2"><testcase name="a"/><testcase name="b"><error message="boom"/></testcase></testsuite>',
     "failed": '<testsuite tests="2"><testcase name="a"/><testcase name="b"><failure message="no"/></testcase></testsuite>',
     "short": '<testsuite tests="3"><testcase name="a"/><testcase name="b"/></testsuite>',
+    "unrun": '<testsuite tests="2"><testcase name="a" assertions="0"><skipped/></testcase><testcase name="b"><skipped/></testcase></testsuite>',
+    "vitest": ('<testsuites><testsuite name="src/a.test.ts" tests="4"><testcase classname="src/a.test.ts" name="suma &gt; corre" time="0.001"/>'
+               '<testcase classname="src/a.test.ts" name="suma &gt; salta" time="0"><skipped/></testcase>'
+               '<testcase classname="src/a.test.ts" name="suma &gt; pendiente" time="0"><skipped message="todo"/></testcase>'
+               '<testcase classname="src/a.test.ts" name="suma &gt; por contexto" time="0"><skipped/></testcase></testsuite></testsuites>'),
 }
 case, target = sys.argv[1], sys.argv[2]
 if case != "none":
@@ -2199,6 +2246,10 @@ def test_guard_adapters():
         check(code == 1 and guard_state(said, "guard silent") == "FAIL" and "1 fallidos" in said, "junit: un fallo es rojo, y la guarda debil lo cuenta (visto fallar)")
         code, said = junit("short")
         check(code == 1 and guard_state(said, "guard registered") == "FAIL", "junit: una suite que declara mas tests de los que lista es roja por guard registered (visto fallar)")
+        code, said = junit("unrun")
+        silent_line = next((line for line in said.splitlines() if "guard silent" in line), "")
+        check(code == 1 and guard_state(said, "guard silent") == "FAIL" and "no corrio ningun test" in silent_line and "debil" not in silent_line,
+              "junit: un informe con todos sus casos saltados es rojo por guard silent porque no corrio ninguno, sin llamar debil a lo que no se midio (visto fallar)")
         junit("strong")
         code, said = junit("none")
         check(code == 1 and "no escribio ningun informe" in said and guard_state(said, "guard registered") == "FAIL",
@@ -2210,6 +2261,18 @@ def test_guard_adapters():
               "junit: un directorio de informes se lee entero, cada .xml que tenga")
         code, said = guard_run(root, "junit.py", "--report", "x.xml", sys.executable)
         check(code == 2 and "falta '--'" in said, "junit: sin '--' antes del comando dice el uso y no corre nada")
+        code, said = junit("vitest")
+        check(code == 0 and [guard_state(said, g) for g in GUARDS] == ["PASS"] * 3 and "saltados" not in said,
+              "junit: sin --forbid-skipped, los casos saltados no cambian el veredicto de ningun stack")
+        code, said = guard_run(root, "junit.py", "--forbid-skipped", "--report", report, "--", sys.executable, "runner.py", "vitest", report)
+        named = all("src/a.test.ts > suma > %s" % case in said for case in ("salta", "pendiente", "por contexto")) and "suma > corre" not in said
+        check(code == 1 and [guard_state(said, g) for g in GUARDS] == ["PASS"] * 3 and named
+              and said.strip().splitlines()[-1].startswith("RESULT: 4 tests, 0 fallidos, 0 con error, 3 saltados que --forbid-skipped no admite"),
+              "junit: con --forbid-skipped, un caso saltado (it.skip, describe.skip, it.todo, ctx.skip) da rojo y se nombra, con las guardas en pie (visto fallar)")
+        code, said = guard_run(root, "junit.py", "--report", report, "--forbid-skipped", "--", sys.executable, "runner.py", "weak", report)
+        check(code == 1 and "no se admite ninguno: b" in said, "junit: --forbid-skipped va en cualquier sitio antes de '--', y un caso sin classname se nombra por su nombre (visto fallar)")
+        code, said = guard_run(root, "junit.py", "--forbid-skipped", "--report", report, "--", sys.executable, "runner.py", "strong", report)
+        check(code == 0 and "saltados" not in said, "junit: con --forbid-skipped, un informe sin casos saltados sigue en verde (visto fallar)")
         write(root, "out/pom.xml", "<project><modelVersion>4.0.0</modelVersion></project>\n")
         write(root, "out/TEST-viejo.xml", '<testsuite tests="1"><testcase name="viejo"')
         code, said = junit("none", "out")
@@ -2244,10 +2307,11 @@ START = {"type": "start", "protocolVersion": "0.1.1", "runnerVersion": None, "pi
 DONE = [{"type": "done", "success": True}]
 
 
-def loading(suite, test, result="success", hidden=True):
+def loading(suite, test, result="success"):
+    # The reporter hides the loading of a suite that loads, and shows one that fails.
     return [{"type": "suite", "suite": {"id": suite, "path": "s%d_test.dart" % suite}},
             {"type": "testStart", "test": {"id": test, "name": "loading s%d_test.dart" % suite, "suiteID": suite, "groupIDs": []}},
-            {"type": "testDone", "testID": test, "result": result, "hidden": hidden, "skipped": False}]
+            {"type": "testDone", "testID": test, "result": result, "hidden": result == "success", "skipped": False}]
 
 
 def suite(declared, *tests, nested=0):
@@ -2270,7 +2334,7 @@ CASES = {
     "skipped": suite(1, ("success", True)) + DONE,
     "failed": suite(2, ("success", False), ("failure", False)) + DONE,
     "error": suite(2, ("success", False), ("error", False)) + DONE,
-    "unloaded": loading(0, 1, "error", False) + DONE,
+    "unloaded": loading(0, 1, "error") + DONE,
     "unfinished": suite(2, ("success", False), (None, False)),
     "short": suite(3, ("success", False), ("success", False)) + DONE,
     "nested": suite(2, ("success", False), ("success", False), nested=1) + DONE,
@@ -2883,7 +2947,8 @@ def test_template_layers():
                 before = tree_bytes(target)
                 layered, said = quietly(I.main, [target, "--layer", name, "--apply"], template)
                 if layer["external"]:
-                    accept_external(I, template, scratch, layer, ready, layered == 0 or tree_bytes(target) != before, said)
+                    too_early = {"code": layered, "said": said, "before": before, "after": tree_bytes(target)}
+                    accept_external(I, template, scratch, layer, ready, too_early)
                     continue
                 if layered != 0:
                     refused = "NO: la capa %s entra con " % name in said and tree_bytes(target) == before
@@ -2907,7 +2972,7 @@ def test_template_layers():
     end()
 
 
-def accept_external(I, template, scratch, layer, ready, touched, said):
+def accept_external(I, template, scratch, layer, ready, too_early):
     """What this suite accepts of a layer whose gates it cannot run: applied
     to a new instance it is refused for what it needs and touches nothing; it
     has no ready/; and the sources of its stack template, committed as an
@@ -2915,11 +2980,14 @@ def accept_external(I, template, scratch, layer, ready, touched, said):
     gate of the scaffold green. That proves its plan, and what it writes and
     cites, against its real product; its own gates run outside. A clone never
     sees the layer, so each of its 'prepare' rows is a command the README of
-    its stack template shows on a line of its own."""
+    its stack template shows on a line of its own. `too_early` is what
+    applying it to the new instance did: the exit code, what it said, and the
+    instance's bytes before and after."""
     name, stack = layer["name"], layer["external"][0]
-    refused = not touched and "NO: la capa %s entra con " % name in said
+    refused = (too_early["code"] != 0 and too_early["after"] == too_early["before"]
+               and "NO: la capa %s entra con " % name in too_early["said"])
     check(refused and not ready, "capas (%s): sus puertas se aceptan fuera de esta suite (%s); aplicada antes de tiempo se niega sin tocar nada,"
-          " y no tiene ready/, porque su producto es su plantilla de stack (visto fallar) %s" % (name, stack["why"], "" if refused else last_words(said)))
+          " y no tiene ready/, porque su producto es su plantilla de stack (visto fallar) %s" % (name, stack["why"], "" if refused else last_words(too_early["said"])))
     tool = accept_tool()
     try:
         sources = tool.sources(tool.stack_folder(V.ROOT, stack["folder"])) if tool else {}
@@ -3005,8 +3073,8 @@ def test_accept():
     with scratch_tree() as product:
         write(product, V.GATES_FILE, "uno | 10 | x\nboard: build | 1 | y\n")
         layer = {"prepare": ["{python} -c \"print('uno')\"", "echo dos"]}
-        changed = (1, [V.result_line(2, [], True)])
-        green = (0, [V.result_line(2, [], False)])
+        changed = (1, [V.changed_result_line(2, [])])
+        green = (0, [V.result_line(2, [])])
         run, ran = scripted([(0, ["uno"]), (0, ["dos"]), changed, green, green])
         quietly(tool.run_gates, product, layer, 2, run)
         check([command for command, _, _ in ran[:2]] == [V.expand(layer["prepare"][0], sys.executable), "echo dos"]
@@ -3016,7 +3084,7 @@ def test_accept():
         check(ran[2][1] == 3 * (60 + V.KILL_WAIT_SECONDS) and ran[0][1] == tool.PREPARE_SECONDS,
               "aceptacion: verify.py tiene de tope lo que suman los topes de sus puertas, y la reconstruccion del veredicto (visto fallar)")
         # A first run that recorded the verdict with a gate red is red, not the verdict's first record.
-        red = (1, [V.result_line(2, ["uno"], True)])
+        red = (1, [V.changed_result_line(2, ["uno"])])
         for results, says, calls in (([(1, ["fallo"])], "'prepare {python}", 1), (["timeout"], "sin veredicto tras su tope", 1),
                                      ([(0, []), (0, []), red], "la primera corrida", 3),
                                      ([(0, []), (0, []), changed, green, red], "la corrida 2 de 2", 5)):
@@ -3110,7 +3178,7 @@ def test_accept():
         except KeyboardInterrupt:
             code, said = "la interrupcion escapo de main", ""
         last = said.strip().splitlines()[-1] if said.strip() else ""
-        check(code == V.INTERRUPTED_EXIT and last.startswith("RESULT: la capa fuera NO queda aceptada: interrumpida (SIGTERM: matada, y no queda vivo nada"),
+        check(code == V.INTERRUPTED_EXIT and last.startswith("RESULT: la capa fuera NO queda aceptada: interrumpida (SIGTERM: matada, y no queda vivo ningun proceso"),
               "aceptacion: una parada mata el paso en curso y acaba con su linea RESULT y 130, como verify.py (visto fallar) %s" % ("" if code == V.INTERRUPTED_EXIT else code))
         check(handlers == [V.stop_on] and signal.getsignal(signal.SIGTERM) == before,
               "aceptacion: mientras corren los pasos, SIGTERM toma el camino del Ctrl+C, y despues vuelve lo que habia (visto fallar)")
@@ -4256,6 +4324,59 @@ def test_component_physical_paths():
     end()
 
 
+def test_component_unreadable_gate_row():
+    """A gate row of the instance that does not parse (one that chains, since
+    0.3.3) is named and stops the plan: compared as absent, the plan would add
+    the layer's row beside it."""
+    begin("test_component_unreadable_gate_row")
+    U = upgrade_tool()
+    if U is None or shutil.which("git") is None:
+        check(U is None or shutil.which("git") is None, "componentes: solo la plantilla actualiza y necesita git")
+        end()
+        return
+    import components as C
+    local = C.local_lines({C.GATES_FILE: "# x\nuno | 1 | {python} t.py | tail -1\n"})
+    check(not local["gates"] and len(local["problems"]) == 1 and "gates.txt:2" in local["problems"][0],
+          "componentes: una fila de puerta de la instancia que no se lee se nombra con su linea, no se compara como ausente (visto fallar)")
+    import instantiate as I
+    with scratch_tree() as repo, scratch_tree() as scratch:
+        folder = component_template(repo)
+        product, _, _ = created_product(I, folder, scratch)
+        append(product, "gates.txt", "encadena | - | {python} t.py; echo listo\n")
+        git_run(product, "add", "-A")
+        git_run(product, "commit", "-q", "--no-verify", "-m", "chore: a chained row")
+        before = tree_bytes(product)
+        code, said = quietly(U.main, [product], folder)
+        check(code != 0 and "la fila de puerta de la instancia no se lee" in said and "';'" in said and tree_bytes(product) == before,
+              "componentes: el plan se para y nombra la fila de puerta que la instancia no puede leer, sin escribir nada (visto fallar)")
+    end()
+
+
+def test_scratch_tree_is_physical():
+    """A destination under a link is refused by design (contained_path), and
+    the system's temporary folder may be under one (TEMP on a junction, /tmp
+    and /var/folders on macOS): the folders this suite makes there are given
+    by their physical path, or every destination it makes would be refused."""
+    begin("test_scratch_tree_is_physical")
+    import instantiate as I
+    with scratch_tree() as scratch:
+        physical, linked = os.path.join(scratch, "fisica"), os.path.join(scratch, "enlazada")
+        os.makedirs(physical)
+        directory_link(linked, physical)
+        try:
+            with patched(tempfile, tempdir=linked), scratch_tree() as inner:
+                try:
+                    I.contained_path(inner)
+                    refused = ""
+                except OSError as error:
+                    refused = str(error)
+        finally:
+            unlink_directory(linked)
+    check(not refused, "rutas fisicas: con el temporal del sistema bajo un enlace, la carpeta de la suite es la ruta fisica, que contained_path acepta"
+          " (visto fallar) %s" % refused)
+    end()
+
+
 def test_accept_posix_lifetime():
     begin("test_accept_posix_lifetime")
     tool = accept_tool()
@@ -4546,7 +4667,7 @@ def main():
              test_settled_citations_and_verify, test_encoding, test_links_and_comments, test_derived_strict,
              test_gates_file, test_run_gate, test_gate_environment, test_kill_report, test_verify_main, test_atomic_writes, test_board_end_to_end,
              test_tree_listing_with_git, test_adapters, test_harness_rows, test_skills, test_commit_message, test_pre_push,
-             test_hooks_through_git, test_long_paths, test_python_discovery, test_hook_modes, test_guard_adapters, test_dart_test_adapter, test_runner_by_its_path, test_instantiate_merges, test_instantiate, test_instantiate_command_line, test_layer_readiness, test_template_layers, test_accept, test_accept_posix_lifetime, test_python_layer_needs, test_released_engine, test_layer_requires_its_engine, test_engine_manifest, test_upgrade_plan, test_upgrade, test_components_model, test_component_creation_and_update, test_component_safety, test_component_review_safety, test_component_rendered_paths, test_component_blob_failure, test_component_physical_paths, test_stack_rendered_destinations, test_component_adoption, test_stack_templates, test_record_rules, test_prose_is_data, test_order_line_and_parts, test_split_indexes,
+             test_hooks_through_git, test_long_paths, test_python_discovery, test_hook_modes, test_guard_adapters, test_dart_test_adapter, test_runner_by_its_path, test_instantiate_merges, test_instantiate, test_instantiate_command_line, test_layer_readiness, test_template_layers, test_accept, test_accept_posix_lifetime, test_python_layer_needs, test_released_engine, test_layer_requires_its_engine, test_engine_manifest, test_upgrade_plan, test_upgrade, test_components_model, test_component_creation_and_update, test_component_safety, test_component_review_safety, test_component_rendered_paths, test_component_blob_failure, test_component_physical_paths, test_component_unreadable_gate_row, test_scratch_tree_is_physical, test_stack_rendered_destinations, test_component_adoption, test_stack_templates, test_record_rules, test_prose_is_data, test_order_line_and_parts, test_split_indexes,
              test_adopt]
     for test in tests:
         try:

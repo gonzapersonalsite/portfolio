@@ -399,12 +399,13 @@ def rendered_pieces(stack, pieces, params, raw_of):
 # ----------------------------------------------------------------- layer items
 
 
-def gate_parts(row):
+def gate_parts(row, number=0):
     """A gate row as (label, its managed text, its reference column): the
     label, the harness tag and the command are the layer's; the reference
     seconds are the instance's, measured on its machine, so they never count
-    as a change of the row."""
-    gate = V.parse_gate_row(row, 0, "python")
+    as a change of the row. `number` is its line in gates.txt, for the error
+    of a row that does not parse (0 when it comes from elsewhere)."""
+    gate = V.parse_gate_row(row, number, "python")
     managed = "%s%s | %s" % (gate["label"], " [harness]" if gate["harness"] else "", gate["raw"])
     parts = row.split("|", 2)
     return gate["label"], managed, parts[1].strip() if len(parts) == 3 else ""
@@ -428,19 +429,22 @@ def layer_lines(layer, skill_lines):
 def local_lines(texts):
     """What the instance's shared files hold, as the plan compares them: each
     gate row by label, with the sha256 of its managed text, the row and its
-    reference column; and for the other kinds the sha256 of every line."""
-    gates = {}
-    for line in texts.get(GATES_FILE, "").split("\n"):
+    reference column; and for the other kinds the sha256 of every line.
+    'problems' names the gate rows it cannot read, which a plan that compared
+    them as absent would get wrong."""
+    gates, problems = {}, []
+    for number, line in enumerate(texts.get(GATES_FILE, "").split("\n"), 1):
         stripped = line.strip()
         if not stripped or stripped.startswith("#") or V.guard_row(stripped) or "|" not in stripped:
             continue
         try:
-            label, managed, reference = gate_parts(stripped)
-        except V.GatesFileError:
+            label, managed, reference = gate_parts(stripped, number)
+        except V.GatesFileError as error:
+            problems.append("la fila de puerta de la instancia no se lee (%s): se corrige antes de actualizar" % error)
             continue
         gates[label] = {"sha": line_hash(managed), "line": line, "reference": reference}
     present = {kind: {line_hash(line) for line in texts.get(path, "").split("\n") if line.strip()} for kind, path in ITEM_FILES.items() if kind != GATE}
-    return {"gates": gates, "present": present}
+    return {"gates": gates, "present": present, "problems": problems}
 
 
 def local_item_sha(local, kind, key):

@@ -5,7 +5,7 @@ It is the adapter of any runner that writes that format: Gradle, Maven
 Surefire, pytest (--junitxml), Vitest and Jest (with a junit reporter), Karma
 (with karma-junit-reporter).
 
-    python tools/guards/junit.py --report <file or directory> [--report ...] -- <command ...>
+    python tools/guards/junit.py [--forbid-skipped] --report <file or directory> [--report ...] -- <command ...>
 
 Before the command runs, the reports a previous run left are removed, so none
 passes for this one: the XML files whose root is a test suite, the named file
@@ -27,7 +27,13 @@ verify.py gives the gate. Then every report is read:
   more than 0 tests ran and none failed.
 
 The verdict is green only if the command exits 0, nothing failed or crashed
-and the three guards hold. Requires Python 3.8+ and nothing else.
+and the three guards hold. A skipped test case (a <skipped> element) is
+listed and does not run: beside cases that ran it changes nothing, and a
+report whose every case is skipped fails `guard silent`, since none ran. With
+`--forbid-skipped`, which a gate row opts into, any skipped case makes the
+verdict red and the skipped cases are named: Vitest writes one for it.skip,
+describe.skip, it.todo, ctx.skip and a skip in the options object. Requires
+Python 3.8+ and nothing else.
 """
 import os
 import shlex
@@ -37,7 +43,8 @@ import xml.etree.ElementTree as ElementTree
 
 SEPARATOR = "--"
 REPORT_FLAG = "--report"
-USAGE = "uso: python tools/guards/junit.py --report <fichero o directorio> [--report ...] -- <comando ...>"
+FORBID_SKIPPED_FLAG = "--forbid-skipped"
+USAGE = "uso: python tools/guards/junit.py [--forbid-skipped] --report <fichero o directorio> [--report ...] -- <comando ...>"
 WEAKER = "debil: el informe no cuenta aserciones, asi que vale mas de 0 ejecutados y 0 fallidos"
 # The root elements of a JUnit XML report, with any namespace dropped.
 REPORT_ROOTS = ("testsuite", "testsuites")
@@ -45,21 +52,29 @@ GIT_SECONDS = 30
 SHOWN = 5
 
 
+def refused_request(error):
+    return {"reports": [], "command": [], "forbid_skipped": False, "error": error}
+
+
 def parse_args(argv):
-    """The report paths and the command, or an error in words."""
+    """The report paths, whether a skipped case is forbidden, and the command,
+    or an error in words."""
     if SEPARATOR not in argv:
-        return {"reports": [], "command": [], "error": "falta '%s' antes del comando" % SEPARATOR}
+        return refused_request("falta '%s' antes del comando" % SEPARATOR)
     cut = argv.index(SEPARATOR)
     options, command = argv[:cut], argv[cut + 1:]
-    reports = []
+    reports, forbid_skipped = [], False
     while options:
+        if options[0] == FORBID_SKIPPED_FLAG:
+            forbid_skipped, options = True, options[1:]
+            continue
         if options[0] != REPORT_FLAG or len(options) < 2:
-            return {"reports": [], "command": [], "error": "argumento no reconocido: %s" % options[0]}
+            return refused_request("argumento no reconocido: %s" % options[0])
         reports.append(options[1])
         options = options[2:]
     if not reports or not command:
-        return {"reports": [], "command": [], "error": "hacen falta al menos un %s y un comando" % REPORT_FLAG}
-    return {"reports": reports, "command": command, "error": ""}
+        return refused_request("hacen falta al menos un %s y un comando" % REPORT_FLAG)
+    return {"reports": reports, "command": command, "forbid_skipped": forbid_skipped, "error": ""}
 
 
 def root_tag(path):
@@ -124,12 +139,20 @@ def shell_line(command):
     return subprocess.list2cmdline(command) if os.name == "nt" else " ".join(shlex.quote(word) for word in command)
 
 
+def case_name(case):
+    """A test case as a person finds it: its class or file, when the report
+    gives one, and its name."""
+    classname, name = case.get("classname", ""), case.get("name", "")
+    return "%s > %s" % (classname, name) if classname else name
+
+
 def counts_of(texts):
     """What a set of JUnit XML reports say. A suite's 'tests' counts as
     declared only in the suites that hold test cases themselves, so a nested
-    report is not counted twice. 'problems' names what could not be read."""
-    counts = {"listed": 0, "declared": 0, "declares": True, "failed": 0, "crashed": 0, "skipped": 0, "ran": 0, "with_checks": 0,
-              "counts_checks": True, "problems": []}
+    report is not counted twice. 'skipped_cases' names the skipped ones, and
+    'problems' what could not be read."""
+    counts = {"listed": 0, "declared": 0, "declares": True, "failed": 0, "crashed": 0, "skipped": 0, "skipped_cases": [], "ran": 0,
+              "with_checks": 0, "counts_checks": True, "problems": []}
     for name, text in texts:
         try:
             root = ElementTree.fromstring(text)
@@ -152,6 +175,7 @@ def counts_of(texts):
             counts["listed"] += 1
             if case.find("skipped") is not None:
                 counts["skipped"] += 1
+                counts["skipped_cases"].append(case_name(case))
                 continue
             counts["ran"] += 1
             counts["failed"] += 1 if case.find("failure") is not None else 0
@@ -169,11 +193,13 @@ def guard_lines(counts):
     declared = counts["declared"] if counts["declares"] else counts["listed"]
     registered = counts["listed"] > 0 and counts["listed"] == declared and not counts["problems"]
     finished = counts["crashed"] == 0 and not counts["problems"]
-    if counts["counts_checks"] and counts["ran"]:
+    if not counts["ran"]:
+        silent, said = False, "0 ejecutados: no corrio ningun test"
+    elif counts["counts_checks"]:
         silent = counts["with_checks"] == counts["ran"]
         said = "%d ejecutados, %d con al menos una asercion" % (counts["ran"], counts["with_checks"])
     else:
-        silent = counts["ran"] > 0 and counts["failed"] == 0
+        silent = counts["failed"] == 0
         said = "%d ejecutados, %d fallidos (%s)" % (counts["ran"], counts["failed"], WEAKER)
     lines = ["[%s] guard registered: %d en los informes, %d declarados por sus suites%s"
              % ("PASS" if registered else "FAIL", counts["listed"], declared, "" if counts["declares"] else " (no declaran su total)"),
@@ -216,8 +242,13 @@ def main(argv):
     guards = guard_lines(counts)
     for line in guards["lines"]:
         print(line)
-    print("RESULT: %d tests, %d fallidos, %d con error, el comando salio con %d" % (counts["listed"], counts["failed"], counts["crashed"], code))
-    return 0 if code == 0 and guards["hold"] and counts["failed"] == 0 else 1
+    forbidden = counts["skipped_cases"] if request["forbid_skipped"] else []
+    if forbidden:
+        more = "" if len(forbidden) <= SHOWN else " y %d mas" % (len(forbidden) - SHOWN)
+        print("%s: %d tests saltados, y no se admite ninguno: %s%s" % (FORBID_SKIPPED_FLAG, len(forbidden), ", ".join(forbidden[:SHOWN]), more))
+    said = ", %d saltados que %s no admite" % (len(forbidden), FORBID_SKIPPED_FLAG) if forbidden else ""
+    print("RESULT: %d tests, %d fallidos, %d con error%s, el comando salio con %d" % (counts["listed"], counts["failed"], counts["crashed"], said, code))
+    return 0 if code == 0 and guards["hold"] and counts["failed"] == 0 and not forbidden else 1
 
 
 if __name__ == "__main__":

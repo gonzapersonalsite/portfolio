@@ -92,7 +92,9 @@ segmentos que tengan algo:
   Feature-Sliced Design no se les aplican: un test puede entrar en el slice que
   prueba.
 - **Todo test corre y comprueba algo.** `.skip`, `.todo`, `skipIf` y `runIf`
-  son errores de `no-restricted-properties` en los tests, y Vitest rechaza un
+  son errores de `no-restricted-properties` en los tests, y la puerta `tests`
+  no admite ningún caso que el informe de Vitest dé por saltado
+  (`--forbid-skipped`), también el que esa regla no lee. Vitest rechaza un
   `.only` (`allowOnly: false`) y hace fallar un test que no comprueba nada
   (`expect.requireAssertions`), los dos en `frontend/vite.config.ts`.
 

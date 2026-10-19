@@ -28,9 +28,9 @@
 # pending   : '<id> | <path> | <what>': what an applied upgrade left to do by
 #             hand, in every plan until `upgrade.py --done <path>`.
 
-component layer:react-vite | 39bead6c761666ac5f5648e83bf89a4265d07aaf | -
-file layer:react-vite | .agents/skills/react-fsd-maintainer/SKILL.md | kept
-file layer:react-vite | docs/ARCHITECTURE.md | kept
+component layer:react-vite | 16f19536e03771a0a45e746d289b9f8c1bd613b8 | -
+file layer:react-vite | .agents/skills/react-fsd-maintainer/SKILL.md | 258f99c0fd76df3af020012a42a6feefefc8464166e23af7f5d5f9096c3657de
+file layer:react-vite | docs/ARCHITECTURE.md | 0cfe43bf518a2f5434500646ad6f8ea298e672ceb8045f141a0d8aca21b4ef18
 item layer:react-vite | tools/board/documents.txt | document | - | 05e1d7309f9c1a39ca140a0a9aeaa8ffdb57018014a252a7eb7651873d7477f4
 item layer:react-vite | tools/board/documents.txt | document | - | 07df23320c3b7c7f9b854594bfb1621e3fefa79238f9d8e7ebaaf45306849898
 item layer:react-vite | tools/board/documents.txt | document | - | 36d605d0f13340fff6ba755fa1d903953f9e81258582c314510b60c40eb48da2
@@ -54,8 +54,9 @@ item layer:react-vite | .gitignore | ignore | - | 887f42eeae4276a8ba8ed3e14ec656
 item layer:react-vite | .gitignore | ignore | - | f1a9a09b226cf8e98a4286200c5d9ebd5c28924707ac3317947f8ecf06ab167b
 item layer:react-vite | AGENTS.md | skill | - | bb28bd982e9aace3172c57e39bb4fe46a147a970f10b80aa9b82db0dcf4dfb98
 
-component stack:react-fsd | 39bead6c761666ac5f5648e83bf89a4265d07aaf | project=portafolio
+component stack:react-fsd | 16f19536e03771a0a45e746d289b9f8c1bd613b8 | project=portafolio
 file stack:react-fsd | eslint-fsd-gaps.js | kept
+file stack:react-fsd | eslint-tests.js | kept
 file stack:react-fsd | eslint.config.js | kept
 file stack:react-fsd | eslint.config.test.ts | kept
 file stack:react-fsd | src/shared/api/httpClient.test.ts | kept
@@ -70,3 +71,5 @@ file stack:react-fsd | tooling/agent-files/sitemap.ts | kept
 file stack:react-fsd | tooling/agent-files/vitePlugin.test.ts | kept
 file stack:react-fsd | tooling/agent-files/vitePlugin.ts | kept
 file stack:react-fsd | vitest.setup.ts | kept
+
+applied 16f19536e03771a0a45e746d289b9f8c1bd613b8

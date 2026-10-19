@@ -23,15 +23,15 @@
 #            instantiate.py writes a copy's manifest without them, adopt.py
 #            refuses where they are and seal where they are not.
 #
-version 0.3.2
+version 0.3.3
 
 # The runner, the board, their tests and the tools around them.
-engine verify.py 2aaedf0013b3ee8162d5d894bf796c76f11210710b9b28801e3acc5d75422807
+engine verify.py 7e9f7c6b7a55e9c0f3c74bd4fd6beec916ad5d48fb999f19de1dbd1e00a63b17
 engine tools/board/board.py a63680c2575e44e3a4fa20610d891673a73896a7758f6cfcde3e97f5d4c8722a
-engine tools/board/test_board.py d47a402a508917a70cdf6a16831db25928a52f68b8e42f2511fe3b2e55fbfbff
+engine tools/board/test_board.py 0c9c39728c7909cac30700779af70cb800faab8bd783fa904d15ab8b75dec206
 engine tools/board/adopt.py dc02435edf0ce6b57c4887c53acbc11dee932ba5214f471139224e90b8160318
 engine tools/board/instantiate.py 6e5ab18a8845d5c27d1b706fc7ac102220954e2ac18f73d3ac940bd49dedecdf
-engine tools/board/components.py bd9dd4628752cf91cafbb7ba262d30a81170db705f74994b9d78e4f5888f7740
+engine tools/board/components.py 5f22e492a995dd26ea5c367cf8cca3f5bae220c71f489017c718515916c910a9
 engine tools/board/commit_message.py 9497e180e4e9156e7aaca3351aba635f79f0ce55297b41709c0fa6e8efc1f669
 engine tools/board/pre_push.py 6075738ef29a7c2e1bf11fc0193e0f75d54d6b0a7aa8808289dd12754b3d598a
 engine tools/board/README.md 38ce113d2e48144e91f920b39311cd13f4e0bb5454cc18e292af0e2fee024a51
@@ -39,7 +39,7 @@ engine docs/registry/README.md 77c65c5996fc7b449b42625894645dd91d9b43a45816af66a
 
 # The adapters that print the guards of runners other than the board's.
 engine tools/guards/python_unittest.py cd42a705023b625245854563000bab3343e645a34e73252e6492a3985ae9ad42
-engine tools/guards/junit.py 8d79b56b523c9a2857216bfe015b0b017afb7561a1a0c1f67336e060aefbfe9a
+engine tools/guards/junit.py e037abe0bdb1278c47daf592b946abaded3beb085842f1d1ca7303652f60f2d3
 engine tools/guards/dart_test.py 9816ce419c546b242b5a224b4fcf07ba0c0ca62f67dd26be1a504bed1d3170de
 
 # The hooks and what they share.

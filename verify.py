@@ -64,8 +64,20 @@ PYTHON_TOKEN = "{python}"
 # runs one: cmd.exe may be told not to look in the current directory
 # (NoDefaultCurrentDirectoryInExePath), and a POSIX shell never does.
 LOCAL_TOKEN = re.compile(r"\{local:([^{}\s]+)\}")
+# What chains or pipes another command on a line in cmd.exe or in sh ('|',
+# '||' and a lone '&' in both; ';' and a line break in sh only): a row that does
+# is refused on every system, because on some shell its verdict would be its
+# last command's exit code. '&&' stops at the first failure, and an '&' right
+# after '>' or '<' ('2>&1', '>&2') is a redirection, so both stay.
+CHAINING = ("||", "|", ";", "&", "\n")
+REDIRECTION = (">", "<")
+CHAINING_SAID = {"\n": "salto de linea"}
 UTF8_BOM = b"\xef\xbb\xbf"
 INTERRUPTED_EXIT = 130
+# A daemon the gate asks to start something (dockerd and its containers) is
+# outside the gate's job or process group on every system: a kill's report says
+# so, because a container was seen running long after a gate's tree was dead.
+OUTSIDE_THE_TREE = "lo que un daemon arranco para ella (un contenedor de Docker) esta fuera y no se comprobo"
 # The verdict of one gate, as the report prints it and verdict.txt keeps it.
 GREEN, RED, TIMEOUT = "GREEN", "RED", "TIMEOUT"
 # A CI that cancels sends SIGTERM and a closed terminal SIGHUP. The running gate
@@ -176,10 +188,33 @@ def split_tag(label, number):
     return name.strip(), True
 
 
+def chaining_operator(command):
+    """The first operator of CHAINING outside double quotes, or ''. The line is
+    read as cmd.exe reads it: each double quote opens or closes a quoted
+    stretch, and a single quote protects nothing; sh protects as much inside
+    double quotes, so a row means one command in both. A double quote that a
+    shell reads as a plain character still opens or closes a stretch here: one
+    escaped for either shell (\\" in sh, ^" in cmd.exe), or one inside sh's
+    single quotes ('"')."""
+    quoted, at = False, 0
+    while at < len(command):
+        if command[at] == '"':
+            quoted = not quoted
+        elif not quoted and command.startswith("&&", at):
+            at += 1
+        elif not quoted and not (command[at] == "&" and command[at - 1:at] in REDIRECTION):
+            found = next((operator for operator in CHAINING if command.startswith(operator, at)), "")
+            if found:
+                return found
+        at += 1
+    return ""
+
+
 def parse_gate_row(line, number, python):
     """'label | reference seconds | command', the label tagged '[harness]' when
     the gate is a test runner. The two-column form of the previous version
-    ('label | command') still parses, as legacy."""
+    ('label | command') still parses, as legacy. In both, the command is one
+    command: one that chains another (chaining_operator) is refused."""
     if "|" not in line:
         raise GatesFileError("gates.txt:%d: se esperaba 'etiqueta | segundos de referencia | comando' o '%s <nombre>'" % (number, GUARD_KEY))
     parts = line.split("|", 2)
@@ -193,6 +228,11 @@ def parse_gate_row(line, number, python):
         reference, command, legacy = None, line.split("|", 1)[1].strip(), True
     if not label or not command:
         raise GatesFileError("gates.txt:%d: etiqueta o comando vacio" % number)
+    chained = chaining_operator(command)
+    if chained:
+        raise GatesFileError("gates.txt:%d: el comando encadena otro con '%s' fuera de comillas dobles, y en algun shell su veredicto seria el codigo del ultimo"
+                             " (#lesson-a-script-error-is-not-red): '&&' y las redirecciones valen, y lo demas va en un script de tools/"
+                             % (number, CHAINING_SAID.get(chained, chained)))
     return {"label": label, "command": expand(command, python), "raw": command, "harness": harness, "reference": reference,
             "budget": budget_seconds(reference), "legacy": legacy, "line": number}
 
@@ -377,27 +417,28 @@ class JobTree:
     alive. The gate is created suspended and joins the job before it runs an
     instruction, so nothing it starts is born outside. Closing the last handle
     kills what the job holds, so a verify that dies abruptly takes its gate
-    with it."""
+    with it. What a daemon starts when the gate asks it (a Docker container)
+    is the daemon's, not the gate's: no job holds it."""
 
-    scope = "job de Windows: todo lo que lanzo"
+    scope = "job de Windows"
 
     def __init__(self):
         self.api, self.killed, self.members = win32(), False, []
         self.job = self.api.kernel.CreateJobObjectW(None, None)
         if not self.job:
             raise TreeUnavailable("CreateJobObject fallo: %s" % last_error(self.api))
-        if not self.kill_on_close(True):
+        if not self.set_job_limits(JOB_LIMIT_KILL_ON_JOB_CLOSE):
             reason = last_error(self.api)
             self.api.kernel.CloseHandle(self.job)
             raise TreeUnavailable("el job no acepta matar lo suyo al cerrarse: %s" % reason)
 
-    def kill_on_close(self, wanted, active_limit=0):
+    def set_job_limits(self, flags, active_limit=0):
+        """Sets the job's limits to `flags`, JOB_LIMIT_* values or'ed together
+        (0 clears them); with JOB_LIMIT_ACTIVE_PROCESS, at most `active_limit`
+        of its processes may be alive. True when Windows took them."""
         limits = self.api.ExtendedLimits()
-        flags = JOB_LIMIT_KILL_ON_JOB_CLOSE if wanted else 0
-        if active_limit:
-            flags |= JOB_LIMIT_ACTIVE_PROCESS
-            limits.BasicLimitInformation.ActiveProcessLimit = active_limit
         limits.BasicLimitInformation.LimitFlags = flags
+        limits.BasicLimitInformation.ActiveProcessLimit = active_limit
         return bool(self.api.kernel.SetInformationJobObject(self.job, JOB_INFO_EXTENDED_LIMITS, self.api.ctypes.byref(limits),
                                                             self.api.ctypes.sizeof(limits)))
 
@@ -463,7 +504,7 @@ class JobTree:
     def terminate(self, process):
         self.killed = True
         self._close_members()
-        self.kill_on_close(True, active_limit=1)
+        self.set_job_limits(JOB_LIMIT_KILL_ON_JOB_CLOSE | JOB_LIMIT_ACTIVE_PROCESS, active_limit=1)
         pids = self._listed()
         if pids is None:
             self.members = [False]
@@ -510,7 +551,7 @@ class JobTree:
         flag fails, closing errs on the side of killing."""
         self._close_members()
         if process is not None and not self.killed and process.poll() is not None:
-            self.kill_on_close(False)
+            self.set_job_limits(0)
         self.api.kernel.CloseHandle(self.job)
 
 
@@ -603,7 +644,7 @@ class GroupTree:
     """POSIX. The gate leads its own session, so what it starts shares its
     process group unless it opens a session of its own (a daemon does)."""
 
-    scope = "grupo de procesos: todo lo que lanzo sin abrir su propia sesion"
+    scope = "grupo de procesos, sin lo que abrio su propia sesion"
 
     def __init__(self):
         self.group = 0
@@ -672,7 +713,8 @@ def wait_within(process, budget):
 
 
 def kill_tree(process, tree):
-    """Kills the gate and everything it started, and reports only what it
+    """Kills the gate and the processes of its tree (its job or its process
+    group, never what a daemon started for it), and reports only what it
     checked: 'tree' when the tree saw nothing of it left alive, 'gone' when at
     least the gate itself is dead, 'exited' when the gate had already exited on
     its own (a console's Ctrl+C reaches it too)."""
@@ -735,12 +777,13 @@ def verdict_of(result):
 
 
 def kill_said(kill):
-    """What a kill did, in words that never claim more than kill_tree checked."""
+    """What a kill did, in words that never claim more than kill_tree checked:
+    the processes of the gate's tree, never what a daemon started for it."""
     gate = "la puerta ya habia salido" if kill["exited"] else "la puerta murio"
     if kill["tree"]:
         if kill["exited"]:
-            return "%s, y no queda vivo nada de su %s" % (gate, kill["scope"])
-        return "matada, y no queda vivo nada de su %s" % kill["scope"]
+            return "%s, y no queda vivo ningun proceso de su %s; %s" % (gate, kill["scope"], OUTSIDE_THE_TREE)
+        return "matada, y no queda vivo ningun proceso de su %s; %s" % (kill["scope"], OUTSIDE_THE_TREE)
     if kill["gone"]:
         return "%s, pero no se pudo comprobar que muriera todo lo que lanzo (%s): puede quedar algun proceso hijo vivo" % (gate, kill["how"])
     return "NO se pudo matar la puerta (pid %d, %s): sigue viva" % (kill["pid"], kill["how"])
@@ -955,17 +998,23 @@ def run_and_store(gates, filter_labels, guards, root):
         return INTERRUPTED_EXIT
     red = outcome["red"]
     refreshed = stored["changed"] and not stored["error"] and DERIVED_GATE not in red
-    print(result_line(len(outcome["rows"]), red, refreshed))
+    said = changed_result_line if refreshed else result_line
+    print(said(len(outcome["rows"]), red))
     return 1 if red or stored["changed"] else 0
 
 
-def result_line(count, red, changed):
+def result_line(count, red):
     """The last line of a run of `count` gates with the labels in `red` red,
-    which says whether the verdict changed: the line a tool that runs
-    verify.py reads its outcome from."""
+    whose verdict did not change, or changed without its derivatives rendered
+    again: the line a tool that runs verify.py reads its outcome from."""
     names = "" if not red else " -> " + ", ".join(red)
-    tail = "; el veredicto CAMBIO: los derivados se regeneraron con el nuevo, vuelve a correr" if changed else ""
-    return "RESULT: %d puertas, %d en rojo%s%s" % (count, len(red), names, tail)
+    return "RESULT: %d puertas, %d en rojo%s" % (count, len(red), names)
+
+
+def changed_result_line(count, red):
+    """result_line of a run whose verdict changed and whose derivatives were
+    rendered again with it, which asks for another run."""
+    return result_line(count, red) + "; el veredicto CAMBIO: los derivados se regeneraron con el nuevo, vuelve a correr"
 
 
 def main(argv, root=ROOT):

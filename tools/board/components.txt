@@ -29,8 +29,8 @@
 #             hand, in every plan until `upgrade.py --done <path>`.
 
 component layer:react-vite | 39bead6c761666ac5f5648e83bf89a4265d07aaf | -
-file layer:react-vite | .agents/skills/react-fsd-maintainer/SKILL.md | 045163da21e77643ae8f5dcd46e325acc1e1dc7ed9e5e84fbe3b1e2d84668789
-file layer:react-vite | docs/ARCHITECTURE.md | e6156efe01823774e85756534b5382673844c6174384a5b43f99aec270043f21
+file layer:react-vite | .agents/skills/react-fsd-maintainer/SKILL.md | kept
+file layer:react-vite | docs/ARCHITECTURE.md | kept
 item layer:react-vite | tools/board/documents.txt | document | - | 05e1d7309f9c1a39ca140a0a9aeaa8ffdb57018014a252a7eb7651873d7477f4
 item layer:react-vite | tools/board/documents.txt | document | - | 07df23320c3b7c7f9b854594bfb1621e3fefa79238f9d8e7ebaaf45306849898
 item layer:react-vite | tools/board/documents.txt | document | - | 36d605d0f13340fff6ba755fa1d903953f9e81258582c314510b60c40eb48da2
@@ -47,7 +47,7 @@ item layer:react-vite | gates.txt | gate | build | 1f8438e39828d658b7f6a9f23e9fd
 item layer:react-vite | gates.txt | gate | dependencies | b6c86160dc171a173b67b32b42e79829c1a5cb98083b3146e349d50c929cf3a7
 item layer:react-vite | gates.txt | gate | format | 31da03c880b6a30b5d899d0acb35bbd2d07a0968376700abf81a9f9504c20a20
 item layer:react-vite | gates.txt | gate | lint | a29103deda44fc9c07f02a0290e545f9a2b2ba63918fa9093e34388476d86a7f
-item layer:react-vite | gates.txt | gate | tests | 4736373eb92ef6ea94454c11bfd547d9b91323815090e692cbb2e59027f2e371
+item layer:react-vite | gates.txt | gate | tests | e4da82acbf33bcedf74bac9d895b7df561249ffd60cf5cd50103ea80e68e4c87
 item layer:react-vite | gates.txt | gate | typecheck | 645125e7c9201fb2f8022cc98bad151c7c4cdf87d320bc329a91ac8f20e67373
 item layer:react-vite | .gitignore | ignore | - | 760cbee9ff011897924015f51e8e84d071a5da3b0d0d1a5cf91a646a259a4908
 item layer:react-vite | .gitignore | ignore | - | 887f42eeae4276a8ba8ed3e14ec6567107ed2760d18ea7303cc715a38670fbea

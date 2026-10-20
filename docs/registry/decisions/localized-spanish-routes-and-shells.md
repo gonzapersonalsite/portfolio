@@ -8,7 +8,7 @@ phase: F2
 `es`) y las rutas en inglés bajo `/en` (`/en` y `/en/<página>`), sincronizadas
 con el idioma activo y servidas por sus propios shells HTML estáticos.** Elegido
 y aprobado por el dueño en `F2.1` para alinear el esquema de URLs con el resto
-del ecosistema web (`developer-site` en `gonzaloapps.es` y `kanban-board-app`):
+del ecosistema web (`gonzaloapps-site` en `gonzaloapps.es` y `kanban-board-app`):
 
 - **Esquema de URLs con raíz en español (`x-default`) y prefijo `/en` en inglés:**
   las seis páginas en español mantienen las rutas raíz (inicio (/), `/about`,
@@ -52,6 +52,6 @@ del ecosistema web (`developer-site` en `gonzaloapps.es` y `kanban-board-app`):
   servidor, una query string `?lang=` sirve siempre el mismo fichero HTML a los
   crawlers de redes sociales y buscadores (WhatsApp, LinkedIn, X, Googlebot), y
   unificar el español como idioma raíz (inicio (/) = `es`, `/en` = `en`) alinea el
-  portafolio con `gonzaloapps.es` (`developer-site`), las fichas de Google Play
+  portafolio con `gonzaloapps.es` (`gonzaloapps-site`), las fichas de Google Play
   Console y Microsoft Partner Center y el resto de aplicaciones web multilingües
   del dueño sin requerir rewrites en `frontend/vercel.json`.

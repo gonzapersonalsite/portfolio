@@ -32,7 +32,7 @@ Eliminar el backend (Render) y la base de datos (Aiven) para acabar con la depen
 - **No existe integración con la API de GitHub Releases**; `githubUrl`/`liveUrl` son simples campos de texto/enlace.
 
 ### Contenido en producción (dump `backend/backups/backup_20260911_063742.sql`, Aiven, 2026-09-11)
-- 1 perfil (`profiles`), 5 proyectos (`projects`), 33 skills (`skills`), 4 experiencias (`experiences`), 3 idiomas hablados (`spoken_languages`), 1 usuario admin (`users`, **no se migra**). Instantánea histórica: hoy el repo contiene 7 proyectos (se añadieron `developer-site` y `quotidia`).
+- 1 perfil (`profiles`), 5 proyectos (`projects`), 33 skills (`skills`), 4 experiencias (`experiences`), 3 idiomas hablados (`spoken_languages`), 1 usuario admin (`users`, **no se migra**). Instantánea histórica: hoy el repo contiene 7 proyectos (se añadieron `gonzaloapps-site` y `quotidia`).
 - `project_technologies` y `experience_technologies` contienen duplicados (mismo valor repetido hasta 20 veces) → hay que deduplicar preservando el orden de primera aparición.
 - 21 URLs de imágenes de proyectos en `project_images`, todas en `i.postimg.cc`. El perfil tiene foto y CV enlazados a Google Drive.
 - Los textos usan `\n` (backslash-n literal, escapado como `\\n` en el dump) para saltos de línea; el frontend los renderiza con `RichTextRenderer`.
@@ -124,7 +124,7 @@ Eliminar el backend (Render) y la base de datos (Aiven) para acabar con la depen
 - [ ] Periodo de gracia 1 semana → después: apagar y eliminar servicio Render y base Aiven (paso externo al repo, del propietario). Verificado 2026-09-24: `https://portafolio-9uob.onrender.com/api/public/profile` sigue devolviendo 200 con el contenido antiguo, y el dump que se daba por archivado en `_backups/portafolio/` no existe (ver "Pasos manuales").
 - [x] Borrar el script de extracción desechable y artefactos temporales.
 
-### Fase 7 — Extras opcionales (adopciones de developer-site)
+### Fase 7 — Extras opcionales (adopciones de gonzaloapps-site)
 - [x] `sitemap.xml` + `robots.txt` (generados en build por `tooling/agent-files`).
 - [x] `llms.txt` + twins markdown por página (EN/ES) + shells HTML por ruta con canonical, metadatos y `rel="alternate"`.
 - [x] Dimensiones de imagen en datos para cero CLS (técnica de leer headers) — hecho 2026-09-24: cada imagen guarda `fullWidth` (el test lo lee de la cabecera WebP), las portadas miden exactamente 16:9 y las tarjetas reservan esa proporción.
@@ -150,9 +150,9 @@ Quedará: un solo deploy (Vercel), una sola fuente de verdad de contenido (JSON 
 - 2026-09-11: `node_modules` del frontend quedó en estado inconsistente tras la primera instalación (fallos en 2 suites de tests no relacionados con el cambio); se resolvió con reinstalación limpia. Verificado además contra el HEAD original en un worktree temporal.
 - 2026-09-11: El test de integridad usa `import.meta.glob('/public/images/**')` en lugar de `node:fs` para verificar existencia de imágenes (evita añadir tipos Node al tsconfig de la app).
 - 2026-09-11: `vercel.json` gana bloque de headers cache para `/images/(.*)` (immutable) al quedar las imágenes en el mismo deploy.
-- 2026-09-11: **Optimización de imágenes (revisión final):** conversión a WebP (q82) con dos variantes por imagen de proyecto (`-800` para tarjetas/miniaturas, `-full` para lightbox) → 11.2 MB → 956 KB (91% menos). Foto de perfil y fallback a WebP; `og-cover.jpg` 1200×630 para crawlers sociales. Reserva de espacio anti-CLS añadida a las fotos de perfil (`aspectRatio="2/3"`) y `loading="lazy"` en portadas de proyecto. `data.json` gana el campo `imageUrlsFull`. Favicon real copiado de developer-site.
+- 2026-09-11: **Optimización de imágenes (revisión final):** conversión a WebP (q82) con dos variantes por imagen de proyecto (`-800` para tarjetas/miniaturas, `-full` para lightbox) → 11.2 MB → 956 KB (91% menos). Foto de perfil y fallback a WebP; `og-cover.jpg` 1200×630 para crawlers sociales. Reserva de espacio anti-CLS añadida a las fotos de perfil (`aspectRatio="2/3"`) y `loading="lazy"` en portadas de proyecto. `data.json` gana el campo `imageUrlsFull`. Favicon real copiado de gonzaloapps-site.
 - 2026-09-24: **Cierre externo (agente autorizado por el propietario).** Eliminado el secret `RENDER_DEPLOY_HOOK_URL` (`gh secret list` queda vacío). El repositorio de GitHub apunta su homepage a `https://mi-portafolio-gonzalo.vercel.app/` (antes el alias antiguo, que redirigía con 307) y tiene descripción y topics nuevos. No se tocaron Render, Aiven ni Vercel: borrar el servicio o la base elimina datos, y no hay CLI de Vercel con sesión iniciada. Se corrigió la instrucción de mantener `PNPM_APPROVE_BUILDS` (pnpm no lee esa variable) y se detectó que el dump de la Fase 0 ya no existe.
-- 2026-09-24: El favicon copiado de developer-site se sustituyó por un monograma propio (`frontend/public/icons/`), y `og-cover.jpg` por `og-cover-typographic.jpg`; las capturas del proyecto "Portfolio" se rehicieron en inglés con la UI actual.
+- 2026-09-24: El favicon copiado de gonzaloapps-site se sustituyó por un monograma propio (`frontend/public/icons/`), y `og-cover.jpg` por `og-cover-typographic.jpg`; las capturas del proyecto "Portfolio" se rehicieron en inglés con la UI actual.
 - 2026-10-13: Borrados `frontend/.npmrc` y el bloque `onlyBuiltDependencies` de `frontend/pnpm-workspace.yaml`, ajustes de pnpm 10 que pnpm 11+ ignora, sin esperar al log de Vercel del paso manual 1 (decisión delegada por el propietario): la aprobación de esbuild vive en `allowBuilds`, y el build no depende de su script de instalación (CI instala con `--ignore-scripts` y construye en verde).
 
 ## Pasos manuales (externos al repo)

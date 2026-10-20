@@ -89,7 +89,7 @@ const headBlock = (route: RouteSpec, locale: Locale): string =>
       (target) =>
         `<link rel="alternate" hreflang="${target}" href="${absoluteUrl(localizedPath(route.path, target))}">`,
     ),
-    `<link rel="alternate" hreflang="x-default" href="${absoluteUrl(localizedPath(route.path, 'en'))}">`,
+    `<link rel="alternate" hreflang="x-default" href="${absoluteUrl(localizedPath(route.path, 'es'))}">`,
     ...LOCALES.map(
       (target) =>
         `<link rel="alternate" type="text/markdown" hreflang="${target}" href="${absoluteUrl(twinPathOf(route, target))}">`,
@@ -181,7 +181,7 @@ const applyRouteMeta = (html: string, route: RouteSpec, locale: Locale): string 
   return updateMeta(result, 'name', 'twitter:image', absoluteImagePath('twitter:image'))
 }
 
-export const buildRouteShell = (template: string, route: RouteSpec, locale: Locale = 'en'): string =>
+export const buildRouteShell = (template: string, route: RouteSpec, locale: Locale = 'es'): string =>
   applyRouteMeta(
     insertBefore(insertBefore(template, HEAD_END, headBlock(route, locale)), APP_ROOT, noscriptBlock(route)),
     route,
@@ -198,5 +198,5 @@ export const buildNotFoundPage = (template: string): string =>
       noscriptBlock(HOME_ROUTE),
     ),
     HOME_ROUTE,
-    'en',
+    'es',
   )

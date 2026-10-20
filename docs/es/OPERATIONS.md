@@ -119,7 +119,7 @@ El contenido vive en `src/entities/<entidad>/api/data.json`:
 
 **Animaciones:** el menú de tema permite pausar o reanudar juntos el punto de disponibilidad y la tarjeta flotante de Inicio. La elección se guarda para futuras visitas; si el navegador bloquea el almacenamiento, sigue funcionando durante la sesión actual. La preferencia de movimiento reducido del sistema tiene prioridad y se explica en el menú. Glass conserva un fondo ambiental estático; la pausa afecta solo a las pequeñas animaciones decorativas.
 
-**Enlaces en español:** las páginas en español tienen sus propias URLs bajo `/es` (`/es`, `/es/about`, …) con shells HTML y metadatos Open Graph localizados, y cambiar el idioma actualiza automáticamente la barra de direcciones. Añadir `?lang=es` (o `?lang=en`) a la dirección de cualquier página sigue funcionando como override explícito: el idioma queda guardado para ese visitante igual que si lo hubiera elegido en el menú, y la dirección se normaliza a la ruta localizada sin el parámetro.
+**Enlaces por idioma:** las páginas en español viven en las URLs raíz (`/`, `/about`, …) y las páginas en inglés tienen sus propias URLs bajo `/en` (`/en`, `/en/about`, …), cada una con shells HTML y metadatos Open Graph localizados, y cambiar el idioma actualiza automáticamente la barra de direcciones. Añadir `?lang=es` (o `?lang=en`) a la dirección de cualquier página sigue funcionando como override explícito: el idioma queda guardado para ese visitante igual que si lo hubiera elegido en el menú, y la dirección se normaliza a la ruta localizada sin el parámetro.
 
 ### 2. Añadir imágenes
 

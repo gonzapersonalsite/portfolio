@@ -3,7 +3,7 @@ export const SUPPORTED_LANGUAGES = ['en', 'es'] as const
 
 export type Language = (typeof SUPPORTED_LANGUAGES)[number]
 
-export const DEFAULT_LANGUAGE: Language = 'en'
+export const DEFAULT_LANGUAGE: Language = 'es'
 
 export const LANGUAGE_STORAGE_KEY = 'language'
 
@@ -23,7 +23,7 @@ export interface LanguageSources {
   browser: string | null
 }
 
-// An explicit `?lang=` parameter or `/es` path wins over the visitor's saved choice, which wins over the browser setting.
+// An explicit `?lang=` parameter or `/en` path wins over the visitor's saved choice, which wins over the browser setting.
 export const resolveInitialLanguage = ({ path, query, stored, browser }: LanguageSources): Language =>
   toSupportedLanguage(query) ??
   toSupportedLanguage(path) ??

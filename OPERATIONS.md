@@ -119,7 +119,7 @@ Content lives in `src/entities/<entity>/api/data.json`:
 
 **Animations:** the theme menu can pause or resume the availability dot and the floating Home card together. The choice is saved for later visits; if site storage is blocked, it still works for the current session. The system's reduced-motion preference takes priority and is explained in the menu. Glass keeps a static ambient background; pausing affects only the small decorative animations.
 
-**Links in Spanish:** Spanish pages have dedicated `/es` URLs (`/es`, `/es/about`, …) with their own localized HTML shells and Open Graph metadata, and switching the language updates the address bar automatically. Adding `?lang=es` (or `?lang=en`) to any page address is also supported as an explicit override: the visitor's language choice is saved as if they had picked it in the menu, and the URL is normalized to the matching localized route without the query parameter.
+**Localized links:** Spanish pages live at the root URLs (`/`, `/about`, …) and English pages have dedicated `/en` URLs (`/en`, `/en/about`, …), each with their own localized HTML shells and Open Graph metadata, and switching the language updates the address bar automatically. Adding `?lang=es` (or `?lang=en`) to any page address is also supported as an explicit override: the visitor's language choice is saved as if they had picked it in the menu, and the URL is normalized to the matching localized route without the query parameter.
 
 ### 2. Add images
 

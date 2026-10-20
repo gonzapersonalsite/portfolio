@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import {
   absoluteUrl,
+  DEFAULT_LANGUAGE,
   findAppRoute,
   localizedPath,
   markdownTwinPath,
@@ -24,7 +25,7 @@ const ogLocaleOf = (language: Language): string => (language === 'es' ? 'es_ES' 
 export function useCanonicalLinks() {
   const { pathname } = useLocation()
   const route = findAppRoute(pathname)
-  const language: Language = pathnameLanguage(pathname) ?? 'en'
+  const language: Language = pathnameLanguage(pathname) ?? DEFAULT_LANGUAGE
 
   useEffect(() => {
     if (route === undefined) return
@@ -48,7 +49,7 @@ export function useCanonicalLinks() {
     setAttribute(
       'link[rel="alternate"]:not([type])[hreflang="x-default"]',
       'href',
-      absoluteUrl(localizedPath(route.path, 'en')),
+      absoluteUrl(localizedPath(route.path, DEFAULT_LANGUAGE)),
     )
   }, [route, language])
 }

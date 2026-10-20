@@ -35,11 +35,11 @@ export function agentFilesPlugin(): Plugin {
 
       // Every shell starts from the built index.html (with its script, style and font tags).
       const template = decodeAssetSource(index.source)
-      index.source = buildRouteShell(template, HOME_ROUTE, 'en')
+      index.source = buildRouteShell(template, HOME_ROUTE, 'es')
 
       for (const locale of LOCALES) {
         for (const route of ROUTES) {
-          if (locale === 'en' && route.id === HOME_ROUTE.id) continue
+          if (locale === 'es' && route.id === HOME_ROUTE.id) continue
 
           this.emitFile({
             type: 'asset',

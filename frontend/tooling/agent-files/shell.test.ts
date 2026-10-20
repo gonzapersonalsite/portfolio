@@ -111,10 +111,10 @@ describe('buildRouteShell', () => {
     const shell = buildRouteShell(INDEX_HTML, routeOf('about'))
 
     expect(shell).toContain(
-      '<link rel="alternate" hreflang="en" href="https://mi-portafolio-gonzalo.vercel.app/about">',
+      '<link rel="alternate" hreflang="en" href="https://mi-portafolio-gonzalo.vercel.app/en/about">',
     )
     expect(shell).toContain(
-      '<link rel="alternate" hreflang="es" href="https://mi-portafolio-gonzalo.vercel.app/es/about">',
+      '<link rel="alternate" hreflang="es" href="https://mi-portafolio-gonzalo.vercel.app/about">',
     )
     expect(shell).toContain(
       '<link rel="alternate" hreflang="x-default" href="https://mi-portafolio-gonzalo.vercel.app/about">',
@@ -265,6 +265,6 @@ describe('buildNotFoundPage', () => {
     expect(page).toContain('<div id="root">')
     expect(page).toContain(`<title>${HOME_ROUTE.shellTitle}</title>`)
     expect(noScriptContent(page)).toContain('href="/index.md"')
-    expect(page).toContain('<progress aria-label="Loading portfolio"></progress>')
+    expect(page).toContain('<progress aria-label="Cargando portafolio"></progress>')
   })
 })

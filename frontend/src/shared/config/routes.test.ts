@@ -2,30 +2,30 @@ import { describe, expect, it } from 'vitest'
 import { findAppRoute, localizedPath, markdownTwinPath, pathnameLanguage } from './routes'
 
 describe('routes', () => {
-  it('detects the Spanish route prefix regardless of case or trailing slashes', () => {
+  it('detects the English route prefix regardless of case or trailing slashes', () => {
     expect(pathnameLanguage('/')).toBeNull()
     expect(pathnameLanguage('/projects')).toBeNull()
-    expect(pathnameLanguage('/espanol')).toBeNull()
-    expect(pathnameLanguage('/es')).toBe('es')
-    expect(pathnameLanguage('/es/')).toBe('es')
-    expect(pathnameLanguage('/ES/Projects/')).toBe('es')
+    expect(pathnameLanguage('/english')).toBeNull()
+    expect(pathnameLanguage('/en')).toBe('en')
+    expect(pathnameLanguage('/en/')).toBe('en')
+    expect(pathnameLanguage('/EN/Projects/')).toBe('en')
   })
 
-  it('builds English root paths and Spanish /es paths', () => {
-    expect(localizedPath('/', 'en')).toBe('/')
-    expect(localizedPath('/projects', 'en')).toBe('/projects')
-    expect(localizedPath('/', 'es')).toBe('/es')
-    expect(localizedPath('/projects', 'es')).toBe('/es/projects')
+  it('builds Spanish root paths and English /en paths', () => {
+    expect(localizedPath('/', 'es')).toBe('/')
+    expect(localizedPath('/projects', 'es')).toBe('/projects')
+    expect(localizedPath('/', 'en')).toBe('/en')
+    expect(localizedPath('/projects', 'en')).toBe('/en/projects')
   })
 
-  it('resolves canonical routes for both English and Spanish paths', () => {
+  it('resolves canonical routes for both Spanish and English paths', () => {
     expect(findAppRoute('/')?.id).toBe('home')
-    expect(findAppRoute('/es')?.id).toBe('home')
-    expect(findAppRoute('/ES/')?.id).toBe('home')
+    expect(findAppRoute('/en')?.id).toBe('home')
+    expect(findAppRoute('/EN/')?.id).toBe('home')
     expect(findAppRoute('/projects')?.id).toBe('projects')
-    expect(findAppRoute('/es/projects')?.id).toBe('projects')
-    expect(findAppRoute('/ES/PROJECTS/')?.id).toBe('projects')
-    expect(findAppRoute('/es/unknown')).toBeUndefined()
+    expect(findAppRoute('/en/projects')?.id).toBe('projects')
+    expect(findAppRoute('/EN/PROJECTS/')?.id).toBe('projects')
+    expect(findAppRoute('/en/unknown')).toBeUndefined()
     expect(findAppRoute('/projects/unknown')).toBeUndefined()
   })
 

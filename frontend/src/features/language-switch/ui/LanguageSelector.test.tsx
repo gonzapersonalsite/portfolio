@@ -49,12 +49,12 @@ describe('LanguageSelector', () => {
   })
 
   it('switches the whole interface and the URL path to the chosen language', () => {
-    renderSelector('/projects')
+    renderSelector('/en/projects')
     fireEvent.click(screen.getByRole('button', { name: /EN/ }))
     fireEvent.click(screen.getByRole('menuitemradio', { name: 'Español' }))
 
     expect(screen.getByRole('button', { name: 'Idioma: Español (ES)' })).toBeTruthy()
     expect(document.documentElement.lang).toBe('es')
-    expect(screen.getByTestId('pathname').textContent).toBe('/es/projects')
+    expect(screen.getByTestId('pathname').textContent).toBe('/projects')
   })
 })

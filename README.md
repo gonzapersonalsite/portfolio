@@ -16,7 +16,7 @@
 - **Liquid Glass Interface:** Cutting-edge visual style inspired by visionOS, featuring advanced glassmorphism and neon accents.
 - **Interactive Project Gallery:** full-screen viewer with captions, a thumbnail strip, zoom up to 4× (buttons, click or keyboard) and keyboard navigation (arrows, +/−, 0).
 - **Theme Engine:** Light, Dark and the exclusive Liquid Glass mode. The site follows the operating system until the visitor picks a theme, and paints the right background before the app loads.
-- **Dynamic Localization:** full bilingual support (English/Spanish) with instant interface and content translation and dedicated `/es` routes (plus `?lang=es|en` query overrides) so sharing any URL preserves the active language and its localized social preview.
+- **Dynamic Localization:** full bilingual support (Spanish/English) with instant interface and content translation, Spanish root routes and dedicated `/en` routes (plus `?lang=es|en` query overrides) so sharing any URL preserves the active language and its localized social preview.
 
 ### 📦 Content as Data
 - **Static JSON content model:** projects, skills, experience, profile, and spoken languages live in versioned JSON files — no CMS, no API, no database. Adding a project is a data change, not a code change.

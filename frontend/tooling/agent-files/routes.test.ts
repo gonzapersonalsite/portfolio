@@ -9,13 +9,13 @@ describe('route specs', () => {
         expect(route.meta[locale].title).toBe(i18n.t(`seo.${route.id}.title`, { lng: locale }))
         expect(route.meta[locale].description).toBe(i18n.t(`seo.${route.id}.description`, { lng: locale }))
       }
-      expect(route.shellTitle).toBe(route.meta.en.title)
-      expect(route.shellDescription).toBe(route.meta.en.description)
+      expect(route.shellTitle).toBe(route.meta.es.title)
+      expect(route.shellDescription).toBe(route.meta.es.description)
     }
   })
 
-  it('map every route to its English and Spanish HTML shell files', () => {
-    expect(ROUTES.map((route) => htmlFileOf(route, 'en'))).toEqual([
+  it('map every route to its Spanish and English HTML shell files', () => {
+    expect(ROUTES.map((route) => htmlFileOf(route, 'es'))).toEqual([
       'index.html',
       'about/index.html',
       'skills/index.html',
@@ -23,13 +23,13 @@ describe('route specs', () => {
       'projects/index.html',
       'contact/index.html',
     ])
-    expect(ROUTES.map((route) => htmlFileOf(route, 'es'))).toEqual([
-      'es/index.html',
-      'es/about/index.html',
-      'es/skills/index.html',
-      'es/experience/index.html',
-      'es/projects/index.html',
-      'es/contact/index.html',
+    expect(ROUTES.map((route) => htmlFileOf(route, 'en'))).toEqual([
+      'en/index.html',
+      'en/about/index.html',
+      'en/skills/index.html',
+      'en/experience/index.html',
+      'en/projects/index.html',
+      'en/contact/index.html',
     ])
   })
 

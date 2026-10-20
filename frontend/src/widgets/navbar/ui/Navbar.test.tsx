@@ -23,49 +23,56 @@ describe('Navbar', () => {
     await i18n.changeLanguage('en')
   })
 
-  it.each(['/skills', '/skills/', '/SKILLS/'])('marks the current page in the desktop navigation at %s', (path) => {
-    renderNavbar(path)
+  it.each(['/en/skills', '/en/skills/', '/EN/SKILLS/'])(
+    'marks the current page in the desktop navigation at %s',
+    (path) => {
+      renderNavbar(path)
 
-    const nav = within(screen.getByRole('banner')).getByRole('navigation', { name: 'Main navigation' })
-    const links = within(nav).getAllByRole('link')
-    expect(links.map((link) => link.textContent)).toEqual([
-      'Home',
-      'About',
-      'Skills',
-      'Experience',
-      'Projects',
-      'Contact',
-    ])
-    expect(
-      links.filter((link) => link.getAttribute('aria-current') === 'page').map((link) => link.textContent),
-    ).toEqual(['Skills'])
-    expect(within(nav).getByRole('link', { current: 'page' }).getAttribute('href')).toBe('/skills')
-  })
+      const nav = within(screen.getByRole('banner')).getByRole('navigation', { name: 'Main navigation' })
+      const links = within(nav).getAllByRole('link')
+      expect(links.map((link) => link.textContent)).toEqual([
+        'Home',
+        'About',
+        'Skills',
+        'Experience',
+        'Projects',
+        'Contact',
+      ])
+      expect(
+        links.filter((link) => link.getAttribute('aria-current') === 'page').map((link) => link.textContent),
+      ).toEqual(['Skills'])
+      expect(within(nav).getByRole('link', { current: 'page' }).getAttribute('href')).toBe('/en/skills')
+    },
+  )
 
-  it.each(['/projects', '/projects/', '/PROJECTS/'])('marks the current page in the mobile menu at %s', (path) => {
-    renderNavbar(path)
-    const menuButton = screen.getByRole('button', { name: 'Open menu' })
-    expect(menuButton.getAttribute('aria-expanded')).toBe('false')
+  it.each(['/en/projects', '/en/projects/', '/EN/PROJECTS/'])(
+    'marks the current page in the mobile menu at %s',
+    (path) => {
+      renderNavbar(path)
+      const menuButton = screen.getByRole('button', { name: 'Open menu' })
+      expect(menuButton.getAttribute('aria-expanded')).toBe('false')
 
-    fireEvent.click(menuButton)
+      fireEvent.click(menuButton)
 
-    expect(menuButton.getAttribute('aria-expanded')).toBe('true')
-    const drawer = screen.getByRole('dialog', { name: 'Menu' })
-    expect(menuButton.getAttribute('aria-controls')).toBe(drawer.id)
-    expect(drawer.querySelector('p')?.textContent).toBe('GONZALO.DEV')
-    const current = within(within(drawer).getByRole('navigation')).getByRole('link', { current: 'page' })
-    expect(current.textContent).toBe('Projects')
-    expect(current.getAttribute('href')).toBe('/projects')
-  })
+      expect(menuButton.getAttribute('aria-expanded')).toBe('true')
+      const drawer = screen.getByRole('dialog', { name: 'Menu' })
+      expect(menuButton.getAttribute('aria-controls')).toBe(drawer.id)
+      expect(drawer.querySelector('p')?.textContent).toBe('GONZALO.DEV')
+      const current = within(within(drawer).getByRole('navigation')).getByRole('link', { current: 'page' })
+      expect(current.textContent).toBe('Projects')
+      expect(current.getAttribute('href')).toBe('/en/projects')
+    },
+  )
 
-  it('points navigation links to /es/... and marks the current page when viewing Spanish routes', () => {
-    renderNavbar('/es/skills')
+  it('points navigation links to root paths and marks the current page when viewing Spanish routes', async () => {
+    await i18n.changeLanguage('es')
+    renderNavbar('/skills')
 
     const nav = within(screen.getByRole('banner')).getByRole('navigation', { name: 'Navegación principal' })
     const current = within(nav).getByRole('link', { current: 'page' })
     expect(current.textContent).toBe('Habilidades')
-    expect(current.getAttribute('href')).toBe('/es/skills')
-    expect(within(nav).getByRole('link', { name: 'Inicio' }).getAttribute('href')).toBe('/es')
+    expect(current.getAttribute('href')).toBe('/skills')
+    expect(within(nav).getByRole('link', { name: 'Inicio' }).getAttribute('href')).toBe('/')
   })
 
   it('does not mark a page for an unknown address sharing a route prefix', () => {

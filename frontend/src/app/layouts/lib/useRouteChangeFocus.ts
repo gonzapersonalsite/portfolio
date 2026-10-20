@@ -6,7 +6,7 @@ import { findAppRoute } from '@/shared/config'
 // activated (or on <body> when that link unmounts), so the new page would open half-way down
 // and screen readers would not notice it. Each new page starts at the top with the focus on
 // `targetId` (the <main> region). Back/forward (POP), hash-only changes and language switches
-// on the same page (`/about` <-> `/es/about`) keep the current position and focus.
+// on the same page (`/about` <-> `/en/about`) keep the current position and focus.
 export function useRouteChangeFocus(targetId: string) {
   const { pathname } = useLocation()
   const navigationType = useNavigationType()

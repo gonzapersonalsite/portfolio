@@ -45,12 +45,12 @@ describe('LanguageProvider', () => {
   })
 
   it('applies, saves and reflects in the URL the language the visitor chooses', () => {
-    const { result } = renderLanguage('/projects')
+    const { result } = renderLanguage('/en/projects')
 
     act(() => result.current.setLanguage('es'))
 
     expect(result.current.language).toBe('es')
-    expect(result.current.pathname).toBe('/es/projects')
+    expect(result.current.pathname).toBe('/projects')
     expect(i18n.language).toBe('es')
     expect(document.documentElement.lang).toBe('es')
     expect(window.localStorage.getItem('language')).toBe('es')
@@ -58,23 +58,24 @@ describe('LanguageProvider', () => {
     act(() => result.current.setLanguage('en'))
 
     expect(result.current.language).toBe('en')
-    expect(result.current.pathname).toBe('/projects')
+    expect(result.current.pathname).toBe('/en/projects')
     expect(window.localStorage.getItem('language')).toBe('en')
   })
 
-  it('starts in Spanish when the visitor lands on a /es route', () => {
-    const { result } = renderLanguage('/es/about')
+  it('starts in English when the visitor lands on a /en route', async () => {
+    await i18n.changeLanguage('es')
+    const { result } = renderLanguage('/en/about')
 
-    expect(result.current.language).toBe('es')
-    expect(result.current.pathname).toBe('/es/about')
-    expect(document.documentElement.lang).toBe('es')
+    expect(result.current.language).toBe('en')
+    expect(result.current.pathname).toBe('/en/about')
+    expect(document.documentElement.lang).toBe('en')
   })
 
   it('saves the language of a ?lang= link, rewrites to the localized route and drops the parameter', () => {
-    const { result } = renderLanguage('/about?lang=es&ref=cv')
+    const { result } = renderLanguage('/about?lang=en&ref=cv')
 
-    expect(window.localStorage.getItem('language')).toBe('es')
-    expect(result.current.pathname).toBe('/es/about')
+    expect(window.localStorage.getItem('language')).toBe('en')
+    expect(result.current.pathname).toBe('/en/about')
     expect(result.current.search).toBe('?ref=cv')
   })
 

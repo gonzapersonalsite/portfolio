@@ -134,14 +134,14 @@ const SHELLS: Record<RouteId, RouteShell> = {
 export const ROUTES: readonly RouteSpec[] = APP_ROUTES.map(({ id, path }) => ({
   id,
   path,
-  shellTitle: SHELLS[id].meta.en.title,
-  shellDescription: SHELLS[id].meta.en.description,
+  shellTitle: SHELLS[id].meta.es.title,
+  shellDescription: SHELLS[id].meta.es.description,
   ...SHELLS[id],
 }))
 
 export const HOME_ROUTE: RouteSpec = ROUTES[0]
 
-export const htmlFileOf = (route: RouteSpec, locale: Locale = 'en'): string => {
+export const htmlFileOf = (route: RouteSpec, locale: Locale = 'es'): string => {
   const path = localizedPath(route.path, locale)
   return path === '/' ? 'index.html' : `${path.slice(1)}/index.html`
 }

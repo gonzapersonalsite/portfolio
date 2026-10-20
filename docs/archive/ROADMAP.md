@@ -39,13 +39,15 @@ marcador y la lápida que apunta aquí. Solo crece por el final.
   (`#pixel-goblin-portals-and-contact-panel`,
   `#2026-10-19-pixel-goblin-portals-and-contact-panel`).
 
-## F2 — Rutas y shells HTML localizados en español bajo /es (DONE)
+## F2 — Rutas y shells HTML localizados por idioma (raíz en español y /en en inglés) (DONE)
 
-- **F2.1 — Subrutas `/es`, sincronización URL ↔ idioma y shells HTML estáticos en español — DONE.**
-  Rutas `/es` y `/es/<página>` sincronizadas con `LanguageProvider` y el
-  selector de idioma sin perder scroll ni foco, enlaces internos localizados y
-  emisión en build de shells HTML en español (`../../frontend/dist/es/`) con
-  metadatos Open Graph (`seo.es.*`, `og:locale="es_ES"`), alternates HTML
-  `hreflang` (`en`, `es`, `x-default`) y entradas en `sitemap.xml`
-  (`#localized-spanish-routes-and-shells`,
+- **F2.1 — Rutas raíz en español, subrutas `/en` en inglés, sincronización URL ↔ idioma y shells HTML estáticos por idioma — DONE.**
+  Rutas raíz (inicio (/) y `/<página>`) en español (`DEFAULT_LANGUAGE = 'es'`) y
+  subrutas `/en` (`/en` y `/en/<página>`) en inglés sincronizadas con
+  `LanguageProvider` y el selector de idioma sin perder scroll ni foco, enlaces
+  internos localizados y emisión en build de shells HTML en español
+  (`../../frontend/dist/`) y en inglés (`../../frontend/dist/en/`) con metadatos
+  Open Graph (`seo.es.*` / `seo.en.*`, `og:locale`), alternates HTML `hreflang`
+  (`en`, `es`, `x-default` apuntando a la raíz en español) y entradas en
+  `sitemap.xml` (`#localized-spanish-routes-and-shells`,
   `#2026-10-20-localized-spanish-routes-and-shells`).

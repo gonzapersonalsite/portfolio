@@ -15,8 +15,8 @@ const Layout: React.FC = () => {
       <button type="button" onClick={() => navigate('/about#main')}>
         skip
       </button>
-      <button type="button" onClick={() => navigate('/es/about')}>
-        spanish
+      <button type="button" onClick={() => navigate('/en/about')}>
+        english
       </button>
       <button type="button" onClick={() => navigate(-1)}>
         back
@@ -77,10 +77,10 @@ describe('useRouteChangeFocus', () => {
     expect(scrollTo).not.toHaveBeenCalled()
     expect(document.activeElement).toBe(skip)
 
-    const spanish = press('spanish')
+    const english = press('english')
 
     expect(scrollTo).not.toHaveBeenCalled()
-    expect(document.activeElement).toBe(spanish)
+    expect(document.activeElement).toBe(english)
   })
 
   it('keeps the browser behaviour on back and forward', () => {

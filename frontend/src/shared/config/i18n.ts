@@ -2,6 +2,7 @@ import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import { readStorage } from '@/shared/lib'
 import {
+  DEFAULT_LANGUAGE,
   LANGUAGE_QUERY_PARAM,
   LANGUAGE_STORAGE_KEY,
   SUPPORTED_LANGUAGES,
@@ -399,7 +400,7 @@ i18n.use(initReactI18next).init({
   resources,
   lng: getInitialLanguage(),
   supportedLngs: SUPPORTED_LANGUAGES,
-  fallbackLng: 'en',
+  fallbackLng: DEFAULT_LANGUAGE,
   interpolation: {
     escapeValue: false,
   },

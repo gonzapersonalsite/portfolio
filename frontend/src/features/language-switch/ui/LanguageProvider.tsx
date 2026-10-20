@@ -15,7 +15,7 @@ import { writeStorage } from '@/shared/lib'
 import { LanguageContext } from '../model/LanguageContext'
 
 // i18n (shared/config) resolves the initial language once, before the first render; this
-// provider owns every later change and keeps the URL path (root vs /es) aligned with the
+// provider owns every later change and keeps the URL path (root vs /en) aligned with the
 // active language so the address bar is always shareable in the language shown on screen.
 // Only explicit choices (`setLanguage` or `?lang=`) are saved in storage.
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

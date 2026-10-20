@@ -25,10 +25,10 @@ describe('ErrorBoundary', () => {
     const main = screen.getByRole('main')
     expect(main.querySelector('h1')?.textContent).toBe('Something went wrong')
     expect(screen.getByRole('button', { name: 'Refresh Page' })).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'Go to Home Page' }).getAttribute('href')).toBe('/')
+    expect(screen.getByRole('link', { name: 'Go to Home Page' }).getAttribute('href')).toBe('/en')
   })
 
-  it('points the way home to /es when the active language is Spanish', async () => {
+  it('points the way home to / when the active language is Spanish', async () => {
     await i18n.changeLanguage('es')
     vi.spyOn(console, 'error').mockImplementation(() => {})
 
@@ -38,6 +38,6 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>,
     )
 
-    expect(screen.getByRole('link', { name: 'Ir a la página de inicio' }).getAttribute('href')).toBe('/es')
+    expect(screen.getByRole('link', { name: 'Ir a la página de inicio' }).getAttribute('href')).toBe('/')
   })
 })

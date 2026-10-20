@@ -53,6 +53,6 @@ por identidad).
 
 - Cuerpo y entregas archivados en `archive/ROADMAP.md`.
 
-## F2 — Rutas y shells HTML localizados en español bajo /es (DONE)
+## F2 — Rutas y shells HTML localizados por idioma (raíz en español y /en en inglés) (DONE)
 
 - Cuerpo y entregas archivados en `archive/ROADMAP.md`.

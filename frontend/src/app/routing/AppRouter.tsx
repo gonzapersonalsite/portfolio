@@ -122,7 +122,7 @@ export default function AppRouter() {
         {renderRoutes('es')}
       </Route>
 
-      <Route path="/es/*" element={<Navigate to="/es" replace />} />
+      <Route path="/en/*" element={<Navigate to="/en" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

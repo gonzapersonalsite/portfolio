@@ -18,22 +18,22 @@ type AppRoute = (typeof APP_ROUTES)[number]
 const normalizePathname = (pathname: string): string =>
   pathname.length > 1 ? pathname.replace(/\/+$/, '').toLowerCase() : pathname
 
-// Spanish routes live under `/es` (`/es` and `/es/<page>`); English routes keep the root paths.
+// English routes live under `/en` (`/en` and `/en/<page>`); Spanish routes keep the root paths.
 export const pathnameLanguage = (pathname: string): Language | null => {
   const normalized = normalizePathname(pathname)
-  return normalized === '/es' || normalized.startsWith('/es/') ? 'es' : null
+  return normalized === '/en' || normalized.startsWith('/en/') ? 'en' : null
 }
 
 export const localizedPath = (path: string, language: Language): string => {
-  if (language === 'en') return path
+  if (language === 'es') return path
   return path === '/' ? `/${language}` : `/${language}${path}`
 }
 
-// The router matches paths case-insensitively, with or without `/es` and with a trailing slash;
+// The router matches paths case-insensitively, with or without `/en` and with a trailing slash;
 // this returns the canonical route definition, or undefined for an address that is not a page.
 export const findAppRoute = (pathname: string): AppRoute | undefined => {
   const normalized = normalizePathname(pathname)
-  const basePath = normalized === '/es' ? '/' : normalized.startsWith('/es/') ? normalized.slice(3) : normalized
+  const basePath = normalized === '/en' ? '/' : normalized.startsWith('/en/') ? normalized.slice(3) : normalized
   return APP_ROUTES.find((route) => route.path === basePath)
 }
 

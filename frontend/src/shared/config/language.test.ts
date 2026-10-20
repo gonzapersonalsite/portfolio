@@ -16,14 +16,16 @@ describe('toSupportedLanguage', () => {
 })
 
 describe('resolveInitialLanguage', () => {
-  it('prefers a ?lang= link, then the saved choice, then the browser', () => {
-    expect(resolveInitialLanguage({ query: 'es', stored: 'en', browser: 'en-US' })).toBe('es')
-    expect(resolveInitialLanguage({ query: null, stored: 'es', browser: 'en-US' })).toBe('es')
-    expect(resolveInitialLanguage({ query: null, stored: null, browser: 'es-ES' })).toBe('es')
+  it('prefers a ?lang= link, then a /es path, then the saved choice, then the browser', () => {
+    expect(resolveInitialLanguage({ path: null, query: 'es', stored: 'en', browser: 'en-US' })).toBe('es')
+    expect(resolveInitialLanguage({ path: 'es', query: 'en', stored: 'es', browser: 'es-ES' })).toBe('en')
+    expect(resolveInitialLanguage({ path: 'es', query: null, stored: 'en', browser: 'en-US' })).toBe('es')
+    expect(resolveInitialLanguage({ path: null, query: null, stored: 'es', browser: 'en-US' })).toBe('es')
+    expect(resolveInitialLanguage({ path: null, query: null, stored: null, browser: 'es-ES' })).toBe('es')
   })
 
   it('skips values it cannot use and falls back to English', () => {
-    expect(resolveInitialLanguage({ query: 'fr', stored: 'de', browser: 'es-MX' })).toBe('es')
-    expect(resolveInitialLanguage({ query: null, stored: 'fr', browser: 'pt-BR' })).toBe('en')
+    expect(resolveInitialLanguage({ path: 'fr', query: 'fr', stored: 'de', browser: 'es-MX' })).toBe('es')
+    expect(resolveInitialLanguage({ path: null, query: null, stored: 'fr', browser: 'pt-BR' })).toBe('en')
   })
 })

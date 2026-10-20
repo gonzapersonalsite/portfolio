@@ -16,7 +16,7 @@
 - **Interfaz Liquid Glass:** estilo visual vanguardista inspirado en visionOS, con glassmorphism avanzado y acentos de neón.
 - **Galería de proyectos interactiva:** visor a pantalla completa con pies de imagen, tira de miniaturas, zoom hasta 4× (botones, clic o teclado) y navegación por teclado (flechas, +/−, 0).
 - **Motor de temas:** modo claro, oscuro y el exclusivo modo Liquid Glass. El sitio sigue al sistema operativo hasta que el visitante elige un tema, y pinta el fondo correcto antes de que cargue la aplicación.
-- **Localización dinámica:** soporte bilingüe completo (inglés/español) con traducción instantánea de interfaz y contenido. Añadir `?lang=es` a cualquier dirección comparte la página en español.
+- **Localización dinámica:** soporte bilingüe completo (inglés/español) con traducción instantánea de interfaz y contenido y rutas propias bajo `/es` (además del parámetro `?lang=es|en`) para que compartir cualquier dirección conserve el idioma activo y su vista previa social localizada.
 
 ### 📦 Contenido como datos
 - **Modelo de contenido JSON estático:** proyectos, habilidades, experiencia, perfil e idiomas viven en ficheros JSON versionados — sin CMS, sin API, sin base de datos. Añadir un proyecto es un cambio de datos, no de código.

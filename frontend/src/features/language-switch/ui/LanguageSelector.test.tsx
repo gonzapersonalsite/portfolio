@@ -1,14 +1,17 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { fireEvent, render, screen, within } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { LanguageProvider, LanguageSelector } from '@/features/language-switch'
 import { i18n } from '@/shared/config'
 
-const renderSelector = () =>
+const PathProbe = () => <output data-testid="pathname">{useLocation().pathname}</output>
+
+const renderSelector = (initialEntry = '/projects') =>
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <LanguageProvider>
         <LanguageSelector />
+        <PathProbe />
       </LanguageProvider>
     </MemoryRouter>,
   )
@@ -45,12 +48,13 @@ describe('LanguageSelector', () => {
     expect(button.getAttribute('aria-controls')).toBe(menu.closest('.MuiMenu-root')?.id)
   })
 
-  it('switches the whole interface to the chosen language', () => {
-    renderSelector()
+  it('switches the whole interface and the URL path to the chosen language', () => {
+    renderSelector('/projects')
     fireEvent.click(screen.getByRole('button', { name: /EN/ }))
     fireEvent.click(screen.getByRole('menuitemradio', { name: 'Español' }))
 
     expect(screen.getByRole('button', { name: 'Idioma: Español (ES)' })).toBeTruthy()
     expect(document.documentElement.lang).toBe('es')
+    expect(screen.getByTestId('pathname').textContent).toBe('/es/projects')
   })
 })

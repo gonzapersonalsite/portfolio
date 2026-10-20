@@ -1,23 +1,35 @@
 import { describe, expect, it } from 'vitest'
 import i18n from '../../src/shared/config/i18n'
-import { htmlFileOf, ROUTES, twinPathOf } from './routes'
+import { htmlFileOf, LOCALES, ROUTES, twinPathOf } from './routes'
 
 describe('route specs', () => {
-  it('mirror the English seo metadata the pages apply at runtime', () => {
+  it('mirror the English and Spanish seo metadata the pages apply at runtime', () => {
     for (const route of ROUTES) {
-      expect(route.shellTitle).toBe(i18n.t(`seo.${route.id}.title`, { lng: 'en' }))
-      expect(route.shellDescription).toBe(i18n.t(`seo.${route.id}.description`, { lng: 'en' }))
+      for (const locale of LOCALES) {
+        expect(route.meta[locale].title).toBe(i18n.t(`seo.${route.id}.title`, { lng: locale }))
+        expect(route.meta[locale].description).toBe(i18n.t(`seo.${route.id}.description`, { lng: locale }))
+      }
+      expect(route.shellTitle).toBe(route.meta.en.title)
+      expect(route.shellDescription).toBe(route.meta.en.description)
     }
   })
 
-  it('map every route to its HTML shell file', () => {
-    expect(ROUTES.map(htmlFileOf)).toEqual([
+  it('map every route to its English and Spanish HTML shell files', () => {
+    expect(ROUTES.map((route) => htmlFileOf(route, 'en'))).toEqual([
       'index.html',
       'about/index.html',
       'skills/index.html',
       'experience/index.html',
       'projects/index.html',
       'contact/index.html',
+    ])
+    expect(ROUTES.map((route) => htmlFileOf(route, 'es'))).toEqual([
+      'es/index.html',
+      'es/about/index.html',
+      'es/skills/index.html',
+      'es/experience/index.html',
+      'es/projects/index.html',
+      'es/contact/index.html',
     ])
   })
 

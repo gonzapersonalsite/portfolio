@@ -8,6 +8,7 @@ import {
   resolveInitialLanguage,
   type Language,
 } from './language'
+import { pathnameLanguage } from './routes'
 
 const resources = {
   en: {
@@ -388,6 +389,7 @@ const resources = {
 
 const getInitialLanguage = (): Language =>
   resolveInitialLanguage({
+    path: pathnameLanguage(window.location.pathname),
     query: new URLSearchParams(window.location.search).get(LANGUAGE_QUERY_PARAM),
     stored: readStorage(LANGUAGE_STORAGE_KEY),
     browser: navigator.language,

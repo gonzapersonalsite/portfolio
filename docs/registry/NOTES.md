@@ -1,7 +1,7 @@
 # Notas de desarrollo (índice)
 
 GENERADO por tools/board desde `docs/registry/deliveries/` y `docs/registry/lessons/`. No editar a mano: se reescribe.
-board-fingerprint:b8e0fc878bb29d21 — su contenido cambió por última vez el 2026-10-19.
+board-fingerprint:cd4fcc5daf39512d — su contenido cambió por última vez el 2026-10-20.
 
 Cada entrega es un fichero `docs/registry/deliveries/<fecha>-<tema>.md` con lo que se hizo, cómo se
 verificó y qué costó; cada lección es un fichero `docs/registry/lessons/<identidad>.md` y se cita como
@@ -9,8 +9,9 @@ verificó y qué costó; cada lección es un fichero `docs/registry/lessons/<ide
 entregas dicen cómo llegó a estar así. Aquí van las más recientes de cada clase; todas,
 mes a mes, en su índice del mes.
 
-## Entregas (4; aquí las 4 más recientes)
+## Entregas (5; aquí las 5 más recientes)
 
+- 2026-10-20 `#2026-10-20-localized-spanish-routes-and-shells` Rutas y shells HTML localizados en español bajo /es
 - 2026-10-19 `#2026-10-19-hero-card-pixel-goblin` Duende pixelado sobre la tarjeta del hero de Inicio
 - 2026-10-19 `#2026-10-19-pixel-goblin-portals-and-contact-panel` Portales pixel 2D de entrada y salida y reutilización en el panel de Contacto
 - 2026-10-19 `#2026-10-19-scaffold-upgrade-to-0-3-3` Actualización a agentic-scaffold 0.3.3, con lo que aplica a un producto de convenciones propias
@@ -28,5 +29,5 @@ mes a mes, en su índice del mes.
 
 ## Por mes (2 índices)
 
-- `docs/registry/index/notes-2026-10.md` — 2026-10: 4 entregas, 0 lecciones
+- `docs/registry/index/notes-2026-10.md` — 2026-10: 5 entregas, 0 lecciones
 - `docs/registry/index/notes-2026-09.md` — 2026-09: 0 entregas, 7 lecciones

@@ -2,7 +2,7 @@ import React, { Suspense, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Box, Container } from '@mui/material'
 import { PublicLayout } from '../layouts'
-import { APP_ROUTES, type RouteId } from '@/shared/config'
+import { APP_ROUTES, localizedPath, type Language, type RouteId } from '@/shared/config'
 import {
   HeroSkeleton,
   PageHeaderSkeleton,
@@ -97,26 +97,32 @@ function usePrefetchPages() {
   }, [])
 }
 
+const renderRoutes = (language: Language) =>
+  PAGES.map(({ id, path, Page }) => {
+    const element = (
+      <Suspense fallback={PAGE_SKELETONS[id]}>
+        <Page />
+      </Suspense>
+    )
+    const routePath = localizedPath(path, language)
+    return routePath === '/' ? (
+      <Route key={`${language}-${id}`} index element={element} />
+    ) : (
+      <Route key={`${language}-${id}`} path={routePath} element={element} />
+    )
+  })
+
 export default function AppRouter() {
   usePrefetchPages()
 
   return (
     <Routes>
       <Route path="/" element={<PublicLayout />}>
-        {PAGES.map(({ id, path, Page }) => {
-          const element = (
-            <Suspense fallback={PAGE_SKELETONS[id]}>
-              <Page />
-            </Suspense>
-          )
-          return path === '/' ? (
-            <Route key={id} index element={element} />
-          ) : (
-            <Route key={id} path={path} element={element} />
-          )
-        })}
+        {renderRoutes('en')}
+        {renderRoutes('es')}
       </Route>
 
+      <Route path="/es/*" element={<Navigate to="/es" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

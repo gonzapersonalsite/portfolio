@@ -5,7 +5,7 @@ import { getProfile } from '../../src/entities/profile/api/profileApi'
 import { getAllProjects } from '../../src/entities/project/api/projectApi'
 import { projectCoverSources } from '../../src/entities/project/model/projectImages'
 import { getCoreSkills } from '../../src/entities/skill/api/skillApi'
-import { absoluteUrl, HOME_ROUTE, ROUTES, type RouteSpec } from './routes'
+import { absoluteUrl, HOME_ROUTE, LOCALES, localizedPath, ROUTES, type RouteSpec } from './routes'
 import { buildNotFoundPage, buildRouteShell } from './shell'
 
 // The real template: a marker the shells need cannot disappear from it unnoticed.
@@ -81,22 +81,44 @@ describe('buildRouteShell', () => {
     expect(metaContent(shell, 'property', 'og:url')).toEqual(['https://mi-portafolio-gonzalo.vercel.app/'])
   })
 
-  it('gives every route its own title, description, canonical address and og:url, once', () => {
-    for (const route of ROUTES) {
-      const shell = buildRouteShell(INDEX_HTML, route)
+  it('gives every route and locale its own lang, title, description, canonical address, og:url and og:locale, once', () => {
+    for (const locale of LOCALES) {
+      for (const route of ROUTES) {
+        const shell = buildRouteShell(INDEX_HTML, route, locale)
+        const expectedUrl = absoluteUrl(localizedPath(route.path, locale))
 
-      expect(shell.match(/<title>/g), route.id).toHaveLength(1)
-      expect(shell, route.id).toContain(`<title>${route.shellTitle}</title>`)
-      expect(metaContent(shell, 'name', 'description'), route.id).toEqual([route.shellDescription])
-      expect(shell.match(/rel="canonical"/g), route.id).toHaveLength(1)
-      expect(shell, route.id).toContain(`<link rel="canonical" href="${absoluteUrl(route.path)}">`)
-      expect(metaContent(shell, 'property', 'og:url'), route.id).toEqual([absoluteUrl(route.path)])
+        expect(shell, `${route.id} ${locale}`).toContain(`<html lang="${locale}">`)
+        expect(shell.match(/<title>/g), `${route.id} ${locale}`).toHaveLength(1)
+        expect(shell, `${route.id} ${locale}`).toContain(`<title>${route.meta[locale].title}</title>`)
+        expect(metaContent(shell, 'name', 'description'), `${route.id} ${locale}`).toEqual([
+          route.meta[locale].description,
+        ])
+        expect(metaContent(shell, 'property', 'og:title'), `${route.id} ${locale}`).toEqual([route.meta[locale].title])
+        expect(metaContent(shell, 'property', 'og:description'), `${route.id} ${locale}`).toEqual([
+          route.meta[locale].description,
+        ])
+        expect(metaContent(shell, 'property', 'og:locale'), `${route.id} ${locale}`).toEqual([
+          locale === 'es' ? 'es_ES' : 'en_US',
+        ])
+        expect(shell.match(/rel="canonical"/g), `${route.id} ${locale}`).toHaveLength(1)
+        expect(shell, `${route.id} ${locale}`).toContain(`<link rel="canonical" href="${expectedUrl}">`)
+        expect(metaContent(shell, 'property', 'og:url'), `${route.id} ${locale}`).toEqual([expectedUrl])
+      }
     }
   })
 
-  it('links both markdown twins with symmetric hreflang', () => {
+  it('links HTML and markdown alternates with symmetric hreflang', () => {
     const shell = buildRouteShell(INDEX_HTML, routeOf('about'))
 
+    expect(shell).toContain(
+      '<link rel="alternate" hreflang="en" href="https://mi-portafolio-gonzalo.vercel.app/about">',
+    )
+    expect(shell).toContain(
+      '<link rel="alternate" hreflang="es" href="https://mi-portafolio-gonzalo.vercel.app/es/about">',
+    )
+    expect(shell).toContain(
+      '<link rel="alternate" hreflang="x-default" href="https://mi-portafolio-gonzalo.vercel.app/about">',
+    )
     expect(shell).toContain(
       '<link rel="alternate" type="text/markdown" hreflang="en" href="https://mi-portafolio-gonzalo.vercel.app/about/index.md">',
     )
@@ -169,12 +191,17 @@ describe('buildRouteShell', () => {
     expect(noscript).toContain(`href="mailto:${getProfile().email}"`)
   })
 
-  it('keeps one startup indicator for every route', () => {
+  it('keeps one startup indicator for every route, labeled in the shell language', () => {
     for (const route of ROUTES) {
-      const document = new DOMParser().parseFromString(buildRouteShell(INDEX_HTML, route), 'text/html')
-      expect(document.querySelectorAll('#root'), route.id).toHaveLength(1)
-      expect(document.querySelectorAll('#root .app-startup'), route.id).toHaveLength(1)
-      expect(document.querySelector('#root progress')?.getAttribute('aria-label'), route.id).toBe('Loading portfolio')
+      const enDoc = new DOMParser().parseFromString(buildRouteShell(INDEX_HTML, route, 'en'), 'text/html')
+      expect(enDoc.querySelectorAll('#root'), route.id).toHaveLength(1)
+      expect(enDoc.querySelectorAll('#root .app-startup'), route.id).toHaveLength(1)
+      expect(enDoc.querySelector('#root progress')?.getAttribute('aria-label'), route.id).toBe('Loading portfolio')
+
+      const esDoc = new DOMParser().parseFromString(buildRouteShell(INDEX_HTML, route, 'es'), 'text/html')
+      expect(esDoc.querySelector('#root progress')?.getAttribute('aria-label'), `${route.id} es`).toBe(
+        'Cargando portafolio',
+      )
     }
   })
 

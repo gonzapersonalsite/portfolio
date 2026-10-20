@@ -6,13 +6,20 @@ import { useLanguage, LanguageProvider } from '@/features/language-switch'
 import { i18n } from '@/shared/config'
 
 const renderLanguage = (initialEntry = '/') =>
-  renderHook(() => ({ ...useLanguage(), search: useLocation().search }), {
-    wrapper: ({ children }: { children: React.ReactNode }) => (
-      <MemoryRouter initialEntries={[initialEntry]}>
-        <LanguageProvider>{children}</LanguageProvider>
-      </MemoryRouter>
-    ),
-  })
+  renderHook(
+    () => ({
+      ...useLanguage(),
+      pathname: useLocation().pathname,
+      search: useLocation().search,
+    }),
+    {
+      wrapper: ({ children }: { children: React.ReactNode }) => (
+        <MemoryRouter initialEntries={[initialEntry]}>
+          <LanguageProvider>{children}</LanguageProvider>
+        </MemoryRouter>
+      ),
+    },
+  )
 
 describe('LanguageProvider', () => {
   beforeEach(async () => {
@@ -37,21 +44,37 @@ describe('LanguageProvider', () => {
     expect(window.localStorage.getItem('language')).toBeNull()
   })
 
-  it('applies and saves the language the visitor chooses', () => {
-    const { result } = renderLanguage()
+  it('applies, saves and reflects in the URL the language the visitor chooses', () => {
+    const { result } = renderLanguage('/projects')
 
     act(() => result.current.setLanguage('es'))
 
     expect(result.current.language).toBe('es')
+    expect(result.current.pathname).toBe('/es/projects')
     expect(i18n.language).toBe('es')
     expect(document.documentElement.lang).toBe('es')
     expect(window.localStorage.getItem('language')).toBe('es')
+
+    act(() => result.current.setLanguage('en'))
+
+    expect(result.current.language).toBe('en')
+    expect(result.current.pathname).toBe('/projects')
+    expect(window.localStorage.getItem('language')).toBe('en')
   })
 
-  it('saves the language of a ?lang= link and drops the parameter from the address', () => {
+  it('starts in Spanish when the visitor lands on a /es route', () => {
+    const { result } = renderLanguage('/es/about')
+
+    expect(result.current.language).toBe('es')
+    expect(result.current.pathname).toBe('/es/about')
+    expect(document.documentElement.lang).toBe('es')
+  })
+
+  it('saves the language of a ?lang= link, rewrites to the localized route and drops the parameter', () => {
     const { result } = renderLanguage('/about?lang=es&ref=cv')
 
     expect(window.localStorage.getItem('language')).toBe('es')
+    expect(result.current.pathname).toBe('/es/about')
     expect(result.current.search).toBe('?ref=cv')
   })
 

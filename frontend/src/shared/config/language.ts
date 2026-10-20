@@ -7,7 +7,7 @@ export const DEFAULT_LANGUAGE: Language = 'en'
 
 export const LANGUAGE_STORAGE_KEY = 'language'
 
-// `?lang=es` makes a shareable link that opens the site in Spanish (the URLs themselves stay English).
+// `?lang=es|en` overrides the language on entry and redirects to the matching route URL.
 export const LANGUAGE_QUERY_PARAM = 'lang'
 
 // Accepts regional tags such as 'es-ES' and rejects any language the UI is not translated into.
@@ -17,11 +17,16 @@ export const toSupportedLanguage = (value: string | null | undefined): Language 
 }
 
 export interface LanguageSources {
+  path?: string | null
   query: string | null
   stored: string | null
   browser: string | null
 }
 
-// An explicit link wins over the visitor's saved choice, which wins over the browser setting.
-export const resolveInitialLanguage = ({ query, stored, browser }: LanguageSources): Language =>
-  toSupportedLanguage(query) ?? toSupportedLanguage(stored) ?? toSupportedLanguage(browser) ?? DEFAULT_LANGUAGE
+// An explicit `?lang=` parameter or `/es` path wins over the visitor's saved choice, which wins over the browser setting.
+export const resolveInitialLanguage = ({ path, query, stored, browser }: LanguageSources): Language =>
+  toSupportedLanguage(query) ??
+  toSupportedLanguage(path) ??
+  toSupportedLanguage(stored) ??
+  toSupportedLanguage(browser) ??
+  DEFAULT_LANGUAGE

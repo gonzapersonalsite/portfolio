@@ -18,10 +18,10 @@ import {
 import MenuIcon from '@mui/icons-material/Menu'
 import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { LanguageSelector } from '@/features/language-switch'
+import { LanguageSelector, useLanguage } from '@/features/language-switch'
 import { ThemeSelector, useColorMode } from '@/features/theme-switch'
 import { getProfile } from '@/entities/profile'
-import { APP_ROUTES, findAppRoute, glassColors, glassEffects } from '@/shared/config'
+import { APP_ROUTES, findAppRoute, glassColors, glassEffects, localizedPath } from '@/shared/config'
 import { useContent } from '@/shared/lib'
 
 const MOBILE_NAV_ID = 'mobile-navigation'
@@ -57,9 +57,11 @@ const Brand: React.FC<{ logoText: string }> = ({ logoText }) => {
 const Navbar: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false)
   const { t } = useTranslation()
+  const { language } = useLanguage()
   const { mode } = useColorMode()
   const { pathname } = useLocation()
   const currentRoute = findAppRoute(pathname)
+  const homePath = localizedPath('/', language)
   const isGlass = mode === 'glass'
   // In glass mode the bar is the theme's dark translucent AppBar, so its text is light.
   const textColor = isGlass ? glassColors.text.primary : 'inherit'
@@ -71,7 +73,7 @@ const Navbar: React.FC = () => {
   }
 
   const navItems = APP_ROUTES.map((route) => ({
-    path: route.path,
+    path: localizedPath(route.path, language),
     label: t(`nav.${route.id}`),
     current: currentRoute?.id === route.id,
   }))
@@ -139,7 +141,7 @@ const Navbar: React.FC = () => {
                 <Typography
                   variant="h6"
                   component={RouterLink}
-                  to="/"
+                  to={homePath}
                   sx={{
                     fontWeight: 700,
                     fontSize: { xs: '1rem', sm: '1.25rem' },

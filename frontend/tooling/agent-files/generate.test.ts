@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildAgentFiles } from './generate'
-import { absoluteUrl, ROUTES, twinPathOf } from './routes'
+import { absoluteUrl, LOCALES, localizedPath, ROUTES, twinPathOf } from './routes'
 
 const LINK_PATTERN = /\]\(([^)]+)\)/g
 
@@ -40,8 +40,10 @@ describe('buildAgentFiles', () => {
     const files = new Map(buildAgentFiles().map((file) => [file.path, file.source]))
     const sitemap = files.get('/sitemap.xml') ?? ''
 
-    for (const route of ROUTES) {
-      expect(sitemap).toContain(`<loc>${absoluteUrl(route.path)}</loc>`)
+    for (const locale of LOCALES) {
+      for (const route of ROUTES) {
+        expect(sitemap).toContain(`<loc>${absoluteUrl(localizedPath(route.path, locale))}</loc>`)
+      }
     }
 
     expect(files.get('/robots.txt')).toContain(`Sitemap: ${absoluteUrl('/sitemap.xml')}`)

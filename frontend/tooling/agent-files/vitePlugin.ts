@@ -1,6 +1,6 @@
 import type { Plugin } from 'vite'
 import { buildAgentFiles } from './generate.ts'
-import { HOME_ROUTE, htmlFileOf, ROUTES } from './routes.ts'
+import { HOME_ROUTE, htmlFileOf, LOCALES, ROUTES } from './routes.ts'
 import { buildNotFoundPage, buildRouteShell } from './shell.ts'
 
 // Vercel serves this file, with status 404, for any address that matches no file.
@@ -35,16 +35,18 @@ export function agentFilesPlugin(): Plugin {
 
       // Every shell starts from the built index.html (with its script, style and font tags).
       const template = decodeAssetSource(index.source)
-      index.source = buildRouteShell(template, HOME_ROUTE)
+      index.source = buildRouteShell(template, HOME_ROUTE, 'en')
 
-      for (const route of ROUTES) {
-        if (route.id === HOME_ROUTE.id) continue
+      for (const locale of LOCALES) {
+        for (const route of ROUTES) {
+          if (locale === 'en' && route.id === HOME_ROUTE.id) continue
 
-        this.emitFile({
-          type: 'asset',
-          fileName: htmlFileOf(route),
-          source: buildRouteShell(template, route),
-        })
+          this.emitFile({
+            type: 'asset',
+            fileName: htmlFileOf(route, locale),
+            source: buildRouteShell(template, route, locale),
+          })
+        }
       }
 
       this.emitFile({ type: 'asset', fileName: NOT_FOUND_FILE, source: buildNotFoundPage(template) })

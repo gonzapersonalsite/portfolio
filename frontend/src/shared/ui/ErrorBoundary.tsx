@@ -1,7 +1,7 @@
 import React from 'react'
 import { Box, Typography, Button, Container, Stack } from '@mui/material'
 import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined'
-import { i18n } from '@/shared/config'
+import { DEFAULT_LANGUAGE, i18n, localizedPath, toSupportedLanguage } from '@/shared/config'
 
 interface Props {
   children: React.ReactNode
@@ -48,7 +48,11 @@ class ErrorBoundary extends React.Component<Props, State> {
               <Button variant="contained" color="primary" size="large" onClick={() => window.location.reload()}>
                 {i18n.t('common.errorBoundaryRefresh')}
               </Button>
-              <Button variant="outlined" size="large" href="/">
+              <Button
+                variant="outlined"
+                size="large"
+                href={localizedPath('/', toSupportedLanguage(i18n.resolvedLanguage) ?? DEFAULT_LANGUAGE)}
+              >
                 {i18n.t('common.errorBoundaryHome')}
               </Button>
             </Stack>

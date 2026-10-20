@@ -7,7 +7,7 @@ export {
   toSupportedLanguage,
 } from './language'
 export type { Language } from './language'
-export { APP_ROUTES, findAppRoute, markdownTwinPath } from './routes'
+export { APP_ROUTES, findAppRoute, localizedPath, markdownTwinPath, pathnameLanguage } from './routes'
 export type { RouteId } from './routes'
 export { absoluteUrl } from './site'
 export { COLOR_MODES, createAppTheme } from './theme'

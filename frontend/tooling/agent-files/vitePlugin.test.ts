@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { build, createServer } from 'vite'
 import { describe, expect, it, onTestFinished } from 'vitest'
 import { buildAgentFiles } from './generate.ts'
-import { absoluteUrl, htmlFileOf, ROUTES } from './routes.ts'
+import { absoluteUrl, htmlFileOf, LOCALES, localizedPath, ROUTES } from './routes.ts'
 
 // The real configuration: removing the plugin from vite.config.ts turns these cases red.
 const ROOT = join(import.meta.dirname, '..', '..')
@@ -65,13 +65,17 @@ describe('agentFilesPlugin in vite.config.ts', () => {
         expect(assets.get(file.path.slice(1)), file.path).toBe(file.source)
       }
 
-      for (const route of ROUTES) {
-        const path = htmlFileOf(route)
-        const shell = assets.get(path) ?? ''
+      for (const locale of LOCALES) {
+        for (const route of ROUTES) {
+          const path = htmlFileOf(route, locale)
+          const expectedUrl = absoluteUrl(localizedPath(route.path, locale))
+          const shell = assets.get(path) ?? ''
 
-        expect(shell, path).not.toBe('')
-        expect(shell, path).toContain(`<link rel="canonical" href="${absoluteUrl(route.path)}">`)
-        expect(metaContent(shell, 'property', 'og:url'), path).toBe(absoluteUrl(route.path))
+          expect(shell, path).not.toBe('')
+          expect(shell, path).toContain(`<html lang="${locale}">`)
+          expect(shell, path).toContain(`<link rel="canonical" href="${expectedUrl}">`)
+          expect(metaContent(shell, 'property', 'og:url'), path).toBe(expectedUrl)
+        }
       }
 
       expect(assets.get('404.html')).toContain('<meta name="robots" content="noindex">')

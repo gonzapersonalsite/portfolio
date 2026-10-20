@@ -12,7 +12,7 @@ import { getProfile } from '@/entities/profile'
 import { useLanguage } from '@/features/language-switch'
 import { useColorMode } from '@/features/theme-switch'
 import { Link as RouterLink } from 'react-router-dom'
-import type { ColorMode } from '@/shared/config'
+import { localizedPath, type ColorMode } from '@/shared/config'
 import { getLocalizedText, useContent, usePageMeta } from '@/shared/lib'
 import { ImageWithFallback, RichTextRenderer, EmptyState, StatusBadge } from '@/shared/ui'
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch'
@@ -97,7 +97,7 @@ const HomePage: React.FC = () => {
                   endIcon={<ArrowForwardIcon />}
                   component={RouterLink}
                   nativeButton={false}
-                  to="/projects"
+                  to={localizedPath('/projects', language)}
                 >
                   {t('home.cta')}
                 </Button>
@@ -206,7 +206,7 @@ const HomePage: React.FC = () => {
               endIcon={<ArrowForwardIcon />}
               component={RouterLink}
               nativeButton={false}
-              to="/projects"
+              to={localizedPath('/projects', language)}
               size="large"
               sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
             >
@@ -268,7 +268,7 @@ const HomePage: React.FC = () => {
               size="large"
               component={RouterLink}
               nativeButton={false}
-              to="/about"
+              to={localizedPath('/about', language)}
             >
               {t('about.more')}
             </Button>

@@ -58,6 +58,16 @@ describe('Navbar', () => {
     expect(current.getAttribute('href')).toBe('/projects')
   })
 
+  it('points navigation links to /es/... and marks the current page when viewing Spanish routes', () => {
+    renderNavbar('/es/skills')
+
+    const nav = within(screen.getByRole('banner')).getByRole('navigation', { name: 'Navegación principal' })
+    const current = within(nav).getByRole('link', { current: 'page' })
+    expect(current.textContent).toBe('Habilidades')
+    expect(current.getAttribute('href')).toBe('/es/skills')
+    expect(within(nav).getByRole('link', { name: 'Inicio' }).getAttribute('href')).toBe('/es')
+  })
+
   it('does not mark a page for an unknown address sharing a route prefix', () => {
     renderNavbar('/projects/missing')
 

@@ -1,9 +1,26 @@
 import { getProfile } from '../../src/entities/profile/api/profileApi.ts'
 import { getCoreSkills } from '../../src/entities/skill/api/skillApi.ts'
 import { getAllSpokenLanguages } from '../../src/entities/spoken-language/api/languageApi.ts'
-import { absoluteUrl, HOME_ROUTE, twinPathOf, type ImagePreload, type Locale, type RouteSpec } from './routes.ts'
+import {
+  absoluteUrl,
+  HOME_ROUTE,
+  LOCALES,
+  localizedPath,
+  twinPathOf,
+  type ImagePreload,
+  type Locale,
+  type RouteSpec,
+} from './routes.ts'
 
-const LOCALES: readonly Locale[] = ['en', 'es']
+const OG_LOCALES: Record<Locale, string> = {
+  en: 'en_US',
+  es: 'es_ES',
+}
+
+const STARTUP_PROGRESS_LABEL: Record<Locale, string> = {
+  en: 'Loading portfolio',
+  es: 'Cargando portafolio',
+}
 
 const HEAD_END = '</head>'
 const APP_ROOT = '<div id="root">'
@@ -65,12 +82,17 @@ const preloadImageLink = (image: ImagePreload): string =>
     'fetchpriority="high">',
   ].join(' ')
 
-const headBlock = (route: RouteSpec): string =>
+const headBlock = (route: RouteSpec, locale: Locale): string =>
   [
-    `<link rel="canonical" href="${absoluteUrl(route.path)}">`,
+    `<link rel="canonical" href="${absoluteUrl(localizedPath(route.path, locale))}">`,
     ...LOCALES.map(
-      (locale) =>
-        `<link rel="alternate" type="text/markdown" hreflang="${locale}" href="${absoluteUrl(twinPathOf(route, locale))}">`,
+      (target) =>
+        `<link rel="alternate" hreflang="${target}" href="${absoluteUrl(localizedPath(route.path, target))}">`,
+    ),
+    `<link rel="alternate" hreflang="x-default" href="${absoluteUrl(localizedPath(route.path, 'en'))}">`,
+    ...LOCALES.map(
+      (target) =>
+        `<link rel="alternate" type="text/markdown" hreflang="${target}" href="${absoluteUrl(twinPathOf(route, target))}">`,
     ),
     ...(route.lcpImage === undefined ? [] : [preloadImageLink(route.lcpImage())]),
     `<script type="application/ld+json">${structuredData()}</script>`,
@@ -139,25 +161,31 @@ const absoluteImagePath =
 
 // The title, description and social metadata of every shell, the home page included, come from
 // routes.ts; the values in index.html only serve the dev server.
-const applyRouteMeta = (html: string, route: RouteSpec): string => {
-  let result = replaceOnce(
-    html,
-    /<title>[\s\S]*?<\/title>/,
-    `<title>${escapeHtml(route.shellTitle)}</title>`,
-    '<title>',
+const applyRouteMeta = (html: string, route: RouteSpec, locale: Locale): string => {
+  const { title, description } = route.meta[locale]
+  const pageUrl = absoluteUrl(localizedPath(route.path, locale))
+  let result = replaceOnce(html, /<html lang="en">/, `<html lang="${locale}">`, '<html lang="en">')
+  result = replaceOnce(result, /<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(title)}</title>`, '<title>')
+  result = replaceOnce(
+    result,
+    /<progress aria-label="Loading portfolio"><\/progress>/,
+    `<progress aria-label="${escapeHtml(STARTUP_PROGRESS_LABEL[locale])}"></progress>`,
+    '<progress aria-label="Loading portfolio">',
   )
-  result = updateMeta(result, 'name', 'description', () => route.shellDescription)
-  result = updateMeta(result, 'property', 'og:title', () => route.shellTitle)
-  result = updateMeta(result, 'property', 'og:description', () => route.shellDescription)
-  result = updateMeta(result, 'property', 'og:url', () => absoluteUrl(route.path))
+  result = updateMeta(result, 'name', 'description', () => description)
+  result = updateMeta(result, 'property', 'og:title', () => title)
+  result = updateMeta(result, 'property', 'og:description', () => description)
+  result = updateMeta(result, 'property', 'og:url', () => pageUrl)
+  result = updateMeta(result, 'property', 'og:locale', () => OG_LOCALES[locale])
   result = updateMeta(result, 'property', 'og:image', absoluteImagePath('og:image'))
   return updateMeta(result, 'name', 'twitter:image', absoluteImagePath('twitter:image'))
 }
 
-export const buildRouteShell = (template: string, route: RouteSpec): string =>
+export const buildRouteShell = (template: string, route: RouteSpec, locale: Locale = 'en'): string =>
   applyRouteMeta(
-    insertBefore(insertBefore(template, HEAD_END, headBlock(route)), APP_ROOT, noscriptBlock(route)),
+    insertBefore(insertBefore(template, HEAD_END, headBlock(route, locale)), APP_ROOT, noscriptBlock(route)),
     route,
+    locale,
   )
 
 // Served by Vercel with status 404 for any other address. It is not a page of the site, so it has
@@ -170,4 +198,5 @@ export const buildNotFoundPage = (template: string): string =>
       noscriptBlock(HOME_ROUTE),
     ),
     HOME_ROUTE,
+    'en',
   )

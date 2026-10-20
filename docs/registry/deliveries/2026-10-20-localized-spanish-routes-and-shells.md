@@ -25,9 +25,11 @@ phase: F2
   internos localizados y actualización dinámica de `canonical`, `og:url`,
   `og:locale` y alternates HTML `hreflang="en|es|x-default"` (`x-default` en la
   raíz española).
-- `frontend/tooling/agent-files/` (`routes.ts`, `shell.ts`, `vitePlugin.ts`,
-  `sitemap.ts`, `generate.ts` y sus tests): metadatos `meta.es` y `meta.en` desde
-  `seo.es` y `seo.en`, emisión de shells estáticos en español en la raíz
+- `frontend/index.html` y `frontend/tooling/agent-files/` (`routes.ts`, `shell.ts`,
+  `vitePlugin.ts`, `sitemap.ts`, `generate.ts` y sus tests): metadatos `meta.es` y
+  `meta.en` desde `seo.es` y `seo.en`, `frontend/index.html` con español como base
+  de desarrollo (`lang="es"`, `og:locale="es_ES"`, `aria-label="Cargando portafolio"`
+  y registro de `stack:react-fsd` en el commit `27df3cf` de `templates`), emisión de shells estáticos en español en la raíz
   (`frontend/dist/index.html` y `frontend/dist/<ruta>/index.html`) y en inglés
   bajo `/en` (`frontend/dist/en/index.html` y `frontend/dist/en/<ruta>/index.html`)
   con `<html lang>`, `og:locale`, `aria-label` del indicador de arranque por

@@ -164,13 +164,13 @@ const absoluteImagePath =
 const applyRouteMeta = (html: string, route: RouteSpec, locale: Locale): string => {
   const { title, description } = route.meta[locale]
   const pageUrl = absoluteUrl(localizedPath(route.path, locale))
-  let result = replaceOnce(html, /<html lang="en">/, `<html lang="${locale}">`, '<html lang="en">')
+  let result = replaceOnce(html, /<html lang="es">/, `<html lang="${locale}">`, '<html lang="es">')
   result = replaceOnce(result, /<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(title)}</title>`, '<title>')
   result = replaceOnce(
     result,
-    /<progress aria-label="Loading portfolio"><\/progress>/,
+    /<progress aria-label="Cargando portafolio"><\/progress>/,
     `<progress aria-label="${escapeHtml(STARTUP_PROGRESS_LABEL[locale])}"></progress>`,
-    '<progress aria-label="Loading portfolio">',
+    '<progress aria-label="Cargando portafolio">',
   )
   result = updateMeta(result, 'name', 'description', () => description)
   result = updateMeta(result, 'property', 'og:title', () => title)

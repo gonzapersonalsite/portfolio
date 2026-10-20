@@ -22,7 +22,7 @@ afterEach(() => {
 describe('initial HTML loading state', () => {
   it('offers a named indeterminate indicator without running any app code', () => {
     const root = mountStartup()
-    const progress = within(root).getByRole('progressbar', { name: 'Loading portfolio' })
+    const progress = within(root).getByRole('progressbar', { name: 'Cargando portafolio' })
 
     expect(progress.hasAttribute('value')).toBe(false)
     expect(root.textContent?.trim()).toBe('GONZALO.DEV')

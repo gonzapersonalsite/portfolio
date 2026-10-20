@@ -54,7 +54,7 @@ item layer:react-vite | .gitignore | ignore | - | 887f42eeae4276a8ba8ed3e14ec656
 item layer:react-vite | .gitignore | ignore | - | f1a9a09b226cf8e98a4286200c5d9ebd5c28924707ac3317947f8ecf06ab167b
 item layer:react-vite | AGENTS.md | skill | - | bb28bd982e9aace3172c57e39bb4fe46a147a970f10b80aa9b82db0dcf4dfb98
 
-component stack:react-fsd | 16f19536e03771a0a45e746d289b9f8c1bd613b8 | project=portafolio
+component stack:react-fsd | 27df3cfdb3a1dbbdaf19ea4425ca99c92528ad74 | project=portafolio
 file stack:react-fsd | eslint-fsd-gaps.js | kept
 file stack:react-fsd | eslint-tests.js | kept
 file stack:react-fsd | eslint.config.js | kept
@@ -72,4 +72,4 @@ file stack:react-fsd | tooling/agent-files/vitePlugin.test.ts | kept
 file stack:react-fsd | tooling/agent-files/vitePlugin.ts | kept
 file stack:react-fsd | vitest.setup.ts | kept
 
-applied 16f19536e03771a0a45e746d289b9f8c1bd613b8
+applied 27df3cfdb3a1dbbdaf19ea4425ca99c92528ad74

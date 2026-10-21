@@ -163,28 +163,30 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
               <VisibilityIcon fontSize="large" aria-hidden="true" />
             </Box>
           </Box>
-          {/* Always visible, so touch screens (no hover) also show that the cover opens a gallery. */}
-          <Box
-            aria-hidden="true"
-            sx={{
-              position: 'absolute',
-              left: 10,
-              bottom: 10,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 0.5,
-              px: 1,
-              py: 0.25,
-              borderRadius: 1,
-              backgroundColor: 'rgba(0, 0, 0, 0.6)',
-              color: 'common.white',
-              typography: 'caption',
-              fontWeight: 600,
-            }}
-          >
-            <PhotoLibraryIcon sx={{ fontSize: 16 }} />
-            {project.images.length}
-          </Box>
+        </Box>
+        {/* Always visible, so touch screens (no hover) also show that the cover opens a gallery. */}
+        <Box
+          aria-hidden="true"
+          sx={{
+            position: 'absolute',
+            left: 10,
+            bottom: 10,
+            zIndex: 2,
+            pointerEvents: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 0.5,
+            px: 1,
+            py: 0.25,
+            borderRadius: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            color: 'common.white',
+            typography: 'caption',
+            fontWeight: 600,
+          }}
+        >
+          <PhotoLibraryIcon sx={{ fontSize: 16 }} />
+          {project.images.length}
         </Box>
 
         <Chip

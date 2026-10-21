@@ -2,7 +2,7 @@ import React from 'react'
 import { Box, Grid, Skeleton, Stack, Container } from '@mui/material'
 
 export const HeroSkeleton: React.FC = () => (
-  <Box sx={{ minHeight: '90vh', display: 'flex', alignItems: 'center' }}>
+  <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center' }}>
     <Container maxWidth="lg">
       <Grid container spacing={4} sx={{ alignItems: 'center' }}>
         <Grid size={{ xs: 12, md: 7 }}>
@@ -174,4 +174,27 @@ export const ContactSkeleton: React.FC = () => (
       <Skeleton animation="wave" variant="rectangular" width="100%" height={500} sx={{ borderRadius: 4 }} />
     </Grid>
   </Grid>
+)
+
+export const NotFoundSkeleton: React.FC = () => (
+  <Box
+    sx={{
+      minHeight: 'calc(100vh - 160px)',
+      display: 'flex',
+      alignItems: 'center',
+      py: { xs: 6, md: 10 },
+    }}
+  >
+    <Container maxWidth="md">
+      <Box sx={{ textAlign: 'center', mb: 5 }}>
+        <Skeleton animation="wave" variant="rounded" width={180} height={32} sx={{ mx: 'auto', mb: 2 }} />
+        <Skeleton animation="wave" variant="text" width={220} height={110} sx={{ mx: 'auto', mb: 1 }} />
+        <Skeleton animation="wave" variant="text" width="60%" height={48} sx={{ mx: 'auto', mb: 1.5 }} />
+        <Skeleton animation="wave" variant="text" width="75%" height={28} sx={{ mx: 'auto' }} />
+      </Box>
+      <Box sx={{ maxWidth: 640, mx: 'auto', mt: 6 }}>
+        <Skeleton animation="wave" variant="rectangular" width="100%" height={360} sx={{ borderRadius: 4 }} />
+      </Box>
+    </Container>
+  </Box>
 )

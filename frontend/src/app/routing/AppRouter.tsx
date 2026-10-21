@@ -11,6 +11,7 @@ import {
   ProjectGridSkeleton,
   AboutSkeleton,
   ContactSkeleton,
+  NotFoundSkeleton,
 } from '@/shared/ui'
 
 type PageModule = { default: React.ComponentType }
@@ -21,6 +22,9 @@ interface NetworkInformationLike {
 }
 
 const isConstrainedConnection = (): boolean => {
+  if (typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent)) {
+    return true
+  }
   const connection = (navigator as Navigator & { connection?: NetworkInformationLike }).connection
   if (!connection) return false
   if (connection.saveData === true) return true
@@ -144,7 +148,7 @@ export default function AppRouter() {
         <Route
           path="*"
           element={
-            <Suspense fallback={<PageLoader />}>
+            <Suspense fallback={<NotFoundSkeleton />}>
               <NotFoundPage />
             </Suspense>
           }

@@ -246,7 +246,7 @@ const NotFoundPage: React.FC = () => {
                     sx={{
                       fontFamily: 'inherit',
                       fontSize: 'inherit',
-                      color: 'error.main',
+                      color: theme.palette.mode === 'light' ? 'error.dark' : 'error.light',
                       fontWeight: 600,
                       mb: 0.5,
                     }}
@@ -287,7 +287,11 @@ const NotFoundPage: React.FC = () => {
                       sx={{
                         fontFamily: 'inherit',
                         fontSize: 'inherit',
-                        color: output.isError ? 'error.main' : 'text.primary',
+                        color: output.isError
+                          ? theme.palette.mode === 'light'
+                            ? 'error.dark'
+                            : 'error.light'
+                          : 'text.primary',
                         fontWeight: output.isError ? 600 : 500,
                       }}
                     >

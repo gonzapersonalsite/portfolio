@@ -27,7 +27,12 @@ const PublicLayout: React.FC = () => {
       </a>
 
       <Navbar />
-      <Box component="main" id={MAIN_CONTENT_ID} tabIndex={-1} sx={{ flexGrow: 1, outline: 'none' }}>
+      <Box
+        component="main"
+        id={MAIN_CONTENT_ID}
+        tabIndex={-1}
+        sx={{ flexGrow: 1, minHeight: '100vh', outline: 'none' }}
+      >
         <Outlet />
       </Box>
 

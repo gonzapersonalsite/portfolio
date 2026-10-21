@@ -11,4 +11,5 @@ export {
   ExperienceSkeleton,
   PageHeaderSkeleton,
   ContactSkeleton,
+  NotFoundSkeleton,
 } from './SkeletonLoaders'

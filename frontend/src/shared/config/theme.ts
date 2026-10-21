@@ -36,6 +36,11 @@ const getThemeOptions = (mode: ColorMode): ThemeOptions => {
       secondary: {
         main: isGlass ? glassColors.neon.pink : muiMode === 'light' ? '#dc004e' : '#f48fb1',
       },
+      error: {
+        main: muiMode === 'light' ? '#c62828' : '#f44336',
+        light: '#ef5350',
+        dark: '#b71c1c',
+      },
       background: {
         default: isGlass ? glassColors.background.deep : muiMode === 'light' ? '#f5f5f5' : '#121212',
         paper: isGlass ? glassColors.background.glassStart : muiMode === 'light' ? '#ffffff' : '#1e1e1e',

@@ -7,6 +7,7 @@ import {
   buildGoblinScene,
   type GoblinMotion,
   type GoblinScene,
+  type GoblinVariant,
   type PixelRect,
   type PortalSpec,
   type TimelineSpec,
@@ -90,6 +91,20 @@ const renderPortal = (portal: PortalSpec) => (
       portal.coreScale,
       <g>
         {renderRects(portal.coreRects)}
+        {portal.ripples.map((ripple, index) => (
+          <rect
+            key={`ripple-${index}`}
+            data-portal-ripple={portal.side}
+            x={ripple.rect.x}
+            y={ripple.rect.y}
+            width={ripple.rect.width}
+            height={ripple.rect.height}
+            fill={ripple.rect.fill}
+          >
+            {renderAnimate('opacity', ripple.opacity)}
+            {renderAnimate('fill', ripple.fill)}
+          </rect>
+        ))}
         {renderAnimate('opacity', portal.corePulse)}
       </g>,
     )}
@@ -211,10 +226,47 @@ const SCENE_RENDERERS: Record<GoblinMotion, (scene: GoblinScene, clipId: string)
             ))}
             {renderAnimate('opacity', scene.glyphs.visible)}
           </g>
+          {scene.glyphs.alert ? (
+            <g data-goblin-alert="true" opacity={0}>
+              {renderAnimate('opacity', scene.glyphs.alert.visible)}
+              <g>
+                {renderAnimateTransform('translate', scene.glyphs.alert.bounce)}
+                <text
+                  x={scene.glyphs.alert.x}
+                  y={scene.glyphs.alert.y}
+                  fontFamily="ui-monospace, Menlo, Consolas, monospace"
+                  fontSize={11}
+                  fontWeight={800}
+                  fill={scene.palette.portalRim}
+                >
+                  {scene.glyphs.alert.text}
+                </text>
+              </g>
+            </g>
+          ) : null}
         </g>
       </g>
       {renderPortal(scene.portals.entry)}
       {renderPortal(scene.portals.exit)}
+      {scene.portals.beckon ? (
+        <g clipPath={`url(#${clipId})`}>
+          <g
+            data-portal-beckon="exit"
+            transform={`translate(${scene.portals.beckon.x} ${scene.portals.beckon.y})`}
+            opacity={0}
+          >
+            {renderAnimate('opacity', scene.portals.beckon.visible)}
+            <g>
+              {renderAnimateTransform('translate', scene.portals.beckon.reach)}
+              {renderRects(scene.portals.beckon.armRects)}
+              <g>
+                {renderAnimateTransform('translate', scene.portals.beckon.fingerWave)}
+                {renderRects(scene.portals.beckon.fingerRects)}
+              </g>
+            </g>
+          </g>
+        </g>
+      ) : null}
     </>
   ),
   resting: (scene) => (
@@ -269,7 +321,11 @@ const setSvgAnimationRunning = (svg: SVGSVGElement, running: boolean) => {
   }
 }
 
-const PixelGoblin: React.FC = () => {
+export interface PixelGoblinProps {
+  readonly variant?: GoblinVariant
+}
+
+const PixelGoblin: React.FC<PixelGoblinProps> = ({ variant = 'coding' }) => {
   const { t } = useTranslation()
   const { mode, animationsPaused } = useColorMode()
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
@@ -277,7 +333,7 @@ const PixelGoblin: React.FC = () => {
   const rawId = useId()
   const clipId = `goblin-portal-clip-${rawId.replace(/[^a-zA-Z0-9_-]/g, '')}`
   const motion: GoblinMotion = animationsPaused || reducedMotion ? 'resting' : 'animated'
-  const scene = useMemo(() => buildGoblinScene(mode), [mode])
+  const scene = useMemo(() => buildGoblinScene(mode, undefined, variant), [mode, variant])
 
   useEffect(() => {
     const svg = svgRef.current

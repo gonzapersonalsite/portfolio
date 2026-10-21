@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import { Box, Container } from '@mui/material'
 import { PublicLayout } from '../layouts'
 import { APP_ROUTES, localizedPath, type Language, type RouteId } from '@/shared/config'
@@ -25,7 +25,7 @@ const PAGE_LOADERS: Record<RouteId, () => Promise<PageModule>> = {
   contact: () => import('@/pages/contact'),
 }
 
-const PageLoader = ({ children }: { children: React.ReactNode }) => (
+const PageLoader = ({ children }: { children?: React.ReactNode }) => (
   <Box sx={{ py: 8 }}>
     <Container maxWidth="lg">
       <PageHeaderSkeleton />
@@ -64,6 +64,7 @@ const PAGE_SKELETONS: Record<RouteId, React.ReactNode> = {
 }
 
 const PAGES = APP_ROUTES.map((route) => ({ ...route, Page: React.lazy(PAGE_LOADERS[route.id]) }))
+const NotFoundPage = React.lazy(() => import('@/pages/not-found'))
 
 // Warm the lazy page chunks while the browser is idle so navigation feels instant.
 function usePrefetchPages() {
@@ -120,10 +121,15 @@ export default function AppRouter() {
       <Route path="/" element={<PublicLayout />}>
         {renderRoutes('en')}
         {renderRoutes('es')}
+        <Route
+          path="*"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <NotFoundPage />
+            </Suspense>
+          }
+        />
       </Route>
-
-      <Route path="/en/*" element={<Navigate to="/en" replace />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }

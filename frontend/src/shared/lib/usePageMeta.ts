@@ -3,14 +3,16 @@ import { useEffect } from 'react'
 interface PageMetaOptions {
   title: string
   description?: string
+  robots?: string
 }
 
-export const usePageMeta = ({ title, description }: PageMetaOptions) => {
+export const usePageMeta = ({ title, description, robots }: PageMetaOptions) => {
   useEffect(() => {
     const previousTitle = document.title
     const previousDescription = getMetaContent('description')
     const previousOgTitle = getMetaContent('og:title')
     const previousOgDescription = getMetaContent('og:description')
+    const previousRobots = getMetaContent('robots')
 
     document.title = title
     setMeta('og:title', title)
@@ -18,14 +20,20 @@ export const usePageMeta = ({ title, description }: PageMetaOptions) => {
       setMeta('description', description)
       setMeta('og:description', description)
     }
+    if (robots !== undefined) {
+      setMeta('robots', robots)
+    }
 
     return () => {
       document.title = previousTitle
       restoreMeta('description', previousDescription)
       restoreMeta('og:title', previousOgTitle)
       restoreMeta('og:description', previousOgDescription)
+      if (robots !== undefined) {
+        restoreMeta('robots', previousRobots)
+      }
     }
-  }, [title, description])
+  }, [title, description, robots])
 }
 
 const metaAttribute = (name: string): 'property' | 'name' => (name.startsWith('og:') ? 'property' : 'name')

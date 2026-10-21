@@ -261,7 +261,7 @@ describe('buildNotFoundPage', () => {
     expect(page).not.toContain('application/ld+json')
   })
 
-  it('still runs the app, which sends the visitor home, and points no-JS visitors to the home twins', () => {
+  it('still runs the app, which renders the 404 page, and points no-JS visitors to the home twins', () => {
     expect(page).toContain('<div id="root">')
     expect(page).toContain(`<title>${HOME_ROUTE.shellTitle}</title>`)
     expect(noScriptContent(page)).toContain('href="/index.md"')

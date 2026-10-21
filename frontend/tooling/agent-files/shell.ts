@@ -189,7 +189,7 @@ export const buildRouteShell = (template: string, route: RouteSpec, locale: Loca
   )
 
 // Served by Vercel with status 404 for any other address. It is not a page of the site, so it has
-// no canonical link or markdown alternates; with JavaScript the router sends the visitor home.
+// no canonical link or markdown alternates; with JavaScript the router renders the 404 page.
 export const buildNotFoundPage = (template: string): string =>
   applyRouteMeta(
     insertBefore(

@@ -83,7 +83,7 @@ The same entity data feeds a build-time generator (`frontend/tooling/agent-files
 - `llms.txt`, `robots.txt` and `sitemap.xml` at the site root.
 - Markdown twins (`/about/index.md`, `/about/index.es.md`, ...) in English and Spanish for every route, linked from the HTML with `<link rel="alternate" type="text/markdown" hreflang="en|es">`. Each twin ends with links to the other pages, and they are served with `X-Robots-Tag: noindex`, so search engines index the HTML pages instead.
 - One HTML shell per route and language (`dist/<route>/index.html` and `dist/en/<route>/index.html`), the home page included, with its own `<html lang>`, title, description, Open Graph title/description/URL/locale, canonical address, HTML `hreflang="en|es|x-default"` alternates, markdown alternates and structured data: one JSON-LD `@graph` with `WebSite` and `Person` (name, job title, core competencies, spoken languages and profiles, all derived from the content). Crawlers and link previews get the right metadata without running JavaScript; the page content itself reaches readers without JavaScript through the markdown twins, which the shell's `<noscript>` text links. After a client-side navigation or language switch the SPA points the canonical link, Open Graph URL/locale and alternates at the current localized page.
-- `404.html` (`noindex`, no canonical), which Vercel serves with status 404 for any other address; with JavaScript, the app on that page sends the visitor home.
+- `404.html` (`noindex`, no canonical), which Vercel serves with status 404 for any other address; with JavaScript, the app on that page renders `NotFoundPage` with the lost `PixelGoblin` scene, an interactive Linux-style terminal (`help`, `ls`, `pwd`, `whoami`, `clear`, `cd ~`, `cd projects`…) and navigation buttons back to the home or projects page.
 
 `pnpm dev` serves `llms.txt`, `robots.txt`, `sitemap.xml` and the markdown twins through middleware; the per-route HTML shells, their head block (canonical, alternates, JSON-LD) and `404.html` are only produced by `pnpm build` (check them with `pnpm preview` at the trailing-slash address, e.g. `/about/`). `pnpm build` emits everything into `dist/`. Tests pin content, metadata parity with i18n, that every internal link resolves to a generated file, the real size declared for the social image, and that the Vite plugin is wired in `vite.config.ts` for both the production build and the dev server middleware.
 
@@ -103,7 +103,7 @@ This section governs the shape of the code in `src`: where each thing goes, what
 |---|---|
 | `app` | The entry point (`src/app/main.tsx`) and Vite's ambient declarations (`src/app/vite-env.d.ts`), the providers, the router, the public layout and the global styles |
 | `pages` | A whole screen: it composes what is below and keeps the code only it uses |
-| `widgets` | A large UI block that pages or the public layout of `app` use (`navbar`, `footer`) |
+| `widgets` | A large UI block that pages or the public layout of `app` use (`navbar`, `footer`, `pixel-goblin`) |
 | `features` | A user action with value of its own (`contact-form`, `language-switch`, `theme-switch`, `notifications`) |
 | `entities` | A business concept: its types, its rules, its static content and its view (`profile`, `project`, `skill`, `experience`, `spoken-language`) |
 | `shared` | What knows nothing of the business: configuration, utilities, the base UI |

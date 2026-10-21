@@ -48,4 +48,13 @@ describe('usePageMeta', () => {
 
     expect(getMeta('description')?.getAttribute('content')).toBe('Default description')
   })
+
+  it('applies and restores robots metadata when provided', () => {
+    const { unmount } = renderHook(() => usePageMeta({ title: 'Not Found', robots: 'noindex' }))
+
+    expect(getMeta('robots')?.getAttribute('content')).toBe('noindex')
+
+    unmount()
+    expect(getMeta('robots')).toBeNull()
+  })
 })

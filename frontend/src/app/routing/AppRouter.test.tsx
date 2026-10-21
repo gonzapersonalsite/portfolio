@@ -23,6 +23,7 @@ vi.mock('@/pages/skills', () => ({ default: () => <h1>Skills page</h1> }))
 vi.mock('@/pages/experience', () => ({ default: () => <h1>Experience page</h1> }))
 vi.mock('@/pages/projects', () => ({ default: () => <h1>Projects page</h1> }))
 vi.mock('@/pages/contact', () => ({ default: () => <h1>Contact page</h1> }))
+vi.mock('@/pages/not-found', () => ({ default: () => <h1>Not found page</h1> }))
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -63,5 +64,16 @@ describe('AppRouter page prefetch', () => {
     fireEvent.click(screen.getByRole('link', { name: 'About' }))
     expect(await screen.findByRole('heading', { name: i18n.t('common.errorBoundaryTitle') })).toBeTruthy()
     expect(error).toHaveBeenCalledWith('ErrorBoundary caught an error:', expect.any(Error), expect.any(Object))
+  })
+
+  it('renders the custom 404 page inside PublicLayout for unknown routes', async () => {
+    render(
+      <MemoryRouter initialEntries={['/unknown-route']}>
+        <AppRouter />
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole('heading', { name: 'Not found page' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Projects' })).toBeTruthy()
   })
 })

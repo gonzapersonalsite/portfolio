@@ -83,7 +83,7 @@ El mismo contenido de las entidades alimenta un generador en build (`frontend/to
 - `llms.txt`, `robots.txt` y `sitemap.xml` en la raíz del sitio.
 - Copias markdown (`/about/index.md`, `/about/index.es.md`, ...) en inglés y español para cada ruta, enlazadas desde el HTML con `<link rel="alternate" type="text/markdown" hreflang="en|es">`. Cada copia termina con enlaces al resto de páginas y se sirven con `X-Robots-Tag: noindex`, para que los buscadores indexen las páginas HTML.
 - Un shell HTML por ruta e idioma (`dist/<ruta>/index.html` y `dist/en/<ruta>/index.html`), incluida la de inicio, con su propio `<html lang>`, title, description, título/descripción/URL/locale de Open Graph, canonical, alternates HTML `hreflang="en|es|x-default"`, alternates markdown y datos estructurados: un `@graph` JSON-LD con `WebSite` y `Person` (nombre, puesto, competencias principales, idiomas y perfiles, todo derivado del contenido). Los crawlers y las vistas previas de enlaces reciben los metadatos correctos sin ejecutar JavaScript; el contenido de la página llega a quien no ejecuta JavaScript a través de las copias markdown, que enlaza el texto `<noscript>` del shell. Tras una navegación o cambio de idioma en el cliente, la SPA apunta el canonical, la URL/locale de Open Graph y los alternates a la página e idioma actuales.
-- `404.html` (`noindex`, sin canonical), que Vercel sirve con estado 404 para cualquier otra dirección; con JavaScript, la app de esa página lleva al visitante al inicio.
+- `404.html` (`noindex`, sin canonical), que Vercel sirve con estado 404 para cualquier otra dirección; con JavaScript, la app de esa página renderiza `NotFoundPage` con la variante `lost` de `PixelGoblin`, una terminal interactiva estilo Linux (`help`, `ls`, `pwd`, `whoami`, `clear`, `cd ~`, `cd projects`…) y botones de retorno al inicio o a los proyectos.
 
 `pnpm dev` sirve `llms.txt`, `robots.txt`, `sitemap.xml` y las copias markdown por middleware; los shells HTML por ruta, su bloque de cabecera (canonical, alternates, JSON-LD) y `404.html` solo los genera `pnpm build` (compruébalos con `pnpm preview` en la dirección con barra final, p. ej. `/about/`). `pnpm build` lo emite todo en `dist/`. Los tests fijan el contenido, la paridad de metadatos con i18n y que todo enlace interno resuelva a un fichero generado.
 
@@ -103,7 +103,7 @@ Esta sección manda sobre la forma del código de `src`: dónde va cada cosa, qu
 |---|---|
 | `app` | La entrada (`src/app/main.tsx`) y las declaraciones ambientales de Vite (`src/app/vite-env.d.ts`), los providers, el router, el layout público y los estilos globales |
 | `pages` | Una pantalla entera: compone lo de debajo y guarda el código que solo usa ella |
-| `widgets` | Un bloque de interfaz grande que usan las páginas o el layout público de `app` (`navbar`, `footer`) |
+| `widgets` | Un bloque de interfaz grande que usan las páginas o el layout público de `app` (`navbar`, `footer`, `pixel-goblin`) |
 | `features` | Una acción del usuario con valor propio (`contact-form`, `language-switch`, `theme-switch`, `notifications`) |
 | `entities` | Un concepto del negocio: sus tipos, sus reglas, su contenido estático y su vista (`profile`, `project`, `skill`, `experience`, `spoken-language`) |
 | `shared` | Lo que no sabe nada del negocio: la configuración, utilidades, la UI base |

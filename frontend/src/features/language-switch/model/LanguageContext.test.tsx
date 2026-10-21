@@ -62,6 +62,15 @@ describe('LanguageProvider', () => {
     expect(window.localStorage.getItem('language')).toBe('en')
   })
 
+  it('switches the language and path prefix on an unknown 404 route', () => {
+    const { result } = renderLanguage('/en/missing-page')
+
+    act(() => result.current.setLanguage('es'))
+
+    expect(result.current.language).toBe('es')
+    expect(result.current.pathname).toBe('/missing-page')
+  })
+
   it('starts in English when the visitor lands on a /en route', async () => {
     await i18n.changeLanguage('es')
     const { result } = renderLanguage('/en/about')

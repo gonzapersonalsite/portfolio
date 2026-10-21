@@ -164,6 +164,23 @@ const resources = {
       footer: {
         rights: 'All rights reserved.',
       },
+      notFound: {
+        badge: 'HTTP 404 · ROUTE_NOT_FOUND',
+        heading: 'Page Not Found',
+        description: 'The route you are looking for does not exist or has moved to another corner of the codebase.',
+        terminalTitle: 'gonzalo@portfolio: ~ (bash)',
+        terminalOutput: 'No such file or directory (HTTP 404)',
+        terminalHint: 'Type "help" to list commands ("cd ~", "cd projects", "ls"...) or use the buttons below.',
+        terminalInputLabel: 'Terminal command input',
+        terminalPlaceholder: 'help, ls, cd ~, cd projects...',
+        terminalHelp:
+          'Available commands: help · ls · pwd · whoami · clear · cd ~ · cd projects · cd about · cd skills · cd experience · cd contact',
+        terminalLs: 'home/  about/  skills/  experience/  projects/  contact/',
+        terminalWhoami: 'gonzalo — Junior Full Stack Developer (React · TypeScript · Spring Boot · .NET · Flutter)',
+        terminalUnknown: 'bash: {{cmd}}: command not found — type "help" for available commands.',
+        backHome: 'Back to Home',
+        viewProjects: 'View Projects',
+      },
       seo: {
         home: {
           title: 'Gonzalo Martínez | Junior Full Stack Developer',
@@ -194,6 +211,10 @@ const resources = {
           title: 'Contact | Gonzalo Martínez',
           description:
             'Get in touch with Gonzalo Martínez for professional opportunities, collaborations, or project inquiries. Based in Palma de Mallorca, Spain.',
+        },
+        notFound: {
+          title: 'Page Not Found | Gonzalo Martínez',
+          description: 'The page you are looking for does not exist in Gonzalo Martínez’s portfolio.',
         },
       },
     },
@@ -352,6 +373,23 @@ const resources = {
       footer: {
         rights: 'Todos los derechos reservados.',
       },
+      notFound: {
+        badge: 'HTTP 404 · RUTA_NO_ENCONTRADA',
+        heading: 'Página no encontrada',
+        description: 'La ruta que buscas no existe o se ha movido a otro rincón del código.',
+        terminalTitle: 'gonzalo@portfolio: ~ (bash)',
+        terminalOutput: 'No existe el fichero o el directorio (HTTP 404)',
+        terminalHint: 'Escribe "help" para ver los comandos ("cd ~", "cd projects", "ls"...) o usa los botones.',
+        terminalInputLabel: 'Entrada de comandos de la terminal',
+        terminalPlaceholder: 'help, ls, cd ~, cd projects...',
+        terminalHelp:
+          'Comandos disponibles: help · ls · pwd · whoami · clear · cd ~ · cd projects · cd about · cd skills · cd experience · cd contact',
+        terminalLs: 'home/  about/  skills/  experience/  projects/  contact/',
+        terminalWhoami: 'gonzalo — Desarrollador Full Stack junior (React · TypeScript · Spring Boot · .NET · Flutter)',
+        terminalUnknown: 'bash: {{cmd}}: orden no encontrada — escribe "help" para ver los comandos disponibles.',
+        backHome: 'Volver al inicio',
+        viewProjects: 'Ver proyectos',
+      },
       seo: {
         home: {
           title: 'Gonzalo Martínez | Desarrollador Full Stack junior',
@@ -382,6 +420,10 @@ const resources = {
           title: 'Contacto | Gonzalo Martínez',
           description:
             'Ponte en contacto con Gonzalo Martínez para oportunidades profesionales, colaboraciones o consultas sobre proyectos. En Palma de Mallorca, España.',
+        },
+        notFound: {
+          title: 'Página no encontrada | Gonzalo Martínez',
+          description: 'La página que buscas no existe en el portafolio de Gonzalo Martínez.',
         },
       },
     },

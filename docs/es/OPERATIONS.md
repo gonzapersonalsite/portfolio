@@ -24,7 +24,7 @@ El proyecto es **solo estático**: un único despliegue, cero servidores.
   - Panel de Vercel: Install Command `pnpm install` y Build Command `pnpm run build`.
 
 ### 🌐 Configuración del hosting (`frontend/vercel.json`)
-- **Sin rewrites:** cada ruta es un fichero HTML propio. Cualquier otra dirección, incluido un asset o una imagen que no existen, recibe `404.html` con estado 404 (la app de esa página lleva al visitante al inicio). No hay `/favicon.ico`: las páginas enlazan los iconos de `/icons/`.
+- **Sin rewrites:** cada ruta es un fichero HTML propio. Cualquier otra dirección, incluido un asset o una imagen que no existen, recibe `404.html` con estado 404 (la app de esa página muestra `NotFoundPage` con retorno al inicio). No hay `/favicon.ico`: las páginas enlazan los iconos de `/icons/`.
 - **Cabeceras de seguridad:** `Content-Security-Policy`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` y `Permissions-Policy` en cada respuesta. La CSP permite scripts del propio sitio más el script de tema incrustado en `index.html` (por su hash `sha256`), estilos en línea (Emotion), imágenes y fuentes solo del propio sitio y peticiones de red solo al propio sitio y a EmailJS.
   - Si editas el script incrustado en `index.html`, `pnpm test` falla e imprime su nuevo valor `'sha256-…'`: ponlo en la CSP.
   - Un servicio de terceros nuevo (analítica, fuentes, embeds) necesita su host en la directiva de la CSP que corresponda o el navegador lo bloquea. La barra de herramientas de Vercel también queda bloqueada, solo en los despliegues de preview.

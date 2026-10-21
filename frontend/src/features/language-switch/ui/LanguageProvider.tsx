@@ -34,11 +34,10 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setSelectedLanguage(next)
       writeStorage(LANGUAGE_STORAGE_KEY, next)
       const route = findAppRoute(pathname)
-      if (route !== undefined) {
-        const nextPathname = localizedPath(route.path, next)
-        if (nextPathname !== pathname) {
-          navigate(`${nextPathname}${search}${hash}`, { replace: true })
-        }
+      const basePath = route !== undefined ? route.path : pathname.replace(/^\/en(?=\/|$)/i, '') || '/'
+      const nextPathname = localizedPath(basePath, next)
+      if (nextPathname !== pathname) {
+        navigate(`${nextPathname}${search}${hash}`, { replace: true })
       }
     },
     [pathname, search, hash, navigate],

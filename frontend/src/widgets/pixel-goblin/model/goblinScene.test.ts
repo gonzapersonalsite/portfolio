@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   GOBLIN_GROUND_OFFSET_PERCENT,
+  GOBLIN_LOST_LOOP_SECONDS,
   GOBLIN_PALETTES,
   GOBLIN_PIXEL_UNIT,
   GOBLIN_SPRITE_ROWS,
@@ -79,6 +80,9 @@ describe('goblinScene', () => {
     expect(scene.portals.entry.opacity.values).toBe('0;1;0')
     expect(scene.portals.entry.corePulse.dur).toBe('16s')
     expect(scene.portals.entry.corePulse.calcMode).toBe('spline')
+    expect(scene.portals.entry.ripples).toHaveLength(6)
+    expect(scene.portals.entry.ripples[0].fill.dur).toBe('16s')
+    expect(scene.portals.entry.ripples[0].opacity.calcMode).toBe('spline')
     expect(scene.portals.entry.particles).toHaveLength(8)
     expect(scene.portals.entry.particles[0].motion.dur).toBe('16s')
     expect(scene.portals.entry.particles[0].opacity.dur).toBe('16s')
@@ -89,7 +93,9 @@ describe('goblinScene', () => {
     expect(scene.portals.exit.rimScale.keyTimes).toBe('0.0000;0.8095;0.8402;0.9701;0.9919;1.0000')
     expect(scene.portals.exit.scale.keyTimes).toBe('0.0000;0.8181;0.8488;0.9640;0.9858;1.0000')
     expect(scene.portals.exit.opacity.values).toBe('0;1;0')
+    expect(scene.portals.exit.ripples).toHaveLength(6)
     expect(scene.portals.exit.particles).toHaveLength(8)
+    expect(scene.portals.beckon).toBeUndefined()
 
     const topGlowRect = scene.portals.entry.rects[0]
     expect(scene.portals.entry.y + topGlowRect.y).toBe(3)
@@ -145,5 +151,22 @@ describe('goblinScene', () => {
     const motion = beatMotion([[0, 0.01, 0.08]], [-1, 0])
     expect(motion.values).toBe('0 0;0 -3;0 0;0 0')
     expect(motion.keyTimes).toBe('0.0000;0.0050;0.0100;1.0000')
+  })
+
+  it('builds a distinct lost variant with a longer cycle, beckoning exit-portal hand, alert glyph and no laptop', () => {
+    const lost = buildGoblinScene('dark', GOBLIN_STAGE_WIDTH, 'lost')
+    expect(lost.travel.dur).toBe(`${GOBLIN_LOST_LOOP_SECONDS}s`)
+    expect(lost.laptop.deck).toEqual([])
+    expect(lost.laptop.openLid).toEqual([])
+    expect(lost.laptop.inFrontVisible.values).toBe('0;0')
+    expect(lost.glyphs.items.map((item) => item.text)).toEqual(['?', '404', '?!'])
+    expect(lost.glyphs.alert?.text).toBe('!')
+    expect(lost.portals.beckon).toBeDefined()
+    expect(lost.portals.beckon?.x).toBe(lost.portals.exit.x)
+    expect(lost.portals.beckon?.armRects.length).toBeGreaterThan(0)
+    expect(lost.portals.beckon?.fingerRects.length).toBeGreaterThan(0)
+    expect(lost.portals.beckon?.reach.values).toBe('39 0;39 0;0 0;0 0;39 0;39 0')
+    expect(lost.portals.beckon?.fingerWave.values.split(';')).toHaveLength(11)
+    expect(lost.travel.values.split(';')).toHaveLength(11)
   })
 })

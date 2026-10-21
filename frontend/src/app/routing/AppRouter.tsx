@@ -15,6 +15,20 @@ import {
 
 type PageModule = { default: React.ComponentType }
 
+interface NetworkInformationLike {
+  readonly saveData?: boolean
+  readonly effectiveType?: string
+}
+
+const isConstrainedConnection = (): boolean => {
+  const connection = (navigator as Navigator & { connection?: NetworkInformationLike }).connection
+  if (!connection) return false
+  if (connection.saveData === true) return true
+  return (
+    connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g' || connection.effectiveType === '3g'
+  )
+}
+
 // Each page chunk is loaded from one place: React.lazy renders it and the idle prefetch warms it.
 const PAGE_LOADERS: Record<RouteId, () => Promise<PageModule>> = {
   home: () => import('@/pages/home'),
@@ -66,9 +80,15 @@ const PAGE_SKELETONS: Record<RouteId, React.ReactNode> = {
 const PAGES = APP_ROUTES.map((route) => ({ ...route, Page: React.lazy(PAGE_LOADERS[route.id]) }))
 const NotFoundPage = React.lazy(() => import('@/pages/not-found'))
 
-// Warm the lazy page chunks while the browser is idle so navigation feels instant.
+// Warm the lazy page chunks while the browser is idle so navigation feels instant,
+// skipping constrained mobile networks (saveData / 2G / 3G) so prefetching never
+// competes with critical resources.
 function usePrefetchPages() {
   useEffect(() => {
+    if (isConstrainedConnection()) {
+      return undefined
+    }
+
     let cancelled = false
     const run = () => {
       if (!cancelled) {

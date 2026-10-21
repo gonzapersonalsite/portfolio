@@ -66,6 +66,28 @@ describe('AppRouter page prefetch', () => {
     expect(error).toHaveBeenCalledWith('ErrorBoundary caught an error:', expect.any(Error), expect.any(Object))
   })
 
+  it('skips speculative prefetching when saveData is enabled on navigator.connection', async () => {
+    const requestIdleCallback = vi.fn<(callback: IdleRequestCallback) => number>().mockReturnValue(1)
+    vi.stubGlobal('requestIdleCallback', requestIdleCallback)
+    Object.defineProperty(window.navigator, 'connection', {
+      configurable: true,
+      value: { saveData: true, effectiveType: '4g' },
+    })
+
+    render(
+      <MemoryRouter>
+        <AppRouter />
+      </MemoryRouter>,
+    )
+    expect(await screen.findByRole('heading', { name: 'Home page' })).toBeTruthy()
+    expect(requestIdleCallback).not.toHaveBeenCalled()
+
+    Object.defineProperty(window.navigator, 'connection', {
+      configurable: true,
+      value: undefined,
+    })
+  })
+
   it('renders the custom 404 page inside PublicLayout for unknown routes', async () => {
     render(
       <MemoryRouter initialEntries={['/unknown-route']}>

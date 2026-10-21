@@ -7,6 +7,14 @@ const FALLBACK_URLS = {
   project: '/images/no-image.svg',
 } as const
 
+const parseAspectDimensions = (aspectRatio: string): { readonly width?: number; readonly height?: number } => {
+  const match = /^(\d+)\s*\/\s*(\d+)$/.exec(aspectRatio.trim())
+  if (!match) return {}
+  const width = Number(match[1])
+  const height = Number(match[2])
+  return width > 0 && height > 0 ? { width, height } : {}
+}
+
 interface ImageWithFallbackProps extends BoxProps<'img'> {
   src?: string
   alt: string
@@ -40,6 +48,8 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({ src, alt, type, a
   const finalSrc = showFallback ? FALLBACK_URLS[type] : src
   // A srcset wins over src, so it has to go as well for the fallback to show.
   const finalSrcSet = showFallback ? undefined : srcSet
+  const intrinsicDimensions = parseAspectDimensions(aspectRatio)
+  const isEager = props.loading === 'eager'
 
   return (
     <Box
@@ -60,6 +70,8 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({ src, alt, type, a
         component="img"
         src={finalSrc}
         alt={alt}
+        width={intrinsicDimensions.width}
+        height={intrinsicDimensions.height}
         onError={handleError}
         onLoad={handleLoad}
         ref={onImageRef}
@@ -72,8 +84,8 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({ src, alt, type, a
           width: '100%',
           height: '100%',
           objectFit: 'cover',
-          opacity: isLoading ? 0 : 1,
-          transition: 'opacity 0.3s ease-in-out',
+          opacity: isEager || !isLoading ? 1 : 0,
+          transition: isEager ? 'none' : 'opacity 0.3s ease-in-out',
         }}
       />
     </Box>

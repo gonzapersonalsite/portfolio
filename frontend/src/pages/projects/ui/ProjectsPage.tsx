@@ -30,8 +30,8 @@ const ProjectsPage: React.FC = () => {
           <Grid container component="ul" spacing={4} sx={{ listStyle: 'none', p: 0, m: 0 }}>
             {projects.map((project, index) => (
               <Grid component="li" size={{ xs: 12, md: 6, lg: 4 }} key={project.id}>
-                {/* The first cover sits above the fold and is preloaded by the route shell. */}
-                <ProjectCard project={project} priority={index === 0} titleComponent="h2" />
+                {/* The first cover is preloaded with high priority; the first 3 sit above the fold on desktop. */}
+                <ProjectCard project={project} priority={index === 0} eager={index < 3} titleComponent="h2" />
               </Grid>
             ))}
           </Grid>

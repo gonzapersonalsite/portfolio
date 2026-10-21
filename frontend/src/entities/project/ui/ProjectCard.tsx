@@ -47,11 +47,18 @@ interface ProjectCardProps {
   project: Project
   // The first card of a page whose cover is the likely LCP element.
   priority?: boolean
+  // Cards in the first above-the-fold row on desktop load eagerly without competing for high fetchPriority.
+  eager?: boolean
   // h3 under a section heading (Home); h2 when the cards sit right under the page h1 (Projects).
   titleComponent?: 'h2' | 'h3'
 }
 
-const ProjectCard: React.FC<ProjectCardProps> = ({ project, priority = false, titleComponent = 'h3' }) => {
+const ProjectCard: React.FC<ProjectCardProps> = ({
+  project,
+  priority = false,
+  eager = false,
+  titleComponent = 'h3',
+}) => {
   // The language i18n resolved (only 'en' or 'es'), the same one the pages read from the context.
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'en'
@@ -95,7 +102,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, priority = false, ti
           alt={altOf(project.images[0])}
           type="project"
           aspectRatio={`${PROJECT_COVER_RATIO.width}/${PROJECT_COVER_RATIO.height}`}
-          loading={priority ? 'eager' : 'lazy'}
+          loading={priority || eager ? 'eager' : 'lazy'}
           fetchPriority={priority ? 'high' : undefined}
           sx={{
             width: '100%',

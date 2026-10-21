@@ -49,12 +49,18 @@ describe('usePageMeta', () => {
     expect(getMeta('description')?.getAttribute('content')).toBe('Default description')
   })
 
-  it('applies and restores robots metadata when provided', () => {
+  it('applies and restores robots metadata when provided and removes canonical on noindex', () => {
+    document.head.innerHTML = '<link rel="canonical" href="https://mi-portafolio-gonzalo.vercel.app/projects" />'
+
     const { unmount } = renderHook(() => usePageMeta({ title: 'Not Found', robots: 'noindex' }))
 
     expect(getMeta('robots')?.getAttribute('content')).toBe('noindex')
+    expect(document.querySelector('link[rel="canonical"]')).toBeNull()
 
     unmount()
     expect(getMeta('robots')).toBeNull()
+    expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(
+      'https://mi-portafolio-gonzalo.vercel.app/projects',
+    )
   })
 })

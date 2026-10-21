@@ -168,5 +168,10 @@ describe('goblinScene', () => {
     expect(lost.portals.beckon?.reach.values).toBe('39 0;39 0;0 0;0 0;39 0;39 0')
     expect(lost.portals.beckon?.fingerWave.values.split(';')).toHaveLength(11)
     expect(lost.travel.values.split(';')).toHaveLength(11)
+
+    const bounceTimes = lost.body.bounce.keyTimes.split(';').map(Number)
+    for (let i = 1; i < bounceTimes.length; i += 1) {
+      expect(bounceTimes[i]).toBeGreaterThanOrEqual(bounceTimes[i - 1])
+    }
   })
 })

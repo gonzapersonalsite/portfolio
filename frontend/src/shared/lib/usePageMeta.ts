@@ -13,6 +13,8 @@ export const usePageMeta = ({ title, description, robots }: PageMetaOptions) => 
     const previousOgTitle = getMetaContent('og:title')
     const previousOgDescription = getMetaContent('og:description')
     const previousRobots = getMetaContent('robots')
+    const canonicalLink = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')
+    const previousCanonicalHref = canonicalLink?.getAttribute('href') ?? undefined
 
     document.title = title
     setMeta('og:title', title)
@@ -22,6 +24,9 @@ export const usePageMeta = ({ title, description, robots }: PageMetaOptions) => 
     }
     if (robots !== undefined) {
       setMeta('robots', robots)
+      if (robots.includes('noindex')) {
+        canonicalLink?.remove()
+      }
     }
 
     return () => {
@@ -31,6 +36,12 @@ export const usePageMeta = ({ title, description, robots }: PageMetaOptions) => 
       restoreMeta('og:description', previousOgDescription)
       if (robots !== undefined) {
         restoreMeta('robots', previousRobots)
+        if (previousCanonicalHref !== undefined && !document.querySelector('link[rel="canonical"]')) {
+          const link = document.createElement('link')
+          link.setAttribute('rel', 'canonical')
+          link.setAttribute('href', previousCanonicalHref)
+          document.head.appendChild(link)
+        }
       }
     }
   }, [title, description, robots])

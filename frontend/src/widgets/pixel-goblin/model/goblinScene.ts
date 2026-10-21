@@ -408,7 +408,18 @@ const buildLostScene = (stage: StageGeometry): GoblinScene => {
         [LINEAR, EASE_IN_OUT, EASE_IN_OUT, EASE_OUT, EASE_IN_OUT, LINEAR, EASE_OUT, EASE_IN, EASE_IN_OUT, LINEAR],
         L,
       ),
-      bounce: beatMotion([...lostGaitWindows, [0.66, 0.77, 0.2]], [-1, 0], L),
+      bounce: beatMotion(
+        [
+          [0, lostWalkEnd, STEP_SECONDS],
+          [0.2, 0.3, STEP_SECONDS],
+          [0.36, 0.48, STEP_SECONDS],
+          [0.55, 0.66, STEP_SECONDS],
+          [0.66, 0.77, 0.2],
+          [lostRunStart, lostRunEnd, STEP_SECONDS],
+        ],
+        [-1, 0],
+        L,
+      ),
     },
     legs: {
       left: buildLegPixels(t, 6),

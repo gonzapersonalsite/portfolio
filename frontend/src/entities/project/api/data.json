@@ -3,8 +3,8 @@
     "id": "quotidia",
     "titleEn": "Quotidia – Daily Planner",
     "titleEs": "Quotidia – Planificador diario",
-    "descriptionEn": "Quotidia is an offline-first daily planner for Android built with Flutter: tasks, events, goals, a journal and day plans with time blocks, with no account, no analytics and no ads. Optional sync between the user's own devices goes through a private folder in their own Google Drive, with no server of mine in between. It is in pre-release and not on Google Play yet; its public page is on gonzaloapps.es, published by the Gonzalo Apps project.\\n\\nAny reminder can ring as an alarm: it sounds even when the phone is on silent, goes off at the exact minute and can take over the lock screen, thanks to a native Kotlin runtime bridged to Dart with Pigeon and tested on a Galaxy S24 Ultra and on Android 8.0 to 14 and 16 emulators.\\n\\nThe code is organized by feature in layers (Riverpod, Drift over SQLite, go_router), and every push passes a local pipeline with more than 30 custom contract checkers, per-layer coverage floors and more than 4,000 automated tests; more than 70 architecture decision records document the design. The source code is private; I can walk you through it on request.",
-    "descriptionEs": "Quotidia es un planificador diario offline-first para Android hecho con Flutter: tareas, eventos, metas, un diario y el plan del día con bloques de tiempo, sin cuenta, sin analítica y sin anuncios. La sincronización opcional entre los dispositivos del propio usuario pasa por una carpeta privada de su Google Drive, sin ningún servidor mío de por medio. Está en prelanzamiento y todavía no figura en Google Play; su página pública está en gonzaloapps.es, publicada por el proyecto Gonzalo Apps.\\n\\nCualquier recordatorio puede sonar como alarma: suena aunque el móvil esté en silencio, se activa al minuto exacto y puede ocupar la pantalla de bloqueo, gracias a un runtime nativo en Kotlin conectado con Dart mediante Pigeon y probado en un Galaxy S24 Ultra y en emuladores de Android 8.0 a 14 y 16.\\n\\nEl código se organiza por funcionalidades y en capas (Riverpod, Drift sobre SQLite, go_router), y cada push pasa un pipeline local con más de 30 checkers de contratos propios, cobertura mínima por capa y más de 4.000 tests automatizados; más de 70 registros de decisiones de arquitectura (ADR) documentan el diseño. El código fuente es privado; si te interesa, te lo enseño.",
+    "descriptionEn": "Quotidia is an offline-first daily planner for Android, available on Google Play. Tasks, events, goals and a journal come together in a daily timeline with time blocks and a focus for the day. Core planning works without an account, analytics or ads.\\n\\nChoose notifications or alarms for event reminders, with a native Android alarm screen offering stop and snooze. Optional sync between your own devices uses a private folder in your Google Drive; the developer runs no server and receives no copy of your data.\\n\\nBuilt with Flutter and a Kotlin alarm runtime connected through Pigeon, the application is organized by feature and layer with Riverpod, Drift over SQLite and go_router. Local verification checks architecture contracts, behavior and per-layer coverage before a push. The source code is private; I can walk you through it on request.",
+    "descriptionEs": "Quotidia es un planificador diario offline-first para Android, disponible en Google Play. Tareas, eventos, metas y un diario se reúnen en una agenda diaria con bloques de tiempo y una prioridad para el día. La planificación funciona sin cuenta, analítica ni anuncios.\\n\\nElige notificaciones o alarmas para los recordatorios de eventos, con una pantalla nativa de Android para detener o posponer la alarma. La sincronización opcional entre tus dispositivos usa una carpeta privada de tu Google Drive; el desarrollador no opera ningún servidor ni recibe una copia de tus datos.\\n\\nHecha con Flutter y un runtime de alarmas en Kotlin conectado mediante Pigeon, la aplicación se organiza por funcionalidades y capas con Riverpod, Drift sobre SQLite y go_router. La verificación local comprueba contratos de arquitectura, comportamiento y cobertura por capa antes de cada push. El código fuente es privado; si te interesa, te lo enseño.",
     "technologies": [
       "Flutter",
       "Dart",
@@ -18,61 +18,65 @@
     ],
     "images": [
       {
-        "base": "/images/projects/quotidia/00-quotidia_cover-framed",
+        "base": "/images/projects/quotidia/00-quotidia_planning-and-alarms",
         "fullWidth": 1920,
-        "altEn": "Three Quotidia screens on a green background, each in a phone frame under its caption: the day plan, a reminder set to ring as an alarm, and the full-screen alarm that can be stopped or snoozed without unlocking the phone.",
-        "altEs": "Tres pantallas de Quotidia sobre fondo verde, cada una en un marco de móvil bajo su titular: el plan del día, un recordatorio configurado para sonar como alarma y la alarma a pantalla completa, que se detiene o se pospone sin desbloquear el móvil."
+        "altEn": "Three Quotidia screens on a teal background: the daily timeline, an event with alarm and notification reminders, and the ringing alarm with Stop and Snooze controls.",
+        "altEs": "Tres pantallas de Quotidia sobre fondo verde azulado: la agenda diaria, un evento con recordatorios de alarma y notificación, y la alarma sonando con controles para detenerla o posponerla."
       },
       {
-        "base": "/images/projects/quotidia/01-quotidia_daily-plan-framed",
+        "base": "/images/projects/quotidia/01-quotidia_today-timeline",
         "fullWidth": 1458,
-        "altEn": "Quotidia's daily planner: the day's two events and three stretches of time set aside, two of them for tasks.",
-        "altEs": "Plan diario de Quotidia: los dos eventos del día y tres franjas de tiempo reservado, dos de ellas para tareas."
+        "altEn": "Quotidia's Today screen: the day's focus above a timeline of tasks, events and time set aside, with completed tasks marked and the current time shown.",
+        "altEs": "Pantalla Hoy de Quotidia: la prioridad del día sobre una agenda de tareas, eventos y tiempo reservado, con las tareas completadas marcadas y la hora actual indicada."
       },
       {
-        "base": "/images/projects/quotidia/02-quotidia_alarm-choice-framed",
+        "base": "/images/projects/quotidia/02-quotidia_event-alarm-reminders",
         "fullWidth": 1458,
-        "altEn": "Editing an event in Quotidia: the reminder one hour before is set to ring as an alarm and the one a day before to arrive as a notification.",
-        "altEs": "Edición de un evento en Quotidia: el recordatorio de una hora antes está puesto para sonar como alarma y el de un día antes para llegar como notificación."
+        "altEn": "Editing event reminders in Quotidia: the reminder one hour before is an alarm, and the reminder one day before is a notification.",
+        "altEs": "Edición de recordatorios de un evento en Quotidia: el de una hora antes es una alarma y el de un día antes es una notificación."
       },
       {
-        "base": "/images/projects/quotidia/03-quotidia_alarm-ringing-framed",
+        "base": "/images/projects/quotidia/03-quotidia_ringing-with-snooze",
         "fullWidth": 1458,
-        "altEn": "Quotidia's full-screen alarm at 8:30 AM for an event that starts in one hour, with buttons to stop it or snooze it for 5 minutes.",
-        "altEs": "Alarma a pantalla completa de Quotidia a las 8:30 para un evento que empieza en una hora, con botones para detenerla o posponerla 5 minutos."
+        "altEn": "Quotidia alarm at 8:30 AM for the Olmo Bakery workshop, which starts in one hour, with Stop and Snooze 5 min controls.",
+        "altEs": "Alarma de Quotidia a las 8:30 para el taller de Olmo Bakery, que empieza en una hora, con controles para detenerla o posponerla 5 minutos."
       },
       {
-        "base": "/images/projects/quotidia/04-quotidia_overview-framed",
+        "base": "/images/projects/quotidia/04-quotidia_overview-periods",
         "fullWidth": 1458,
-        "altEn": "Quotidia's overview screen: a summary of the last 7 days, with 9 of 9 scheduled tasks done, and a look ahead at the next 7, built from the user's own records.",
-        "altEs": "Pantalla de resumen de Quotidia: balance de los últimos 7 días, con 9 de 9 tareas programadas hechas, y previsión de los próximos 7 a partir de los propios registros del usuario."
+        "altEn": "Quotidia's Overview: task completion and time set aside over the last 7 days, overdue tasks, and the fullest day in the next 7 days.",
+        "altEs": "Resumen de Quotidia: tareas completadas y tiempo reservado en los últimos 7 días, tareas atrasadas y el día más cargado de los próximos 7."
       },
       {
-        "base": "/images/projects/quotidia/05-quotidia_calendar-month-framed",
+        "base": "/images/projects/quotidia/05-quotidia_month-agenda",
         "fullWidth": 1458,
-        "altEn": "Quotidia's calendar in month view for September 2026, with repeating events on most days and buttons to switch to week or year view.",
-        "altEs": "Calendario de Quotidia en vista mensual de septiembre de 2026, con eventos repetidos en la mayoría de los días y botones para cambiar a vista semanal o anual."
+        "altEn": "Quotidia calendar for September 2026, with the 29th selected, recurring events and task status marks, plus Month, Week and Year view controls.",
+        "altEs": "Calendario de Quotidia de septiembre de 2026, con el día 29 seleccionado, eventos recurrentes y marcas de estado de tareas, y controles de vista mensual, semanal y anual."
       },
       {
-        "base": "/images/projects/quotidia/06-quotidia_tasks-framed",
+        "base": "/images/projects/quotidia/06-quotidia_task-catalogue",
         "fullWidth": 1458,
-        "altEn": "Quotidia's task list filtered by date, with a search box, status filters and tasks showing their duration and high, medium or low priority.",
-        "altEs": "Lista de tareas de Quotidia filtrada por fecha, con buscador, filtros de estado y tareas con su duración y prioridad alta, media o baja."
+        "altEn": "Quotidia's tasks for today, with search and status filters, scheduled times, estimated durations, a high-priority task and a repeating task.",
+        "altEs": "Tareas de hoy en Quotidia, con buscador y filtros de estado, horarios, duraciones estimadas, una tarea de prioridad alta y una tarea recurrente."
       },
       {
-        "base": "/images/projects/quotidia/07-quotidia_goals-framed",
+        "base": "/images/projects/quotidia/07-quotidia_goals-and-milestones",
         "fullWidth": 1458,
-        "altEn": "Quotidia's goals screen: goals filtered by area and status, each with a progress ring of completed milestones and a target date.",
-        "altEs": "Pantalla de metas de Quotidia: metas filtradas por área y estado, cada una con un anillo de progreso de hitos completados y una fecha objetivo."
+        "altEn": "Active goals in Quotidia, with search and filters, milestone progress rings, areas, target dates and short descriptions.",
+        "altEs": "Metas activas en Quotidia, con buscador y filtros, anillos de progreso de hitos, áreas, fechas objetivo y descripciones breves."
       },
       {
-        "base": "/images/projects/quotidia/08-quotidia_journal-framed",
+        "base": "/images/projects/quotidia/08-quotidia_journal-months",
         "fullWidth": 1458,
-        "altEn": "Quotidia's journal: dated entries with a title, a short text and a mood icon, plus search by title or content.",
-        "altEs": "Diario de Quotidia: entradas fechadas con título, un texto breve y un icono de estado de ánimo, y búsqueda por título o contenido."
+        "altEn": "Quotidia journal for September 2026: dated entries with titles, text and moods, search, a date selector and a Write today button.",
+        "altEs": "Diario de Quotidia de septiembre de 2026: entradas fechadas con título, texto y estado de ánimo, buscador, selector de fecha y botón para escribir hoy."
       }
     ],
     "links": [
+      {
+        "kind": "googlePlay",
+        "url": "https://play.google.com/store/apps/details?id=com.quotidia.app"
+      },
       {
         "kind": "site",
         "url": "https://gonzaloapps.es/apps/quotidia/"
@@ -180,10 +184,10 @@
         "altEs": "Página de aplicaciones de Gonzalo Apps, con Quotidia y su descripción breve."
       },
       {
-        "base": "/images/projects/gonzaloapps-site/02-gonzaloapps-site_quotidia-gallery",
-        "fullWidth": 1440,
-        "altEn": "Quotidia's page on Gonzalo Apps: the app icon, its tagline and a screenshot carousel.",
-        "altEs": "Página de Quotidia en Gonzalo Apps: el icono de la aplicación, su lema y un carrusel de capturas."
+        "base": "/images/projects/gonzaloapps-site/02-gonzaloapps-site_quotidia-paper-showcase",
+        "fullWidth": 1920,
+        "altEn": "Quotidia's English page on Gonzalo Apps, with the Q-and-calendar icon and the paper-style daily timeline screenshot in its gallery.",
+        "altEs": "Página de Quotidia en inglés en Gonzalo Apps, con el icono de la Q y el calendario y la captura de la agenda diaria con estilo de papel en su galería."
       },
       {
         "base": "/images/projects/gonzaloapps-site/03-gonzaloapps-site_es",

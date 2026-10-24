@@ -16,7 +16,7 @@ describe('buildLlmsTxt', () => {
     const llms = buildLlmsTxt()
 
     expect(llms.startsWith('# Gonzalo Martínez\n')).toBe(true)
-    expect(llms).toContain('> Junior Full Stack Developer')
+    expect(llms).toContain('> Full Stack Developer')
     expect(llms).toContain('Palma de Mallorca')
 
     for (const path of ENGLISH_TWINS) {

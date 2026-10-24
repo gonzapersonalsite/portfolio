@@ -4,7 +4,7 @@
 
 🇺🇸 [English](../../README.md) | **🇪🇸 Español**
 
-**Portafolio profesional** es una aplicación web estática y bilingüe que presenta la trayectoria de Gonzalo Martínez, desarrollador Full Stack junior: proyectos, experiencia, habilidades y perfil, con una interfaz responsive y tres temas visuales.
+**Portafolio profesional** es una aplicación web estática y bilingüe que presenta la trayectoria de Gonzalo Martínez, desarrollador Full Stack: proyectos, experiencia, habilidades y perfil, con una interfaz responsive y tres temas visuales.
 
 **Demo en vivo:** [https://mi-portafolio-gonzalo.vercel.app/](https://mi-portafolio-gonzalo.vercel.app/)
 
@@ -95,4 +95,4 @@ Este software es **propietario** y se proporciona **únicamente con fines de eva
 ---
 
 **Desarrollado por Gonzalo Martínez García**
-*Desarrollador Full Stack junior | Ingeniería de software e innovación*
+*Desarrollador Full Stack | Ingeniería de software e innovación*

@@ -8,7 +8,7 @@ describe('buildTwin', () => {
     const markdown = buildTwin('home', 'en')
 
     expect(markdown.startsWith('# Gonzalo Martínez\n')).toBe(true)
-    expect(markdown).toContain('> Junior Full Stack Developer\n\n**Open to work**')
+    expect(markdown).toContain('> Full Stack Developer\n\n**Open to work**')
     expect(markdown).toContain('## Featured Projects')
     expect(markdown).toContain('### License Generator')
     expect(markdown).not.toContain('### Kanban Board App')
@@ -18,7 +18,7 @@ describe('buildTwin', () => {
   it('renders Spanish content in the Spanish twins', () => {
     const markdown = buildTwin('home', 'es')
 
-    expect(markdown).toContain('> Desarrollador Full Stack junior\n\n**Disponible para trabajar**')
+    expect(markdown).toContain('> Desarrollador Full Stack\n\n**Disponible para trabajar**')
     expect(markdown).toContain('### Quotidia – Planificador diario')
     expect(markdown).toContain('](/projects/index.es.md)')
   })

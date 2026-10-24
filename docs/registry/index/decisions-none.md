@@ -1,7 +1,7 @@
 # Decisiones sin fase (índice)
 
 GENERADO por tools/board desde `docs/registry/decisions/`. No editar a mano: se reescribe.
-board-fingerprint:8dccdeb89b3259d3 — su contenido cambió por última vez el 2026-10-18.
+board-fingerprint:9d9904d8c5735512 — su contenido cambió por última vez el 2026-10-24.
 
 Las decisiones que no nombran ninguna fase de los planes: sin `phase`, o con `none`.
 El índice principal es `docs/registry/DECISIONS.md`.
@@ -12,8 +12,9 @@ El índice principal es `docs/registry/DECISIONS.md`.
 ## DEUDAS VIVAS (0)
 
 
-## PROVISIONALES (0)
+## PROVISIONALES (1)
 
+- `#public-role-is-full-stack-developer` — La etiqueta pública del portafolio es Full Stack Developer (PROVISIONAL 2026-10-24) · none
 
 ## CONFIRMADAS (3)
 

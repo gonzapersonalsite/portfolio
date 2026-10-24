@@ -19,7 +19,7 @@ const Footer: React.FC = () => {
   const isGlass = mode === 'glass'
 
   const { data: profile } = useContent(() => getProfile())
-  const fullName = getLocalizedText(language, profile.fullNameEn, profile.fullNameEs)
+  const signatureName = profile.alternateName
 
   const socialLinks = {
     github: profile.githubUrl,
@@ -71,7 +71,7 @@ const Footer: React.FC = () => {
         >
           <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
             <Typography variant="h6" component="p" sx={{ color: textColor, fontWeight: 'bold' }}>
-              {fullName}
+              {signatureName}
             </Typography>
             <Typography variant="body2" sx={{ color: secondaryTextColor }}>
               {getLocalizedText(language, profile.subtitleEn, profile.subtitleEs)}
@@ -143,7 +143,7 @@ const Footer: React.FC = () => {
           </Box>
 
           <Typography variant="body2" sx={{ color: secondaryTextColor, textAlign: 'center' }}>
-            © {currentYear} {fullName}. {t('footer.rights')}
+            © {currentYear} {signatureName}. {t('footer.rights')}
             <Box component="span" sx={{ display: 'block', mt: 0.5, fontSize: '0.7rem' }}>
               v{__APP_VERSION__} · {__COMMIT_HASH__}
             </Box>

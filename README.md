@@ -4,7 +4,7 @@
 
 🇺🇸 **English** | [🇪🇸 Español](docs/es/README.md)
 
-**Professional Portfolio** is a static, bilingual web application that presents the career of Gonzalo Martínez, Junior Full Stack Developer: projects, experience, skills and profile, with a responsive interface and three visual themes.
+**Professional Portfolio** is a static, bilingual web application that presents the career of Gonzalo Martínez, Full Stack Developer: projects, experience, skills and profile, with a responsive interface and three visual themes.
 
 **Live Demo:** [https://mi-portafolio-gonzalo.vercel.app/](https://mi-portafolio-gonzalo.vercel.app/)
 
@@ -95,4 +95,4 @@ This software is **proprietary** and is provided for **evaluation purposes only*
 ---
 
 **Developed by Gonzalo Martínez García**
-*Junior Full Stack Developer | Software Engineering & Innovation*
+*Full Stack Developer | Software Engineering & Innovation*

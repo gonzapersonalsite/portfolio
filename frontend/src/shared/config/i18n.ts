@@ -176,31 +176,31 @@ const resources = {
         terminalHelp:
           'Available commands: help · ls · pwd · whoami · clear · cd ~ · cd projects · cd about · cd skills · cd experience · cd contact',
         terminalLs: 'home/  about/  skills/  experience/  projects/  contact/',
-        terminalWhoami: 'gonzalo — Junior Full Stack Developer (React · TypeScript · Spring Boot · .NET · Flutter)',
+        terminalWhoami: 'gonzalo — Full Stack Developer (React · TypeScript · Spring Boot · .NET · Flutter)',
         terminalUnknown: 'bash: {{cmd}}: command not found — type "help" for available commands.',
         backHome: 'Back to Home',
         viewProjects: 'View Projects',
       },
       seo: {
         home: {
-          title: 'Gonzalo Martínez | Junior Full Stack Developer',
+          title: 'Gonzalo Martínez | Full Stack Developer',
           description:
-            'Portfolio of Gonzalo Martínez, Junior Full Stack Developer in Palma de Mallorca, Spain: web, desktop and mobile apps with React, TypeScript, Spring Boot, .NET and Flutter.',
+            'Portfolio of Gonzalo Martínez, Full Stack Developer in Palma de Mallorca, Spain: web, desktop and mobile apps with React, TypeScript, Spring Boot, .NET and Flutter.',
         },
         about: {
           title: 'About Me | Gonzalo Martínez',
           description:
-            'Learn about Gonzalo Martínez, a Junior Full Stack Developer based in Palma de Mallorca, Spain: his journey, philosophy, skills and professional background.',
+            'Learn about Gonzalo Martínez, a Full Stack Developer based in Palma de Mallorca, Spain: his journey, philosophy, skills and professional background.',
         },
         skills: {
           title: 'Skills | Gonzalo Martínez',
           description:
-            'Explore the technical skills of Gonzalo Martínez, a Junior Full Stack Developer working with React, TypeScript, Java and Spring Boot, plus .NET, Flutter and Kotlin for desktop and mobile.',
+            'Explore the technical skills of Gonzalo Martínez, a Full Stack Developer working with React, TypeScript, Java and Spring Boot, plus .NET, Flutter and Kotlin for desktop and mobile.',
         },
         experience: {
           title: 'Experience | Gonzalo Martínez',
           description:
-            'Professional experience of Gonzalo Martínez, Junior Full Stack Developer: microservices with Java Spring Boot and React, IAM, CI/CD and on-premise infrastructure.',
+            'Professional experience of Gonzalo Martínez, Full Stack Developer: microservices with Java Spring Boot and React, IAM, CI/CD and on-premise infrastructure.',
         },
         projects: {
           title: 'Projects | Gonzalo Martínez',
@@ -385,31 +385,31 @@ const resources = {
         terminalHelp:
           'Comandos disponibles: help · ls · pwd · whoami · clear · cd ~ · cd projects · cd about · cd skills · cd experience · cd contact',
         terminalLs: 'home/  about/  skills/  experience/  projects/  contact/',
-        terminalWhoami: 'gonzalo — Desarrollador Full Stack junior (React · TypeScript · Spring Boot · .NET · Flutter)',
+        terminalWhoami: 'gonzalo — Desarrollador Full Stack (React · TypeScript · Spring Boot · .NET · Flutter)',
         terminalUnknown: 'bash: {{cmd}}: orden no encontrada — escribe "help" para ver los comandos disponibles.',
         backHome: 'Volver al inicio',
         viewProjects: 'Ver proyectos',
       },
       seo: {
         home: {
-          title: 'Gonzalo Martínez | Desarrollador Full Stack junior',
+          title: 'Gonzalo Martínez | Desarrollador Full Stack',
           description:
-            'Portafolio de Gonzalo Martínez, desarrollador Full Stack junior en Palma de Mallorca, España: aplicaciones web, de escritorio y móviles con React, TypeScript, Spring Boot, .NET y Flutter.',
+            'Portafolio de Gonzalo Martínez, desarrollador Full Stack en Palma de Mallorca, España: aplicaciones web, de escritorio y móviles con React, TypeScript, Spring Boot, .NET y Flutter.',
         },
         about: {
           title: 'Sobre mí | Gonzalo Martínez',
           description:
-            'Conoce a Gonzalo Martínez, desarrollador Full Stack junior en Palma de Mallorca, España: su trayectoria, filosofía, habilidades y experiencia profesional.',
+            'Conoce a Gonzalo Martínez, desarrollador Full Stack en Palma de Mallorca, España: su trayectoria, filosofía, habilidades y experiencia profesional.',
         },
         skills: {
           title: 'Habilidades | Gonzalo Martínez',
           description:
-            'Explora las habilidades técnicas de Gonzalo Martínez, desarrollador Full Stack junior que trabaja con React, TypeScript, Java y Spring Boot, además de .NET, Flutter y Kotlin para escritorio y móvil.',
+            'Explora las habilidades técnicas de Gonzalo Martínez, desarrollador Full Stack que trabaja con React, TypeScript, Java y Spring Boot, además de .NET, Flutter y Kotlin para escritorio y móvil.',
         },
         experience: {
           title: 'Experiencia | Gonzalo Martínez',
           description:
-            'Experiencia profesional de Gonzalo Martínez, desarrollador Full Stack junior: microservicios con Java Spring Boot y React, IAM, CI/CD e infraestructura on-premise.',
+            'Experiencia profesional de Gonzalo Martínez, desarrollador Full Stack: microservicios con Java Spring Boot y React, IAM, CI/CD e infraestructura on-premise.',
         },
         projects: {
           title: 'Proyectos | Gonzalo Martínez',

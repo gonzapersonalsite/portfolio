@@ -1,7 +1,7 @@
 # Registro de decisiones (índice)
 
 GENERADO por tools/board desde `docs/registry/decisions/`. No editar a mano: se reescribe.
-board-fingerprint:0dcaf94ffb71c7ae — su contenido cambió por última vez el 2026-10-20.
+board-fingerprint:3b7940b832b49e76 — su contenido cambió por última vez el 2026-10-24.
 
 Cada decisión es un fichero `docs/registry/decisions/<identidad>.md` con su cabecera de campos y su
 texto; una cita `#<identidad>` resuelve abriendo ese fichero. Cómo se escribe una y cómo
@@ -18,8 +18,9 @@ de `none`.
 ## DEUDAS VIVAS (0)
 
 
-## PROVISIONALES (0)
+## PROVISIONALES (1)
 
+- `#public-role-is-full-stack-developer` — La etiqueta pública del portafolio es Full Stack Developer (PROVISIONAL 2026-10-24) · none
 
 ## EL RESTO (7), SOLO CONTADAS
 
@@ -29,4 +30,4 @@ CONFIRMADAS 7 · RESUELTAS 0 · DESCARTADAS 0 · RETIRADAS 0
 
 - `docs/registry/index/decisions-F1.md` — F1: 3
 - `docs/registry/index/decisions-F2.md` — F2: 1
-- `docs/registry/index/decisions-none.md` — sin fase: 3
+- `docs/registry/index/decisions-none.md` — sin fase: 4

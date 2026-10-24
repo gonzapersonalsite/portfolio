@@ -43,14 +43,14 @@ const SHELLS: Record<RouteId, RouteShell> = {
   home: {
     meta: {
       en: {
-        title: 'Gonzalo Martínez | Junior Full Stack Developer',
+        title: 'Gonzalo Martínez | Full Stack Developer',
         description:
-          'Portfolio of Gonzalo Martínez, Junior Full Stack Developer in Palma de Mallorca, Spain: web, desktop and mobile apps with React, TypeScript, Spring Boot, .NET and Flutter.',
+          'Portfolio of Gonzalo Martínez, Full Stack Developer in Palma de Mallorca, Spain: web, desktop and mobile apps with React, TypeScript, Spring Boot, .NET and Flutter.',
       },
       es: {
-        title: 'Gonzalo Martínez | Desarrollador Full Stack junior',
+        title: 'Gonzalo Martínez | Desarrollador Full Stack',
         description:
-          'Portafolio de Gonzalo Martínez, desarrollador Full Stack junior en Palma de Mallorca, España: aplicaciones web, de escritorio y móviles con React, TypeScript, Spring Boot, .NET y Flutter.',
+          'Portafolio de Gonzalo Martínez, desarrollador Full Stack en Palma de Mallorca, España: aplicaciones web, de escritorio y móviles con React, TypeScript, Spring Boot, .NET y Flutter.',
       },
     },
   },
@@ -59,12 +59,12 @@ const SHELLS: Record<RouteId, RouteShell> = {
       en: {
         title: 'About Me | Gonzalo Martínez',
         description:
-          'Learn about Gonzalo Martínez, a Junior Full Stack Developer based in Palma de Mallorca, Spain: his journey, philosophy, skills and professional background.',
+          'Learn about Gonzalo Martínez, a Full Stack Developer based in Palma de Mallorca, Spain: his journey, philosophy, skills and professional background.',
       },
       es: {
         title: 'Sobre mí | Gonzalo Martínez',
         description:
-          'Conoce a Gonzalo Martínez, desarrollador Full Stack junior en Palma de Mallorca, España: su trayectoria, filosofía, habilidades y experiencia profesional.',
+          'Conoce a Gonzalo Martínez, desarrollador Full Stack en Palma de Mallorca, España: su trayectoria, filosofía, habilidades y experiencia profesional.',
       },
     },
     // AboutPage renders the profile photo eagerly with high priority.
@@ -75,12 +75,12 @@ const SHELLS: Record<RouteId, RouteShell> = {
       en: {
         title: 'Skills | Gonzalo Martínez',
         description:
-          'Explore the technical skills of Gonzalo Martínez, a Junior Full Stack Developer working with React, TypeScript, Java and Spring Boot, plus .NET, Flutter and Kotlin for desktop and mobile.',
+          'Explore the technical skills of Gonzalo Martínez, a Full Stack Developer working with React, TypeScript, Java and Spring Boot, plus .NET, Flutter and Kotlin for desktop and mobile.',
       },
       es: {
         title: 'Habilidades | Gonzalo Martínez',
         description:
-          'Explora las habilidades técnicas de Gonzalo Martínez, desarrollador Full Stack junior que trabaja con React, TypeScript, Java y Spring Boot, además de .NET, Flutter y Kotlin para escritorio y móvil.',
+          'Explora las habilidades técnicas de Gonzalo Martínez, desarrollador Full Stack que trabaja con React, TypeScript, Java y Spring Boot, además de .NET, Flutter y Kotlin para escritorio y móvil.',
       },
     },
   },
@@ -89,12 +89,12 @@ const SHELLS: Record<RouteId, RouteShell> = {
       en: {
         title: 'Experience | Gonzalo Martínez',
         description:
-          'Professional experience of Gonzalo Martínez, Junior Full Stack Developer: microservices with Java Spring Boot and React, IAM, CI/CD and on-premise infrastructure.',
+          'Professional experience of Gonzalo Martínez, Full Stack Developer: microservices with Java Spring Boot and React, IAM, CI/CD and on-premise infrastructure.',
       },
       es: {
         title: 'Experiencia | Gonzalo Martínez',
         description:
-          'Experiencia profesional de Gonzalo Martínez, desarrollador Full Stack junior: microservicios con Java Spring Boot y React, IAM, CI/CD e infraestructura on-premise.',
+          'Experiencia profesional de Gonzalo Martínez, desarrollador Full Stack: microservicios con Java Spring Boot y React, IAM, CI/CD e infraestructura on-premise.',
       },
     },
   },

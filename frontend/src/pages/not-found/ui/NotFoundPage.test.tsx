@@ -85,7 +85,7 @@ describe('NotFoundPage', () => {
 
     fireEvent.change(input, { target: { value: 'whoami' } })
     fireEvent.submit(form)
-    expect(screen.getByText(/gonzalo — Desarrollador Full Stack junior/)).toBeTruthy()
+    expect(screen.getByText(/gonzalo — Desarrollador Full Stack/)).toBeTruthy()
 
     fireEvent.change(input, { target: { value: 'comando-raro' } })
     fireEvent.submit(form)

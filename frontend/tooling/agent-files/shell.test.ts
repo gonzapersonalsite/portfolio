@@ -171,7 +171,7 @@ describe('buildRouteShell', () => {
       '@id': 'https://mi-portafolio-gonzalo.vercel.app/#person',
       name: 'Gonzalo Martínez',
       alternateName: 'Gonzalo Martínez García',
-      jobTitle: 'Junior Full Stack Developer',
+      jobTitle: 'Full Stack Developer',
       url: 'https://mi-portafolio-gonzalo.vercel.app/',
       homeLocation: { '@type': 'Place', name: getProfile().locationEn },
       knowsAbout: getCoreSkills().map((skill) => skill.nameEn),

@@ -130,7 +130,7 @@ lint solo impide que una capa use lo que tiene encima.
   fuente.** `frontend/src/shared/config/site.ts`, `frontend/tooling/agent-files/routes.ts` y los JSON de entidades definen la dirección del sitio, las rutas, los textos, los gemelos Markdown bilingües y las páginas HTML por ruta; el plugin
   cableado en `frontend/vite.config.ts` emite llms.txt, robots.txt, sitemap.xml, los gemelos Markdown y los shells HTML en `frontend/dist/` (y el servidor de desarrollo sirve
   los ficheros de agentes por middleware). Los tests de `frontend/tooling/agent-files` y `frontend/tooling/hosting/vercelConfig.test.ts`
-  cruzan cada valor con los ficheros reales —la portada `frontend/public/og-cover-typographic.jpg`, los iconos y el hash CSP del script inline de `frontend/index.html` incluidos— y comprueban que el plugin sigue cableado en la
+  cruzan cada valor con los ficheros reales —la portada `frontend/public/og-cover-typographic-full-stack.jpg`, los iconos y el hash CSP del script inline de `frontend/index.html` incluidos— y comprueban que el plugin sigue cableado en la
   configuración real: quitarlo de `frontend/vite.config.ts` los deja en rojo.
 
 ## Nombres

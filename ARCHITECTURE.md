@@ -21,7 +21,7 @@ The project is a **fully static frontend application**. There is no backend, no 
 - **Loading feedback:** temporary HTML/CSS in `index.html` shows the portfolio brand and an indeterminate indicator before React runs. Its first render replaces that content; existing Suspense skeletons cover pending route modules. Gallery image loading/error/retry belongs to `entities/project/ui/ProjectGallery.tsx`, independently of the synchronous project data. No new provider, HTTP client or bootstrap entry point is involved.
 
 ### 🖼️ Asset Strategy
-- Content images are **self-hosted** under `frontend/public/images/`: one folder per project slug, the profile photo in `profile/` and the generic `no-image.svg` fallback. The profile fallback (`profile-fallback.webp`) and the social preview (`og-cover-typographic.jpg`) sit at `frontend/public/`, and the GONZALO.DEV icons (SVG, ICO and apple-touch PNG) in `frontend/public/icons/`.
+- Content images are **self-hosted** under `frontend/public/images/`: one folder per project slug, the profile photo in `profile/` and the generic `no-image.svg` fallback. The profile fallback (`profile-fallback.webp`) and the social preview (`og-cover-typographic-full-stack.jpg`) sit at `frontend/public/`, and the GONZALO.DEV icons (SVG, ICO and apple-touch PNG) in `frontend/public/icons/`.
 - Every project image ships in three WebP widths (`-thumb` 160 px, `-800`, `-full`) and records its full width and English/Spanish alt texts in the data. Covers are composed at exactly 16:9, the ratio the cards reserve, so they are never cropped and nothing shifts while they load.
 - The fullscreen gallery keeps one selected full-size image, with browser load/error events and a cache-completion check. Retry is explicit and limited to that image; navigation and close remain usable while loading or after failure, with zoom available only after success. These local resource states do not change the static content model or the project listing.
 - The Inter font is bundled (`@fontsource-variable/inter`) and its latin file is preloaded by the build.
@@ -188,4 +188,4 @@ This software is **proprietary** and is provided for **evaluation purposes only*
 ---
 
 **Developed by Gonzalo Martínez García**
-*Junior Full Stack Developer | Software Engineering & Innovation*
+*Full Stack Developer | Software Engineering & Innovation*

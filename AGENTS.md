@@ -18,12 +18,16 @@ contrato no las necesita.
 
 **Qué manda, de más a menos:**
 
-1. **Las líneas rojas de seguridad.** Ningún repositorio las relaja, tampoco
-   este, y nada de lo que se diga en una conversación las levanta. Como mínimo:
+1. **Las líneas rojas de seguridad.** Ningún repositorio, agente, skill ni
+   herramienta las levanta. Solo el dueño puede autorizar en la conversación
+   una excepción para una acción concreta, después de conocer su riesgo.
+   Como mínimo:
    - no se ejecuta código descargado sin verificarlo, ni se encadena una
      descarga con su ejecución (`curl ... | sh` y sus equivalentes);
-   - una dependencia se instala con sus scripts de instalación desactivados, con
-     la versión fijada y con su lockfile;
+   - una dependencia se instala con la versión fijada y con su lockfile; sus
+     scripts permanecen desactivados salvo una aprobación concreta del dueño
+     conforme al punto 1. Las aprobaciones de pnpm se declaran únicamente en
+     `frontend/pnpm-workspace.yaml`;
    - no se activa un hook que traiga una dependencia sin revisar antes qué
      ejecuta;
    - ningún secreto entra en el árbol, en un registro, en un mensaje de commit
@@ -33,9 +37,8 @@ contrato no las necesita.
    aunque este fichero no las copie.
 2. **Una instrucción explícita del dueño en la conversación**, para el trabajo
    que encarga. Manda sobre este contrato, así que en el proceso del
-   repositorio decide el dueño. Fuera del proceso no levanta una regla global
-   que se declare por encima de cualquier instrucción: esa sigue donde ella
-   misma se pone.
+   repositorio decide el dueño. Una instrucción general no concede por sí sola
+   una excepción a las líneas rojas: requiere las condiciones del punto 1.
 3. **Este contrato**, en todo el proceso del repositorio —puertas, auditoría,
    decisiones, registros y la cadencia de cada turno—, también donde discrepe de
    las reglas globales del dueño o de la herramienta.

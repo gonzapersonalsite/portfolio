@@ -18,13 +18,13 @@
     ],
     "images": [
       {
-        "base": "/images/projects/quotidia/00-quotidia_planning-and-alarms",
+        "base": "/images/projects/quotidia/00-quotidia_capsule-planning-and-alarms",
         "fullWidth": 1920,
         "altEn": "Three Quotidia screens on a teal background: the daily timeline, an event with alarm and notification reminders, and the ringing alarm with Stop and Snooze controls.",
         "altEs": "Tres pantallas de Quotidia sobre fondo verde azulado: la agenda diaria, un evento con recordatorios de alarma y notificación, y la alarma sonando con controles para detenerla o posponerla."
       },
       {
-        "base": "/images/projects/quotidia/01-quotidia_today-timeline",
+        "base": "/images/projects/quotidia/01-quotidia_today-capsule-navigation",
         "fullWidth": 1458,
         "altEn": "Quotidia's Today screen: the day's focus above a timeline of tasks, events and time set aside, with completed tasks marked and the current time shown.",
         "altEs": "Pantalla Hoy de Quotidia: la prioridad del día sobre una agenda de tareas, eventos y tiempo reservado, con las tareas completadas marcadas y la hora actual indicada."
@@ -42,31 +42,31 @@
         "altEs": "Alarma de Quotidia a las 8:30 para el taller de Olmo Bakery, que empieza en una hora, con controles para detenerla o posponerla 5 minutos."
       },
       {
-        "base": "/images/projects/quotidia/04-quotidia_overview-periods",
+        "base": "/images/projects/quotidia/04-quotidia_overview-capsule-navigation",
         "fullWidth": 1458,
         "altEn": "Quotidia's Overview: task completion and time set aside over the last 7 days, overdue tasks, and the fullest day in the next 7 days.",
         "altEs": "Resumen de Quotidia: tareas completadas y tiempo reservado en los últimos 7 días, tareas atrasadas y el día más cargado de los próximos 7."
       },
       {
-        "base": "/images/projects/quotidia/05-quotidia_month-agenda",
+        "base": "/images/projects/quotidia/05-quotidia_month-capsule-navigation",
         "fullWidth": 1458,
         "altEn": "Quotidia calendar for September 2026, with the 29th selected, recurring events and task status marks, plus Month, Week and Year view controls.",
         "altEs": "Calendario de Quotidia de septiembre de 2026, con el día 29 seleccionado, eventos recurrentes y marcas de estado de tareas, y controles de vista mensual, semanal y anual."
       },
       {
-        "base": "/images/projects/quotidia/06-quotidia_task-catalogue",
+        "base": "/images/projects/quotidia/06-quotidia_tasks-round-add-button",
         "fullWidth": 1458,
         "altEn": "Quotidia's tasks for today, with search and status filters, scheduled times, estimated durations, a high-priority task and a repeating task.",
         "altEs": "Tareas de hoy en Quotidia, con buscador y filtros de estado, horarios, duraciones estimadas, una tarea de prioridad alta y una tarea recurrente."
       },
       {
-        "base": "/images/projects/quotidia/07-quotidia_goals-and-milestones",
+        "base": "/images/projects/quotidia/07-quotidia_goals-round-add-button",
         "fullWidth": 1458,
         "altEn": "Active goals in Quotidia, with search and filters, milestone progress rings, areas, target dates and short descriptions.",
         "altEs": "Metas activas en Quotidia, con buscador y filtros, anillos de progreso de hitos, áreas, fechas objetivo y descripciones breves."
       },
       {
-        "base": "/images/projects/quotidia/08-quotidia_journal-months",
+        "base": "/images/projects/quotidia/08-quotidia_journal-write-today-pill",
         "fullWidth": 1458,
         "altEn": "Quotidia journal for September 2026: dated entries with titles, text and moods, search, a date selector and a Write today button.",
         "altEs": "Diario de Quotidia de septiembre de 2026: entradas fechadas con título, texto y estado de ánimo, buscador, selector de fecha y botón para escribir hoy."
@@ -184,7 +184,7 @@
         "altEs": "Página de aplicaciones de Gonzalo Apps, con Quotidia y su descripción breve."
       },
       {
-        "base": "/images/projects/gonzaloapps-site/02-gonzaloapps-site_quotidia-paper-showcase",
+        "base": "/images/projects/gonzaloapps-site/02-gonzaloapps-site_quotidia-capsule-showcase",
         "fullWidth": 1920,
         "altEn": "Quotidia's English page on Gonzalo Apps, with the Q-and-calendar icon and the paper-style daily timeline screenshot in its gallery.",
         "altEs": "Página de Quotidia en inglés en Gonzalo Apps, con el icono de la Q y el calendario y la captura de la agenda diaria con estilo de papel en su galería."

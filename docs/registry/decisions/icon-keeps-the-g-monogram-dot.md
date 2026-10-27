@@ -1,6 +1,6 @@
 ---
 title: El icono conserva el monograma G con su punto, con nombres de fichero nuevos
-state: provisional
+state: confirmed
 date: 2026-10-27
 phase: none
 ---
@@ -26,3 +26,5 @@ No abre fase: es un detalle de presentación de la marca
 
 2026-10-27: el dueño elige esta opción entre las que le puso el agente. Queda
 provisional hasta que la confirme después de releer esta refutación.
+
+2026-10-27: el dueño la confirma después de leer esta refutación.

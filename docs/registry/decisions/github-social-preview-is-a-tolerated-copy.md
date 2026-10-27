@@ -1,6 +1,6 @@
 ---
 title: La vista previa social del repositorio en GitHub es una copia de la tarjeta, tolerada y con su paso escrito
-state: provisional
+state: confirmed
 date: 2026-10-27
 phase: none
 ---
@@ -40,3 +40,5 @@ No abre fase: es un paso de operación, no una funcionalidad.
 
 2026-10-27: el dueño elige esta opción entre las que le puso el agente. Queda
 provisional hasta que la confirme después de releer esta refutación.
+
+2026-10-27: el dueño la confirma después de leer esta refutación.

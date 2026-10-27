@@ -1,7 +1,7 @@
 # Decisiones sin fase (índice)
 
 GENERADO por tools/board desde `docs/registry/decisions/`. No editar a mano: se reescribe.
-board-fingerprint:ccce67f19e00d278 — su contenido cambió por última vez el 2026-10-27.
+board-fingerprint:229e19542e68c1a9 — su contenido cambió por última vez el 2026-10-27.
 
 Las decisiones que no nombran ninguna fase de los planes: sin `phase`, o con `none`.
 El índice principal es `docs/registry/DECISIONS.md`.
@@ -12,14 +12,14 @@ El índice principal es `docs/registry/DECISIONS.md`.
 ## DEUDAS VIVAS (0)
 
 
-## PROVISIONALES (3)
+## PROVISIONALES (0)
 
-- `#brand-accent-marks-the-surname` — La marca de la barra pinta el apellido en el color de acento (PROVISIONAL 2026-10-27) · none
-- `#github-social-preview-is-a-tolerated-copy` — La vista previa social del repositorio en GitHub es una copia de la tarjeta, tolerada y con su paso escrito (PROVISIONAL 2026-10-27) · none
-- `#icon-keeps-the-g-monogram-dot` — El icono conserva el monograma G con su punto, con nombres de fichero nuevos (PROVISIONAL 2026-10-27) · none
 
-## CONFIRMADAS (8)
+## CONFIRMADAS (11)
 
+- `#brand-accent-marks-the-surname` — La marca de la barra pinta el apellido en el color de acento (CONFIRMED 2026-10-27) · none
+- `#github-social-preview-is-a-tolerated-copy` — La vista previa social del repositorio en GitHub es una copia de la tarjeta, tolerada y con su paso escrito (CONFIRMED 2026-10-27) · none
+- `#icon-keeps-the-g-monogram-dot` — El icono conserva el monograma G con su punto, con nombres de fichero nuevos (CONFIRMED 2026-10-27) · none
 - `#public-role-is-full-stack-developer` — La etiqueta pública del portafolio es Full Stack Developer (CONFIRMED 2026-10-27) · none
 - `#visible-brand-is-the-owner-name` — La marca visible es el nombre del dueño; gonzalo.dev desaparece de todo lo que se ve (CONFIRMED 2026-10-27) · none
 - `#owner-authorises-specific-security-exceptions` — El dueño confirma la autoridad sobre excepciones de seguridad del contrato (CONFIRMED 2026-10-24) · none

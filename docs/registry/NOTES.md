@@ -1,7 +1,7 @@
 # Notas de desarrollo (índice)
 
 GENERADO por tools/board desde `docs/registry/deliveries/` y `docs/registry/lessons/`. No editar a mano: se reescribe.
-board-fingerprint:86e6d933a264bf97 — su contenido cambió por última vez el 2026-10-27.
+board-fingerprint:04a889c5fec3aad0 — su contenido cambió por última vez el 2026-10-27.
 
 Cada entrega es un fichero `docs/registry/deliveries/<fecha>-<tema>.md` con lo que se hizo, cómo se
 verificó y qué costó; cada lección es un fichero `docs/registry/lessons/<identidad>.md` y se cita como
@@ -9,8 +9,9 @@ verificó y qué costó; cada lección es un fichero `docs/registry/lessons/<ide
 entregas dicen cómo llegó a estar así. Aquí van las más recientes de cada clase; todas,
 mes a mes, en su índice del mes.
 
-## Entregas (11; aquí las 11 más recientes)
+## Entregas (12; aquí las 12 más recientes)
 
+- 2026-10-27 `#2026-10-27-captures-with-new-gonzaloapps-banner` Las capturas que mostraban el banner antiguo de gonzaloapps.es se rehacen
 - 2026-10-27 `#2026-10-27-visible-brand-owner-name` La marca gonzalo.dev sale del portafolio y la sustituye el nombre del dueño
 - 2026-10-25 `#2026-10-25-quotidia-capsule-showcase` Actualizar la galería de Quotidia con la navegación en cápsula
 - 2026-10-24 `#2026-10-24-full-stack-role` El portafolio declara el puesto Full Stack Developer
@@ -35,5 +36,5 @@ mes a mes, en su índice del mes.
 
 ## Por mes (2 índices)
 
-- `docs/registry/index/notes-2026-10.md` — 2026-10: 11 entregas, 0 lecciones
+- `docs/registry/index/notes-2026-10.md` — 2026-10: 12 entregas, 0 lecciones
 - `docs/registry/index/notes-2026-09.md` — 2026-09: 0 entregas, 7 lecciones

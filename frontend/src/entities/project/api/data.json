@@ -172,8 +172,8 @@
     ],
     "images": [
       {
-        "base": "/images/projects/gonzaloapps-site/00-gonzaloapps-site_home-banner",
-        "fullWidth": 928,
+        "base": "/images/projects/gonzaloapps-site/00-gonzaloapps-site_home-wordmark",
+        "fullWidth": 896,
         "altEn": "Gonzalo Apps home page in English: the gonzaloapps.es banner and an applications section listing Quotidia.",
         "altEs": "Página de inicio de Gonzalo Apps en inglés: el banner de gonzaloapps.es y una sección de aplicaciones con Quotidia."
       },
@@ -190,10 +190,10 @@
         "altEs": "Página de Quotidia en inglés en Gonzalo Apps, con el icono de la Q y el calendario y la captura de la agenda diaria con estilo de papel en su galería."
       },
       {
-        "base": "/images/projects/gonzaloapps-site/03-gonzaloapps-site_es",
+        "base": "/images/projects/gonzaloapps-site/03-gonzaloapps-site_es-wordmark",
         "fullWidth": 1440,
-        "altEn": "Gonzalo Apps home page in Spanish, with the same banner and the Quotidia entry translated.",
-        "altEs": "Página de inicio de Gonzalo Apps en español, con el mismo banner y la ficha de Quotidia traducida."
+        "altEn": "Gonzalo Apps home page in Spanish, with the same banner and the Quotidia, License Generator and Rememora entries translated.",
+        "altEs": "Página de inicio de Gonzalo Apps en español, con el mismo banner y las fichas de Quotidia, License Generator y Rememora traducidas."
       }
     ],
     "links": [
@@ -392,7 +392,7 @@
         "altEs": "Inicio del portafolio en modo oscuro: saludo, nombre, puesto, distintivo de disponibilidad, breve presentación y botones para ver los proyectos y descargar el CV, junto a una tarjeta con tres etiquetas de perfil y un duende pixelado con portátil."
       },
       {
-        "base": "/images/projects/portfolio/01-portfolio_projects-en",
+        "base": "/images/projects/portfolio/01-portfolio_projects-name-brand-en",
         "fullWidth": 1440,
         "altEn": "Portfolio projects page in dark mode: the first three project cards, each with a cover image, its type, a short description with a Read More button and technology chips.",
         "altEs": "Página de proyectos del portafolio en modo oscuro: las tres primeras tarjetas de proyecto, cada una con imagen de portada, tipo, una descripción breve con un botón para leer más y etiquetas de tecnologías."

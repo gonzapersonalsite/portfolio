@@ -1,7 +1,7 @@
 # Decisiones sin fase (índice)
 
 GENERADO por tools/board desde `docs/registry/decisions/`. No editar a mano: se reescribe.
-board-fingerprint:4ad29dcc2d0432f8 — su contenido cambió por última vez el 2026-10-27.
+board-fingerprint:ccce67f19e00d278 — su contenido cambió por última vez el 2026-10-27.
 
 Las decisiones que no nombran ninguna fase de los planes: sin `phase`, o con `none`.
 El índice principal es `docs/registry/DECISIONS.md`.
@@ -12,9 +12,10 @@ El índice principal es `docs/registry/DECISIONS.md`.
 ## DEUDAS VIVAS (0)
 
 
-## PROVISIONALES (2)
+## PROVISIONALES (3)
 
 - `#brand-accent-marks-the-surname` — La marca de la barra pinta el apellido en el color de acento (PROVISIONAL 2026-10-27) · none
+- `#github-social-preview-is-a-tolerated-copy` — La vista previa social del repositorio en GitHub es una copia de la tarjeta, tolerada y con su paso escrito (PROVISIONAL 2026-10-27) · none
 - `#icon-keeps-the-g-monogram-dot` — El icono conserva el monograma G con su punto, con nombres de fichero nuevos (PROVISIONAL 2026-10-27) · none
 
 ## CONFIRMADAS (8)

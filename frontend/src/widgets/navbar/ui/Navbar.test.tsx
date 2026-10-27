@@ -57,7 +57,7 @@ describe('Navbar', () => {
       expect(menuButton.getAttribute('aria-expanded')).toBe('true')
       const drawer = screen.getByRole('dialog', { name: 'Menu' })
       expect(menuButton.getAttribute('aria-controls')).toBe(drawer.id)
-      expect(drawer.querySelector('p')?.textContent).toBe('GONZALO.DEV')
+      expect(drawer.querySelector('p')?.textContent).toBe('GONZALO MARTÍNEZ')
       const current = within(within(drawer).getByRole('navigation')).getByRole('link', { current: 'page' })
       expect(current.textContent).toBe('Projects')
       expect(current.getAttribute('href')).toBe('/en/projects')

@@ -41,14 +41,13 @@ function HideOnScroll(props: Props) {
   )
 }
 
-// "GONZALO.DEV": the name, then the domain part in the accent colour.
 const Brand: React.FC<{ logoText: string }> = ({ logoText }) => {
-  const [name, domain] = logoText.split('.')
+  const accentStart = logoText.lastIndexOf(' ') + 1
   return (
     <>
-      {name}
+      {logoText.slice(0, accentStart)}
       <Box component="span" sx={{ color: 'primary.main' }}>
-        .{domain}
+        {logoText.slice(accentStart)}
       </Box>
     </>
   )
@@ -144,7 +143,7 @@ const Navbar: React.FC = () => {
                   to={homePath}
                   sx={{
                     fontWeight: 700,
-                    fontSize: { xs: '1rem', sm: '1.25rem' },
+                    fontSize: { xs: 'clamp(0.875rem, 4.2vw, 1rem)', sm: '1.25rem' },
                     letterSpacing: { xs: '.05rem', sm: '.1rem' },
                     color: textColor,
                     textDecoration: 'none',

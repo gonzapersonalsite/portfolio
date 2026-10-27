@@ -1,7 +1,7 @@
 ---
 title: La etiqueta pública del portafolio es Full Stack Developer
-state: provisional
-date: 2026-10-24
+state: confirmed
+date: 2026-10-27
 phase: none
 ---
 **La etiqueta pública del portafolio es Full Stack Developer, sin el adjetivo
@@ -48,3 +48,7 @@ declara.
 
 2026-10-24: queda provisional hasta que el dueño vea el portafolio con el
 nuevo puesto; entonces se confirma o se revierte.
+
+2026-10-27: el dueño confirma este enfoque del puesto y fija además que
+`Junior` solo aparezca en textos de disponibilidad
+(`#visible-brand-is-the-owner-name`).

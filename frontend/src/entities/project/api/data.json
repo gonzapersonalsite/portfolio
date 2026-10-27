@@ -174,8 +174,8 @@
       {
         "base": "/images/projects/gonzaloapps-site/00-gonzaloapps-site_home-banner",
         "fullWidth": 928,
-        "altEn": "Gonzalo Apps home page in English: the gonzaloapps.es software studio banner and an applications section listing Quotidia.",
-        "altEs": "Página de inicio de Gonzalo Apps en inglés: el banner del estudio de software gonzaloapps.es y una sección de aplicaciones con Quotidia."
+        "altEn": "Gonzalo Apps home page in English: the gonzaloapps.es banner and an applications section listing Quotidia.",
+        "altEs": "Página de inicio de Gonzalo Apps en inglés: el banner de gonzaloapps.es y una sección de aplicaciones con Quotidia."
       },
       {
         "base": "/images/projects/gonzaloapps-site/01-gonzaloapps-site_apps",
@@ -370,8 +370,8 @@
     "id": "portfolio",
     "titleEn": "Professional portfolio",
     "titleEs": "Portafolio profesional",
-    "descriptionEn": "A modern, bilingual portfolio built as a fully static frontend: no backend, no database, and no servers to maintain. Its pages and assets are distributed through a CDN.\n\nBuilt with React + TypeScript under Feature-Sliced Design to keep the codebase modular and scalable. Content is modeled as data: projects, skills, experience, and profile live in versioned JSON files validated by automated tests, and every image is self-hosted.\n\nIt features three theme modes including a visionOS-inspired Liquid Glass design, instant Spanish/English switching for both interface and content, an interactive project gallery with zoom, and a contact form powered by EmailJS directly from the browser.\n\nAt build time it also generates llms.txt, a sitemap, English and Spanish markdown twins of every page and one HTML shell per route with its own metadata and structured data, so AI agents read the same content as visitors.\n\nDeployed on Vercel; a GitHub Actions pipeline runs typecheck, lint, tests and a production build for frontend changes pushed to main or proposed in pull requests.",
-    "descriptionEs": "Un portafolio moderno y bilingüe construido como frontend totalmente estático: sin backend, sin base de datos y sin servidores que mantener. Sus páginas y recursos se distribuyen a través de una CDN.\n\nDesarrollado con React + TypeScript bajo Feature-Sliced Design para mantener el código modular y escalable. El contenido se modela como datos: proyectos, habilidades, experiencia y perfil viven en ficheros JSON versionados y validados con tests automatizados, y todas las imágenes están autohospedadas.\n\nIncluye tres modos de tema, entre ellos un diseño Liquid Glass inspirado en visionOS, cambio instantáneo español/inglés tanto de interfaz como de contenido, una galería de proyectos interactiva con zoom y un formulario de contacto impulsado por EmailJS directamente desde el navegador.\n\nEn build genera además llms.txt, un sitemap, copias markdown en inglés y español de cada página y un shell HTML por ruta con sus propios metadatos y datos estructurados, para que los agentes de IA lean el mismo contenido que los visitantes.\n\nDesplegado en Vercel; un pipeline de GitHub Actions ejecuta typecheck, lint, tests y build de producción para cambios del frontend enviados a main o propuestos en pull requests.",
+    "descriptionEn": "A modern, bilingual portfolio built as a fully static frontend: no backend, no database, and no servers to maintain. Its pages and assets are distributed through a CDN.\n\nBuilt with React + TypeScript under Feature-Sliced Design to keep the codebase modular and scalable. Content is modeled as data: projects, skills, experience, and profile live in versioned JSON files validated by automated tests, and every image is self-hosted.\n\nIt features three theme modes including a visionOS-inspired Liquid Glass design, instant Spanish/English switching for both interface and content, an interactive project gallery with zoom, and a contact form powered by EmailJS directly from the browser.\n\nAt build time it also generates llms.txt, a sitemap, English and Spanish markdown twins of every page and one HTML shell per route with its own metadata and structured data, so AI agents read the same content as visitors.\n\nDeployed on Vercel; a local pre-push Git hook runs formatting, lint, typecheck, tests and a production build, and refuses to push anything that has not passed them.",
+    "descriptionEs": "Un portafolio moderno y bilingüe construido como frontend totalmente estático: sin backend, sin base de datos y sin servidores que mantener. Sus páginas y recursos se distribuyen a través de una CDN.\n\nDesarrollado con React + TypeScript bajo Feature-Sliced Design para mantener el código modular y escalable. El contenido se modela como datos: proyectos, habilidades, experiencia y perfil viven en ficheros JSON versionados y validados con tests automatizados, y todas las imágenes están autohospedadas.\n\nIncluye tres modos de tema, entre ellos un diseño Liquid Glass inspirado en visionOS, cambio instantáneo español/inglés tanto de interfaz como de contenido, una galería de proyectos interactiva con zoom y un formulario de contacto impulsado por EmailJS directamente desde el navegador.\n\nEn build genera además llms.txt, un sitemap, copias markdown en inglés y español de cada página y un shell HTML por ruta con sus propios metadatos y datos estructurados, para que los agentes de IA lean el mismo contenido que los visitantes.\n\nDesplegado en Vercel; un hook de Git pre-push local ejecuta formato, lint, typecheck, tests y build de producción, y no deja subir nada que no los haya pasado.",
     "technologies": [
       "React",
       "TypeScript",
@@ -381,15 +381,15 @@
       "i18next",
       "EmailJS",
       "Vitest",
-      "GitHub Actions",
+      "Git Hooks",
       "llms.txt"
     ],
     "images": [
       {
-        "base": "/images/projects/portfolio/00-portfolio_home-en",
+        "base": "/images/projects/portfolio/00-portfolio_home-name-brand-en",
         "fullWidth": 1440,
-        "altEn": "Portfolio home page in dark mode: greeting, name, role, an open-to-work badge, a short introduction and buttons to view the projects and download the CV, next to a card with three role chips.",
-        "altEs": "Página de inicio del portafolio en modo oscuro: saludo, nombre, puesto, un distintivo de disponibilidad para trabajar, una breve presentación y botones para ver los proyectos y descargar el CV, junto a una tarjeta con tres etiquetas de perfil."
+        "altEn": "Portfolio home page in dark mode: greeting, name, role, an open-to-work badge, a short introduction and buttons to view the projects and download the CV, next to a card with three role chips and a pixel goblin with a laptop.",
+        "altEs": "Inicio del portafolio en modo oscuro: saludo, nombre, puesto, distintivo de disponibilidad, breve presentación y botones para ver los proyectos y descargar el CV, junto a una tarjeta con tres etiquetas de perfil y un duende pixelado con portátil."
       },
       {
         "base": "/images/projects/portfolio/01-portfolio_projects-en",
@@ -398,13 +398,13 @@
         "altEs": "Página de proyectos del portafolio en modo oscuro: las tres primeras tarjetas de proyecto, cada una con imagen de portada, tipo, una descripción breve con un botón para leer más y etiquetas de tecnologías."
       },
       {
-        "base": "/images/projects/portfolio/02-portfolio_about-en",
+        "base": "/images/projects/portfolio/02-portfolio_about-name-brand-en",
         "fullWidth": 1440,
         "altEn": "Portfolio About page in dark mode: profile photo with a Download CV button, a headline, a short introduction and a personal motto.",
         "altEs": "Página Sobre mí del portafolio en modo oscuro: foto de perfil con un botón para descargar el CV, un titular, una breve presentación y una frase personal."
       },
       {
-        "base": "/images/projects/portfolio/03-portfolio_experience-en",
+        "base": "/images/projects/portfolio/03-portfolio_experience-name-brand-en",
         "fullWidth": 1440,
         "altEn": "Portfolio experience page in dark mode: the Work History heading with an open-to-work badge and a timeline entry with dates, position, company and description.",
         "altEs": "Página de experiencia del portafolio en modo oscuro: el encabezado del historial laboral con un distintivo de disponibilidad para trabajar y una entrada de la línea temporal con fechas, puesto, empresa y descripción."

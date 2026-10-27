@@ -1,0 +1,102 @@
+<!doctype html>
+<!--
+  Source of public/og-cover-gonzalo-martinez-full-stack.jpg. Render it at 1200x630 from frontend/,
+  after pnpm install (the font comes from node_modules):
+    msedge --headless=new --hide-scrollbars --force-device-scale-factor=1 --allow-file-access-from-files
+      --window-size=1200,630 --screenshot=<absolute path>/card.png file:///<absolute path to this file>
+  then save card.png as a quality 85 JPEG under a new file name, because social platforms cache by URL.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Social card</title>
+    <style>
+      @font-face {
+        font-family: 'Inter Variable';
+        font-weight: 100 900;
+        src: url('../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2') format('woff2');
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+        position: relative;
+        background: linear-gradient(135deg, #0d47a1 0%, #121212 100%);
+        font-family: 'Inter Variable', sans-serif;
+        color: #fff;
+      }
+      .circle {
+        position: absolute;
+        border-radius: 50%;
+        background: #1976d2;
+      }
+      .circle.top {
+        width: 600px;
+        height: 600px;
+        right: -300px;
+        top: -300px;
+        opacity: 0.45;
+      }
+      .circle.bottom {
+        width: 490px;
+        height: 490px;
+        left: -245px;
+        bottom: -245px;
+        opacity: 0.27;
+      }
+      main {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      /* 70px keeps the name inside the central 630x630 square that square previews crop to. */
+      h1 {
+        margin: 0;
+        font-size: 70px;
+        line-height: 1.1;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        background: linear-gradient(45deg, #fff 30%, #90caf9 90%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .role {
+        margin: 18px 0 0;
+        font-size: 38px;
+        font-weight: 400;
+      }
+      .rule {
+        width: 84px;
+        height: 4px;
+        border-radius: 2px;
+        background: #90caf9;
+        margin: 30px 0 32px;
+      }
+      .stack {
+        margin: 0;
+        font-size: 27px;
+        font-weight: 500;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="circle top"></div>
+    <div class="circle bottom"></div>
+    <main>
+      <h1>Gonzalo Martínez</h1>
+      <p class="role">Full Stack Developer</p>
+      <div class="rule"></div>
+      <p class="stack">React · TypeScript · Spring Boot · .NET · Flutter</p>
+    </main>
+  </body>
+</html>

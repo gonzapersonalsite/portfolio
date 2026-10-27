@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import { lazy, Suspense } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, render, within } from '@testing-library/react'
+import { getProfile } from '../../src/entities/profile/api/profileApi.ts'
 import { HeroSkeleton } from '../../src/shared/ui/SkeletonLoaders'
 
 const template = readFileSync(resolve(import.meta.dirname, '../../index.html'), 'utf8')
@@ -25,7 +26,12 @@ describe('initial HTML loading state', () => {
     const progress = within(root).getByRole('progressbar', { name: 'Cargando portafolio' })
 
     expect(progress.hasAttribute('value')).toBe(false)
-    expect(root.textContent?.trim()).toBe('GONZALO.DEV')
+  })
+
+  it('shows the same brand as the navigation bar', () => {
+    const root = mountStartup()
+
+    expect(root.textContent?.trim()).toBe(getProfile().logoText)
   })
 
   it('hands over to the existing React skeleton while the page module is still pending', () => {

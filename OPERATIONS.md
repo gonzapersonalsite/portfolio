@@ -30,7 +30,7 @@ The project is **static-only** — a single deployment, zero servers.
   - A new third-party service (analytics, fonts, embeds) needs its host in the matching CSP directive, or the browser blocks it. Vercel's preview toolbar is blocked too, on preview deployments only.
 - **Cache:** `/assets/*`, `/images/*` and `/icons/*` are immutable for one year (see *Cache immutability* below); `index.html` is always revalidated.
 - **Markdown twins** (`*.md`) are served with `X-Robots-Tag: noindex`: agents read them, search engines index the HTML pages.
-- **After a deploy**, check with `curl -I`: `/about` and `/projects/` return 200 with their own `<title>`; `/nope` and `/assets/nope.js` return 404; `/about/index.md` carries `X-Robots-Tag: noindex`; `/icons/gonzalo-dev.svg` carries the immutable `Cache-Control`; every response carries `Content-Security-Policy`.
+- **After a deploy**, check with `curl -I`: `/about` and `/projects/` return 200 with their own `<title>`; `/nope` and `/assets/nope.js` return 404; `/about/index.md` carries `X-Robots-Tag: noindex`; `/icons/g-monogram.svg` carries the immutable `Cache-Control`; every response carries `Content-Security-Policy`.
 
 ---
 
@@ -144,8 +144,8 @@ Never upscale: `min(…, iw)` keeps a narrower source at its own width, so a sou
 - **Covers and gallery content:** the card shows the cover at 16:9 (`PROJECT_COVER_RATIO`) and the tests require exactly that ratio in all three variants. Crop a real screenshot to its content, or extend it with rows of its own plain background when it is too short; never put browser chrome in a screenshot. Gallery slides show the product or its functionality; do not add slides containing only a logo, including as the cover.
 - **No leftovers:** the tests fail on any file under `public/images/projects/` that no project shows, so delete the old variants when you replace or remove an image.
 - **Other images:** WebP only (quality 82 for screenshots, 85 for the profile photo), no external image hosts. The profile photo lives in `public/images/profile/` and its fallback is `public/profile-fallback.webp`.
-- **Social preview:** `public/og-cover-typographic-full-stack.jpg` (1200×630 JPEG, quality 85; social crawlers reject WebP): the GONZALO.DEV wordmark, name, role and main stack in Inter on the dark hero gradient, no photo, rendered from an HTML page in headless Edge. `index.html` links it from `og:image` and `twitter:image` by a root-relative path (the build makes it absolute) and describes it in `og:image:alt` and `twitter:image:alt`. Social platforms cache previews by URL, so a changed image gets a new file name; after the deploy, refresh the previews with LinkedIn Post Inspector and the Facebook Sharing Debugger.
-- **Icons:** the GONZALO.DEV monogram in `public/icons/`: `gonzalo-dev.svg` (preferred by browsers), `gonzalo-dev.ico` (16, 32 and 48 px) and `gonzalo-dev-180.png` (apple-touch icon). A changed icon gets new file names and new links in `index.html`; `pnpm test` checks that every icon and social image `index.html` links exists.
+- **Social preview:** `public/og-cover-gonzalo-martinez-full-stack.jpg` (1200×630 JPEG, quality 85; social crawlers reject WebP): name, role and main stack in Inter on the dark hero gradient, no photo and no wordmark, rendered in headless Edge from `tooling/og-cover/og-cover.html`, which says how. `index.html` links it from `og:image` and `twitter:image` by a root-relative path (the build makes it absolute) and describes it in `og:image:alt` and `twitter:image:alt`. Social platforms cache previews by URL, so a changed image gets a new file name; after the deploy, refresh the previews with LinkedIn Post Inspector and the Facebook Sharing Debugger.
+- **Icons:** the "G" monogram in `public/icons/`: `g-monogram.svg` (preferred by browsers), `g-monogram.ico` (16, 32 and 48 px) and `g-monogram-180.png` (apple-touch icon). A changed icon gets new file names and new links in `index.html`; `pnpm test` checks that every icon and social image `index.html` links exists.
 
 **Cache immutability:** Vercel serves `/assets/*`, `/images/*` and `/icons/*` with a 1-year immutable `Cache-Control`. Vite hashes JS/CSS filenames, so they refresh on every build; image and icon filenames do not. If you replace an image's content, **rename the file** (keep its numeric prefix, which is the gallery position, and change the descriptive part, e.g. `02-gonzaloapps-site_quotidia` → `02-gonzaloapps-site_quotidia-gallery`; rename the `-thumb`, `-800` and `-full` variants together so they keep one base name) and update `base` in `data.json`, or returning visitors will keep the old image for up to one year. `index.html` is always revalidated, so new deployments are picked up immediately.
 
@@ -174,7 +174,7 @@ These are local diagnostic samples, not field Core Web Vitals or a guarantee for
 
 Review closure: `pnpm lint`, all 334 tests in 45 files, `pnpm build` and `git diff --check` passed. Browser checks covered the three badge themes, Home/Experience, 320 px and 390 px layouts, gallery controls and focus return, form validation, saved pause/resume and live reduced-motion changes. The disabled motion explanation remains reachable with the menu's keyboard navigation. No production deployment was performed as part of this review.
 
-Commit and push to `main` → Vercel deploys automatically; GitHub Actions reports lint, tests and the type-checked production build alongside it (it does not hold the deploy back).
+Commit and push to `main` → the `.githooks/pre-push` hook runs the gates before anything leaves the machine, and Vercel deploys automatically. There is no CI on GitHub.
 
 ---
 

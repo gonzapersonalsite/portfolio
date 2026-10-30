@@ -3,8 +3,8 @@
     "id": "quotidia",
     "titleEn": "Quotidia – Daily Planner",
     "titleEs": "Quotidia – Planificador diario",
-    "descriptionEn": "Quotidia is an offline-first daily planner for Android, available on Google Play. Tasks, events, goals and a journal come together in a daily timeline with time blocks and a focus for the day. Core planning works without an account, analytics or ads.\\n\\nChoose notifications or alarms for event reminders, with a native Android alarm screen offering stop and snooze. Optional sync between your own devices uses a private folder in your Google Drive; the developer runs no server and receives no copy of your data.\\n\\nBuilt with Flutter and a Kotlin alarm runtime connected through Pigeon, the application is organized by feature and layer with Riverpod, Drift over SQLite and go_router. Local verification checks architecture contracts, behavior and per-layer coverage before a push. The source code is private; I can walk you through it on request.",
-    "descriptionEs": "Quotidia es un planificador diario offline-first para Android, disponible en Google Play. Tareas, eventos, metas y un diario se reúnen en una agenda diaria con bloques de tiempo y una prioridad para el día. La planificación funciona sin cuenta, analítica ni anuncios.\\n\\nElige notificaciones o alarmas para los recordatorios de eventos, con una pantalla nativa de Android para detener o posponer la alarma. La sincronización opcional entre tus dispositivos usa una carpeta privada de tu Google Drive; el desarrollador no opera ningún servidor ni recibe una copia de tus datos.\\n\\nHecha con Flutter y un runtime de alarmas en Kotlin conectado mediante Pigeon, la aplicación se organiza por funcionalidades y capas con Riverpod, Drift sobre SQLite y go_router. La verificación local comprueba contratos de arquitectura, comportamiento y cobertura por capa antes de cada push. El código fuente es privado; si te interesa, te lo enseño.",
+    "descriptionEn": "Quotidia is an offline-first daily planner for Android, available on Google Play. Tasks, events, goals and a journal come together in a daily timeline with time blocks and a focus for the day, and notes keep ideas and reference text in folders of their own. Core planning works without an account, analytics or ads.\\n\\nChoose notifications or alarms for event reminders, with a native Android alarm screen offering stop and snooze. Optional sync between your own devices uses a private folder in your Google Drive; the developer runs no server and receives no copy of your data.\\n\\nBuilt with Flutter and a Kotlin alarm runtime connected through Pigeon, the application is organized by feature and layer with Riverpod, Drift over SQLite and go_router. Local verification checks architecture contracts, behavior and per-layer coverage before a push. The source code is private; I can walk you through it on request.",
+    "descriptionEs": "Quotidia es un planificador diario offline-first para Android, disponible en Google Play. Tareas, eventos, metas y un diario se reúnen en una agenda diaria con bloques de tiempo y una prioridad para el día, y las notas guardan ideas y apuntes en sus propias carpetas. La planificación funciona sin cuenta, analítica ni anuncios.\\n\\nElige notificaciones o alarmas para los recordatorios de eventos, con una pantalla nativa de Android para detener o posponer la alarma. La sincronización opcional entre tus dispositivos usa una carpeta privada de tu Google Drive; el desarrollador no opera ningún servidor ni recibe una copia de tus datos.\\n\\nHecha con Flutter y un runtime de alarmas en Kotlin conectado mediante Pigeon, la aplicación se organiza por funcionalidades y capas con Riverpod, Drift sobre SQLite y go_router. La verificación local comprueba contratos de arquitectura, comportamiento y cobertura por capa antes de cada push. El código fuente es privado; si te interesa, te lo enseño.",
     "technologies": [
       "Flutter",
       "Dart",
@@ -42,10 +42,10 @@
         "altEs": "Alarma de Quotidia a las 8:30 para el taller de Olmo Bakery, que empieza en una hora, con controles para detenerla o posponerla 5 minutos."
       },
       {
-        "base": "/images/projects/quotidia/04-quotidia_overview-capsule-navigation",
+        "base": "/images/projects/quotidia/04-quotidia_notes-folders",
         "fullWidth": 1458,
-        "altEn": "Quotidia's Overview: task completion and time set aside over the last 7 days, overdue tasks, and the fullest day in the next 7 days.",
-        "altEs": "Resumen de Quotidia: tareas completadas y tiempo reservado en los últimos 7 días, tareas atrasadas y el día más cargado de los próximos 7."
+        "altEn": "Quotidia's Notes: folder chips above the list, two pinned notes and the rest, each with when it changed and the folder it is in, beside search and Trash.",
+        "altEs": "Notas de Quotidia: carpetas sobre la lista, dos notas fijadas y las demás, cada una con cuándo cambió y en qué carpeta está, junto al buscador y la papelera."
       },
       {
         "base": "/images/projects/quotidia/05-quotidia_month-capsule-navigation",
@@ -184,10 +184,10 @@
         "altEs": "Página de aplicaciones de Gonzalo Apps, con Quotidia y su descripción breve."
       },
       {
-        "base": "/images/projects/gonzaloapps-site/02-gonzaloapps-site_quotidia-capsule-showcase",
+        "base": "/images/projects/gonzaloapps-site/02-gonzaloapps-site_quotidia-with-notes",
         "fullWidth": 1920,
-        "altEn": "Quotidia's English page on Gonzalo Apps, with the Q-and-calendar icon and the paper-style daily timeline screenshot in its gallery.",
-        "altEs": "Página de Quotidia en inglés en Gonzalo Apps, con el icono de la Q y el calendario y la captura de la agenda diaria con estilo de papel en su galería."
+        "altEn": "Quotidia's English page on Gonzalo Apps, with the Q-and-calendar icon, the paper-style daily timeline screenshot in its gallery and a description that names its notes.",
+        "altEs": "Página de Quotidia en inglés en Gonzalo Apps, con el icono de la Q y el calendario, la captura de la agenda diaria con estilo de papel en su galería y una descripción que nombra sus notas."
       },
       {
         "base": "/images/projects/gonzaloapps-site/03-gonzaloapps-site_es-wordmark",

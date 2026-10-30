@@ -1,7 +1,7 @@
 # Notas de desarrollo (índice)
 
 GENERADO por tools/board desde `docs/registry/deliveries/` y `docs/registry/lessons/`. No editar a mano: se reescribe.
-board-fingerprint:9fa4d5bbba32097a — su contenido cambió por última vez el 2026-10-30.
+board-fingerprint:8155ebb8bb610cef — su contenido cambió por última vez el 2026-10-30.
 
 Cada entrega es un fichero `docs/registry/deliveries/<fecha>-<tema>.md` con lo que se hizo, cómo se
 verificó y qué costó; cada lección es un fichero `docs/registry/lessons/<identidad>.md` y se cita como
@@ -9,9 +9,10 @@ verificó y qué costó; cada lección es un fichero `docs/registry/lessons/<ide
 entregas dicen cómo llegó a estar así. Aquí van las más recientes de cada clase; todas,
 mes a mes, en su índice del mes.
 
-## Entregas (14; aquí las 14 más recientes)
+## Entregas (15; aquí las 15 más recientes)
 
 - 2026-10-30 `#2026-10-30-dependency-refresh` Actualización de dependencias y alineación del toolchain de pnpm
+- 2026-10-30 `#2026-10-30-quotidia-notes-gallery` La galería de Quotidia muestra Notas
 - 2026-10-27 `#2026-10-27-captures-with-new-gonzaloapps-banner` Las capturas que mostraban el banner antiguo de gonzaloapps.es se rehacen
 - 2026-10-27 `#2026-10-27-github-social-preview-step` El paso de subir la tarjeta como vista previa del repositorio en GitHub queda escrito
 - 2026-10-27 `#2026-10-27-visible-brand-owner-name` La marca gonzalo.dev sale del portafolio y la sustituye el nombre del dueño
@@ -38,5 +39,5 @@ mes a mes, en su índice del mes.
 
 ## Por mes (2 índices)
 
-- `docs/registry/index/notes-2026-10.md` — 2026-10: 14 entregas, 0 lecciones
+- `docs/registry/index/notes-2026-10.md` — 2026-10: 15 entregas, 0 lecciones
 - `docs/registry/index/notes-2026-09.md` — 2026-09: 0 entregas, 7 lecciones

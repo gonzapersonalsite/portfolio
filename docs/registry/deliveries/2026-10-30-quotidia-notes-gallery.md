@@ -10,7 +10,7 @@ portafolio.
 
 **Qué cambió.**
 
-- `quotidia/04` pasa a `04-quotidia_notes-folders`: la toma 4 de la campaña de
+- `quotidia/04` pasa a `04-quotidia_notes-folder-icon`: la toma 4 de la campaña de
   Quotidia en inglés, que desde la 1.7.0 muestra Notas con sus carpetas, dos
   notas fijadas y las demás, en lugar del Resumen. Sus textos alternativos lo
   describen en los dos idiomas.
@@ -21,6 +21,10 @@ portafolio.
   su descripción. Su texto alternativo lo dice.
 - Las variantes anteriores se retiran, y las bases nuevas cambian de nombre para
   invalidar la caché inmutable.
+- El mismo día la toma 4 se rehízo desde la build definitiva de Quotidia 1.7.0,
+  cuyas filas muestran la carpeta con un icono y el nombre en lugar de «In
+  Clients»; su base pasó de `04-quotidia_notes-folders` a
+  `04-quotidia_notes-folder-icon` por la misma razón de caché.
 
 **Cómo se verificó.** La base pasó `python verify.py` antes de modificarla. La
 toma 4 sale de `branding/screenshots/phone/generated/en/04-notes.png` de

@@ -20,6 +20,14 @@ corrida.
 
 - `STATUS.txt`, en la raíz: el resumen en texto plano; lo primero que se lee al
   arrancar una sesión (`../../AGENTS.md` §5).
+- `board.html`, en la raíz: el mismo modelo como página, para una persona. Se
+  abre con doble clic en cualquier navegador, sin servidor ni red, porque lleva
+  sus estilos dentro y no carga ni ejecuta nada. Pinta entero lo que el resumen
+  acota: la línea de orden de cada plan, la fase en curso con sus partes, todas
+  las fases, todos los frentes abiertos, las deudas con su criterio y el
+  veredicto puerta a puerta. Su nombre es el título con que abre el README del
+  producto, y todo lo que muestra va escapado: un título con marcado es texto.
+  No está en la lectura de arranque: es para quien mira, no para el agente.
 - `../../docs/registry/DECISIONS.md`: el índice principal de las decisiones.
   Enteras, las que piden trabajo (abiertas, deudas vivas, provisionales); del
   resto, la cuenta.

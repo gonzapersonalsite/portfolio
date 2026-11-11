@@ -255,9 +255,9 @@ def findings_of(root):
 
 
 def derived_on_disk(root):
-    """The derivatives a built tree holds: the summary, the main indexes and the index directory."""
+    """The derivatives a built tree holds: the summary, the page, the main indexes and the index directory."""
     folder = os.path.join(root, *B.INDEX_DIR.split("/"))
-    return [B.SUMMARY_FILE, B.DECISIONS_INDEX_FILE, B.NOTES_INDEX_FILE] + [B.INDEX_DIR + "/" + n for n in sorted(os.listdir(folder))]
+    return list(B.FIXED_DERIVED) + [B.INDEX_DIR + "/" + n for n in sorted(os.listdir(folder))]
 
 
 def sanitized_env():
@@ -815,7 +815,7 @@ def test_settled_citations_and_verify():
 
 def test_model_and_render():
     begin("test_model_and_render")
-    model = B.build_model(plans(), sample_records(), {"date": "2026-09-12", "rows": [{"label": "tests", "verdict": B.GREEN}]})
+    model = B.build_model(plans(), sample_records(), {"date": "2026-09-12", "rows": [{"label": "tests", "verdict": B.GREEN}]}, "Juego")
     f_axis = model["axes"][0]
     check(len(f_axis["phases"]) == 5 and f_axis["phases"]["F2"]["marker"] == B.IN_PROGRESS and f_axis["phases"]["F2"]["title"] == "Liquidos", "modelo: fases con marcador y titulo limpio")
     check([s["kind"] for s in f_axis["steps"]] == ["phase", "phase", "phase", "phase", "outside"], "modelo: la linea da sus fases en orden, y F9 queda FUERA (visto fallar)")
@@ -836,7 +836,7 @@ def test_model_and_render():
     check("EN CURSO — F2: Liquidos" in text and "NO DERIVABLE" in text, "resumen: la fase en curso y lo que no sabe derivar")
     check("FRENTES ABIERTOS  5 vivos (1 resueltos" in text and "DE LA FASE EN CURSO (1)" in text and "Liquidos vivos" in text and "DEL RESTO, POR FASE (2): F3 1 · H1 1" in text, "resumen: lista los frentes de la fase en curso y cuenta el resto (visto fallar)")
     check("· F3             Cofres" not in text and "SIN FASE PENDIENTE (2)" in text and "DEUDAS       1 vivas, 1 pagadas" in text, "resumen: acotado, y las deudas de sus registros")
-    idle = B.render_summary(B.build_model([{"axis": "F", "file": "p.md", "text": PLAN.replace("F2 (IN PROGRESS)", "F2").replace("(IN PROGRESS)", "(PENDING)")}], sample_records(), {"date": "", "rows": []}))
+    idle = B.render_summary(B.build_model([{"axis": "F", "file": "p.md", "text": PLAN.replace("F2 (IN PROGRESS)", "F2").replace("(IN PROGRESS)", "(PENDING)")}], sample_records(), {"date": "", "rows": []}, ""))
     check("POR FASE (2)" in idle and "Cofres" in idle and "SIN FASE PENDIENTE (3)" in idle and "NO DERIVABLE: no hay veredicto" in idle, "resumen: sin fase en curso se listan todos; sin el eje H, 'Arneses' queda sin fase; y sin veredicto lo dice (visto fallar)")
     dirs = {"decisions": "docs/registry/decisions", "lessons": "docs/registry/lessons", "deliveries": "docs/registry/deliveries"}
     index = B.render_decisions_index(model, dirs)
@@ -844,7 +844,7 @@ def test_model_and_render():
     check("## EL RESTO (3), SOLO CONTADAS" in index, "indice: la cabecera de lo contado suma lo que cuenta (visto fallar)")
     both = sample_records()
     both["decisions"]["records"].append(decision("two-phases", "confirmed", "2026-09-10", {"phase": "F3 H1"}))
-    both_files = {e["file"]: e["template"] for e in B.derived_of(B.build_model(plans(), both, {"date": "", "rows": []}), dirs)}
+    both_files = {e["file"]: e["template"] for e in B.derived_of(B.build_model(plans(), both, {"date": "", "rows": []}, ""), dirs)}
     check(all("`#two-phases`" in both_files[B.decisions_index_file(key)] for key in ("F3", "H1")) and "`#two-phases`" not in both_files[B.decisions_index_file(B.NO_PHASE)],
           "indice: una decision que nombra dos fases esta en el indice de cada una, y no en el de las que no nombran ninguna (visto fallar)")
     check("- `#cofres` — Cofres (OPEN 2026-09-11) · F3" in index and index.find("`#arneses`") < index.find("`#cofres`"), "indice: cada linea con identidad, titulo, estado, fecha y fases; la mas reciente primero (visto fallar)")
@@ -852,7 +852,7 @@ def test_model_and_render():
     check(all(s in covered for s in B.STATES), "indice: todo estado del esquema tiene seccion")
     retired = sample_records()
     retired["decisions"]["records"].append(decision("vieja-regla", "confirmed", "2026-09-10", {"retired": "2026-09-13"}))
-    retired_model = B.build_model(plans(), retired, {"date": "", "rows": []})
+    retired_model = B.build_model(plans(), retired, {"date": "", "rows": []}, "")
     by_file = {e["file"]: e["template"] for e in B.derived_of(retired_model, dirs)}
     with_retired = by_file[B.INDEX_DIR + "/decisions-" + B.NO_PHASE + ".md"]
     check("## RETIRADAS (1)" in with_retired and "· retired 2026-09-13" in with_retired and "## CONFIRMADAS (1)" in with_retired and "RETIRADAS 1" in by_file[B.DECISIONS_INDEX_FILE],
@@ -861,8 +861,8 @@ def test_model_and_render():
     check("## Entregas (1" in notes and "- 2026-09-12 `#2026-09-12-el-seam`" in notes and "- `#lesson-one-thing`" in notes, "indice de notas: entregas con fecha e identidad, lecciones con la suya")
     files = B.derived_of(model, dirs)
     paths = [f["file"] for f in files]
-    check(paths[:3] == [B.SUMMARY_FILE, B.DECISIONS_INDEX_FILE, B.NOTES_INDEX_FILE] and len(set(paths)) == len(paths) and all(B.is_index_file(f) for f in paths[3:]),
-          "derivados: el resumen, los dos indices principales y, en su directorio, los de fase y mes, cada uno una vez")
+    check(paths[:4] == list(B.FIXED_DERIVED) and len(set(paths)) == len(paths) and all(B.is_index_file(f) for f in paths[4:]),
+          "derivados: el resumen, la pagina, los dos indices principales y, en su directorio, los de fase y mes, cada uno una vez")
     fresh = [{"file": f["file"], "template": f["template"], "stored": B.stamp(f["template"], "2026-09-12")} for f in files]
     check(B.derived_files_are_current(fresh, "2026-09-12") == [], "derivados: el que dice lo mismo no sale")
     today = "hoy " + B.STAMP_MARK + B.PRINT_TOKEN
@@ -938,6 +938,80 @@ def test_links_and_comments():
     check([s["value"] for s in B.inline_code(B.comments_only(source, "#"))] == ["#nadie"], "comentarios: la cita del comentario final se lee con su linea")
     js = "const u = \"http://x\"; // ver " + TICK + "#id" + TICK + "\n"
     check(B.comments_only(js, "//").startswith("// ver"), "comentarios: '//' dentro de una URL no abre el comentario")
+    end()
+
+
+def test_page():
+    begin("test_page")
+    verdict = {"date": "2026-09-12", "rows": [{"label": "tests", "verdict": B.GREEN}, {"label": "lint", "verdict": V.RED}]}
+    model = B.build_model(plans(), sample_records(), verdict, "Juego <b>de</b> barro")
+    page = B.render_page(model)
+    check(page.startswith("<!doctype html>") and page.endswith("</html>\n") and page.count(B.STAMP_MARK + B.PRINT_TOKEN) == 1 and page.count(B.DATE_TOKEN) == 2,
+          "pagina: sale como plantilla, con una huella y su fecha por sellar")
+    check("<h1>Juego &lt;b&gt;de&lt;/b&gt; barro</h1>" in page and "<title>Juego &lt;b&gt;de&lt;/b&gt; barro — tablero</title>" in page and "<b>de</b>" not in page,
+          "pagina: el nombre del producto es texto, no marcado (visto fallar)")
+    check(B.render_page(model) == page and "http" not in page and "<script" not in page and "url(" not in page,
+          "pagina: dos pasadas dan los mismos bytes, y no trae nada de fuera ni ejecuta nada")
+    check('<dt>Puertas</dt><dd class="bad">1 / 2 verde</dd>' in page and '<span class="name">tests</span><span class="v ok">verde</span>' in page
+          and '<span class="name">lint</span><span class="v bad">rojo</span>' in page and "<b>2026-09-12</b>" in page,
+          "pagina: el veredicto, puerta a puerta, con la fecha desde la que se sostiene (visto fallar)")
+    check('<span class="ph is-done" title="Base">F0 ✔</span>' in page and '<span class="ph is-now" title="Liquidos">F2 ▸ en curso</span>' in page
+          and '<span class="ph" title="Las puertas cierran">H1</span>' in page and "<b>F9: con sección y fuera de la línea.</b>" in page
+          and 'title="Fuera de la linea"' not in page and page.find(">F1 ✔<") < page.find(">F2 ▸ en curso<") < page.find(">F3<"),
+          "pagina: una linea de orden por plan, en su orden y con el estado de cada fase, y la que queda fuera se dice aparte (visto fallar)")
+    check("<h2>F2 — Liquidos</h2>" in page and '<div class="part ok"><span class="n">F2.1</span><span class="what">El seam</span><span class="st">hecha</span></div>' in page
+          and '<div class="part now"><span class="n">F2.2</span><span class="what">La lava</span><span class="st">en curso</span></div>' in page
+          and page.count('<div class="part todo">') == 2 and "<h3>1 de 4 partes se declaran HECHAS</h3>" in page,
+          "pagina: la fase en curso con sus partes y el estado de cada una (visto fallar)")
+    check("Ninguna fase del eje H se declara IN PROGRESS" in page and "<b>Lo que la línea alcanza a continuación:</b> H1 — Las puertas cierran." in page
+          and '<dt>Eje F · en curso</dt><dd class="hot">F2</dd>' in page and "<dt>Eje H · sigue</dt><dd>H1</dd>" in page,
+          "pagina: un eje sin fase abierta dice lo que su linea alcanza, sin darlo por decidido (visto fallar)")
+    check("<h3>Por fase (3)</h3>" in page and '<span class="k">F2 ▸</span><span class="v"><b>Liquidos vivos</b>' in page and "<h3>Sin fase pendiente (2)</h3>" in page
+          and page.find("<b>Liquidos vivos</b>") < page.find("<b>Cofres</b>") < page.find("<b>Arneses</b>") < page.find("<b>Sonido</b>")
+          and '<dt>Frentes abiertos</dt><dd>5</dd>' in page and '<dt>Sin fase pendiente</dt><dd class="bad">2</dd>' in page and "Hay <b>1</b> ya resueltos" in page,
+          "pagina: los frentes por la fase que su registro declara, en el orden de los planes, y aparte los que no nombran ninguna pendiente (visto fallar)")
+    check("Deudas técnicas (1 vivas, 1 pagadas)" in page and '<span class="code">F3</span><span class="body"><b>Hud monolitico</b> — Dividir en capas</span>' in page
+          and '<span class="code ok">pagada</span><span class="body"><b>Vieja</b> — Se retiro la linea</span>' in page and "<dt>Deudas vivas</dt><dd>1</dd>" in page,
+          "pagina: las deudas con su fase y su criterio, y las pagadas como pagadas (visto fallar)")
+    check('<span class="code ok">F0 · hecha</span>' in page and '<span class="code hot">F2 · en curso</span>' in page and '<span class="code">F9 · pendiente</span>' in page
+          and '<span class="code">H2 · pendiente</span>' in page, "pagina: todas las fases de todos los planes, con su estado")
+    bare = "## Como leer\n\n  **F1 → F2**\n\n## F1 — Base\n\n## F2 — Otra (PENDING)\n"
+    idle = B.render_page(B.build_model([{"axis": "F", "file": "p.md", "text": bare}], groups_of([]), {"date": "", "rows": []}, ""))
+    check("<h1>%s</h1>" % B.PAGE_UNNAMED in idle and "<dt>Puertas</dt><dd>sin dato</dd>" in idle and "<b>NO DERIVABLE:</b> no hay veredicto guardado" in idle
+          and '<span class="ph is-gap" title="Base">F1 — sin marcador</span>' in idle and '<span class="code">F1 · sin marcador</span>' in idle
+          and '<dt>Sin fase pendiente</dt><dd class="ok">0</dd>' in idle,
+          "pagina: sin nombre, sin veredicto o sin marcador lo dice en vez de inventarlo (visto fallar)")
+    spent = B.render_page(B.build_model([{"axis": "F", "file": "p.md", "text": "## Como leer\n\n  **F1 ✔**\n\n## F1 — Base (DONE)\n"}], groups_of([]), {"date": "", "rows": []}, "X"))
+    check("<dt>Eje F · sigue</dt><dd>nada pendiente</dd>" in spent and "no tiene nada pendiente" in spent and "alcanza a continuación" not in spent,
+          "pagina: un plan con todo hecho no anuncia una fase siguiente (visto fallar)")
+    sealed = B.stamp(page, "2026-09-12")
+    check(B.stored_stamp(sealed) == B.fingerprint(page) and B.stored_date(sealed, page) == "2026-09-12" and B.is_current(sealed, page)
+          and B.derived_state(sealed, page, "2026-09-13")["state"] == B.DERIVED_CURRENT and sealed.count("2026-09-12") == 3,
+          "pagina: sellada lleva su huella y su fecha donde el tablero las lee, y al dia no se reescribe (visto fallar)")
+    check(B.derived_state(sealed.replace("<h1>Juego", "<h1>Otro"), page, "2026-09-13")["state"] == B.DERIVED_EDITED
+          and B.derived_state(sealed, page.replace("Liquidos", "Lava"), "2026-09-13")["state"] == B.DERIVED_STALE,
+          "pagina: editada a mano, o con otras fuentes, deja de estar al dia (visto fallar)")
+    check(B.product_name("# Mi juego \n\ntexto\n") == "Mi juego" and B.product_name("texto\n# Tarde\n") == "" and B.product_name("") == "",
+          "pagina: el nombre del producto es el titulo con que abre su README, y sin el no hay nombre (visto fallar)")
+    with scratch_tree() as root:
+        minimal_tree(root)
+        built = read_bytes(root, B.PAGE_FILE)
+        check(built.startswith(b"<!doctype html>") and b"\r" not in built and b"<h1>Producto</h1>" in built and B.today().encode("utf-8") in built
+              and B.PRINT_TOKEN.encode("utf-8") not in built and findings_of(root) == [],
+              "integracion: el build escribe la pagina sellada, con el nombre que dice el README, y el validador la da por buena (visto fallar)")
+        write(root, B.PRODUCT_README, "# Otro nombre\n\nQue es, en un parrafo.\n")
+        stale = findings_of(root)
+        summary = read_bytes(root, B.SUMMARY_FILE)
+        code, said = quietly(B.build, root)
+        check([(f["kind"], f["key"]) for f in stale] == [(B.KIND_DERIVED, B.PAGE_FILE)] and code == 0 and "reescrito " + B.PAGE_FILE in said
+              and b"<h1>Otro nombre</h1>" in read_bytes(root, B.PAGE_FILE) and read_bytes(root, B.SUMMARY_FILE) == summary and findings_of(root) == [],
+              "integracion: cuando cambia lo que la pagina dice, el validador lo señala y el build reescribe solo la pagina (visto fallar)")
+        write(root, B.PAGE_FILE, read_bytes(root, B.PAGE_FILE).replace(b"<h1>Otro nombre</h1>", b"<h1>A mano</h1>"))
+        edited = findings_of(root)
+        code, said = quietly(B.build, root)
+        check(len(edited) == 1 and "a mano" in edited[0]["message"] and code == 1 and "restaurado " + B.PAGE_FILE in said
+              and b"<h1>Otro nombre</h1>" in read_bytes(root, B.PAGE_FILE) and findings_of(root) == [],
+              "integracion: la pagina editada a mano se restaura, y esa corrida sale roja para que se vea (visto fallar)")
     end()
 
 
@@ -2042,7 +2116,7 @@ def test_order_line_and_parts():
     check([p["state"] for p in parts] == [B.DONE, B.PENDING, B.PENDING, B.IN_PROGRESS, B.PENDING],
           "partes: una parte sin marca esta PENDING, la marca vive solo en su nombre en negrita y no en su prosa, y solo cuenta como palabra entera (visto fallar)")
     check(parts[4]["title"] == "Sin negrita", "partes: una parte sin negrita se nombra por su texto hasta la primera pausa (visto fallar)")
-    model = B.build_model([{"axis": "F", "file": "p.md", "text": "**F1 (IN PROGRESS)**\n\n" + plan}], groups_of([]), {"date": "", "rows": []})
+    model = B.build_model([{"axis": "F", "file": "p.md", "text": "**F1 (IN PROGRESS)**\n\n" + plan}], groups_of([]), {"date": "", "rows": []}, "")
     shown = [row.split()[-1] for row in B.render_summary(model).split("\n") if row.startswith("  F1.")]
     check(shown == ["HECHA", "PENDIENTE", "PENDIENTE", "CURSO", "PENDIENTE"], "partes: el resumen dice PENDIENTE de la parte sin marca, no NO DERIVABLE (visto fallar)")
     end()
@@ -2075,7 +2149,7 @@ def test_split_indexes():
     product = "**" + " → ".join("F%d" % n for n in range(10)) + "**\n\n" + "".join("## F%d — Fase %d (PENDING)\n\n" % (n, n) for n in range(10))
     tooling = "**H0 → H1**\n\n## H0 — Uno (PENDING)\n\n## H1 — Dos (PENDING)\n"
     registry = big_registry()
-    model = B.build_model([{"axis": "F", "file": "p.md", "text": product}, {"axis": "H", "file": "t.md", "text": tooling}], registry, {"date": "", "rows": []})
+    model = B.build_model([{"axis": "F", "file": "p.md", "text": product}, {"axis": "H", "file": "t.md", "text": tooling}], registry, {"date": "", "rows": []}, "")
     dirs = {"decisions": "docs/registry/decisions", "lessons": "docs/registry/lessons", "deliveries": "docs/registry/deliveries"}
     derived = {entry["file"]: entry["template"] for entry in B.derived_of(model, dirs)}
     main, notes = derived[B.DECISIONS_INDEX_FILE], derived[B.NOTES_INDEX_FILE]
@@ -4646,7 +4720,7 @@ def test_adopt():
         consistent = findings_of(root)
         code, said = quietly(A.main, [], root, B.today())
         emptied = B.parse_verdict(read_bytes(root, B.VERDICT_FILE).decode("utf-8"))
-        left = [path for path in [B.SUMMARY_FILE, B.DECISIONS_INDEX_FILE, B.NOTES_INDEX_FILE] + B.index_paths(root)
+        left = [path for path in list(B.FIXED_DERIVED) + B.index_paths(root)
                 if os.path.exists(os.path.join(root, *path.split("/")))]
         check(code == 0 and emptied == {"date": B.today(), "rows": []} and left == [B.INDEX_DIR + "/mine.md"],
               "adopt: vacia el veredicto con la fecha del dia y borra los derivados que llevan la huella del tablero, y solo esos (visto fallar)")
@@ -4663,7 +4737,7 @@ def main():
     B.utf8_console()
     print("=== TESTS DEL TABLERO ===")
     tests = [test_data_files, test_docs, test_citations, test_order_and_titles, test_records,
-             test_record_checks, test_sections_and_lists, test_startup_and_timeless, test_model_and_render,
+             test_record_checks, test_sections_and_lists, test_startup_and_timeless, test_model_and_render, test_page,
              test_settled_citations_and_verify, test_encoding, test_links_and_comments, test_derived_strict,
              test_gates_file, test_run_gate, test_gate_environment, test_kill_report, test_verify_main, test_atomic_writes, test_board_end_to_end,
              test_tree_listing_with_git, test_adapters, test_harness_rows, test_skills, test_commit_message, test_pre_push,

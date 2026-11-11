@@ -228,7 +228,7 @@ escribe aquí cite algo que no existe. Lo que no sostiene una puerta no entra.
 | Qué se ha decidido, qué se entregó y qué se aprendió | `docs/registry/README.md` | **Todos los registros**: decisiones, entregas y lecciones, un fichero cada uno; sus índices son DERIVADOS |
 | Qué fase toca y de qué depende | `docs/ROADMAP.md` | **Única autoridad de numeración de fases** del producto, y la gramática de los dos planes |
 | Qué toca del andamio y en qué orden | `docs/TOOLING.md` | **Única autoridad de numeración de tramos** de herramienta |
-| Qué comprueba el tablero y qué significa cada hallazgo | `tools/board/README.md` | Cómo se deriva el estado del proyecto; `STATUS.txt` y los índices del registro son DERIVADOS suyos |
+| Qué comprueba el tablero y qué significa cada hallazgo | `tools/board/README.md` | Cómo se deriva el estado del proyecto; `STATUS.txt`, la página `board.html` y los índices del registro son DERIVADOS suyos |
 | Cómo se organiza el código del producto | `docs/ARCHITECTURE.md` | **Arquitectura del producto**: capas, slices, imports, estilos y acceso a la red |
 
 Ningún documento repite el contenido de otro. Si dos se contradicen, gana el de
@@ -258,7 +258,8 @@ la columna "manda sobre" y el otro se corrige en el mismo cambio.
    del §4 cuyo «Manda sobre» cubre lo que vas a tocar. **`STATUS.txt` orienta,
    no manda:** es el resumen que GENERA `tools/board` (fases, parte en curso,
    frentes abiertos, deudas y puertas); donde discrepe de un documento gana el
-   documento. **Los registros se CONSULTAN, no se leen enteros:** por identidad
+   documento. `board.html` pinta ese mismo modelo como página para una persona,
+   y tampoco manda. **Los registros se CONSULTAN, no se leen enteros:** por identidad
    cuando algo cita uno; por `docs/registry/DECISIONS.md`, que lista entero lo
    que pide trabajo; y, antes de tocar algo, por dos índices de
    `docs/registry/index/`: el de la fase o el tramo que lo gobierna y el de
@@ -342,8 +343,8 @@ enuncia: la intención vive también en los nombres de los tests.
 - **Registro:** un fichero de `docs/registry/` (decisión, lección o entrega)
   con cabecera de campos. Su **identidad** es el nombre del fichero sin `.md`
   (en una entrega, con su fecha delante) y se cita `#<identidad>`.
-- **Derivado:** lo que escribe el tablero (`STATUS.txt` y los índices del
-  registro); se regenera, no se edita.
+- **Derivado:** lo que escribe el tablero (`STATUS.txt`, la página `board.html`
+  y los índices del registro); se regenera, no se edita.
 
 ## 9. Skills del proyecto
 

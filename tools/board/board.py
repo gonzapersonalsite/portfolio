@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The project board: it VALIDATES the living documents and the records against
-the tree, and it GENERATES the derived files (STATUS.txt and the registry
-indices).
+the tree, and it GENERATES the derived files (STATUS.txt, the page board.html
+and the registry indices).
 
     python tools/board/board.py check    GREEN: "0 hallazgos" + exit 0
     python tools/board/board.py build    GREEN: "BOARD_OK" + exit 0
@@ -18,6 +18,7 @@ Requires Python 3.8+ and nothing else.
 import datetime
 import errno
 import hashlib
+import html
 import importlib.util
 import json
 import os
@@ -85,8 +86,16 @@ ADAPTER_KEY = "adapter"
 ADAPTER_LIST = "instructions"
 VERDICT_FILE = "tools/board/verdict.txt"
 SUMMARY_FILE = "STATUS.txt"
+# The same model as the summary, as a page a person opens in a browser.
+PAGE_FILE = "board.html"
 DECISIONS_INDEX_FILE = "docs/registry/DECISIONS.md"
 NOTES_INDEX_FILE = "docs/registry/NOTES.md"
+# The derivatives every tree has, at paths that never change: whatever lists
+# the board's files (the adoption, the upgrade, the tests) reads them here.
+FIXED_DERIVED = (SUMMARY_FILE, PAGE_FILE, DECISIONS_INDEX_FILE, NOTES_INDEX_FILE)
+# The document that says what the product is (AGENTS.md §4): its title is the
+# product's name, the only one the page can derive.
+PRODUCT_README = "README.md"
 # The board owns this directory: one index per phase that decisions name and
 # one per month that notes carry, all derived. What no source generates is removed.
 INDEX_DIR = "docs/registry/index"
@@ -1603,7 +1612,14 @@ def build_axis(axis, file, text):
     return {"axis": axis, "file": file, "phases": phases, "steps": steps, "current": current, "next": next_step(steps)}
 
 
-def build_model(plans, records, verdict):
+def product_name(readme):
+    """The product's name: the title its README opens with, or '' when it
+    opens with none, which the title check reports."""
+    first = readme.split("\n")[0]
+    return first[2:].strip() if first.startswith("# ") else ""
+
+
+def build_model(plans, records, verdict, name):
     axes = [build_axis(p["axis"], p["file"], p["text"]) for p in plans]
     anywhere, order = {}, []
     for axis in axes:
@@ -1611,6 +1627,7 @@ def build_model(plans, records, verdict):
         anywhere.update(axis["phases"])
     decisions = records.get("decisions", {}).get("records", [])
     return {
+        "name": name,
         "axes": axes,
         "axis_order": order,
         "phases": anywhere,
@@ -1734,6 +1751,333 @@ def render_summary(model):
     text += "-" * WIDTH + "\n"
     text += "NO DERIVABLE\n  · Estado del árbol de trabajo y último commit: se miran con `git status`.\n"
     return text
+
+# ----------------------------------------------------------------- page
+
+# The page paints the model the summary prints, for a person and a browser: a
+# single file with its styles inside and nothing fetched, so opening it needs
+# no server and no network, and it reads the same in every clone.
+PAGE_UNNAMED = "Proyecto sin nombre"
+PAGE_STEP = {DONE: ("ph is-done", "%s " + DONE_MARK), IN_PROGRESS: ("ph is-now", "%s ▸ en curso"), PENDING: ("ph", "%s"), "": ("ph is-gap", "%s — sin marcador")}
+PAGE_PART = {DONE: "part ok", IN_PROGRESS: "part now", PENDING: "part todo"}
+PAGE_PHASE = {DONE: "code ok", IN_PROGRESS: "code hot"}
+PAGE_VERDICT = {GREEN: "verde", V.RED: "rojo", V.TIMEOUT: "fuera de plazo"}
+PAGE_STYLE = """
+:root{
+  --ground:#ECEDE6; --surface:#F7F8F3; --sunk:#E2E4DA;
+  --ink:#1A201C; --muted:#656C62; --faint:#8A9186;
+  --line:#D2D5CA; --rule:#BEC2B5;
+  --done:#3D6A55; --done-bg:#DDE7E0;
+  --active:#B4541B; --active-bg:#F6E3D6;
+  --risk:#95301F; --risk-bg:#F3DED9;
+  --cold:#4A5F72;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --ground:#131613; --surface:#1B1F1B; --sunk:#22271F;
+    --ink:#E7EAE1; --muted:#99A197; --faint:#727A6F;
+    --line:#2B312A; --rule:#3A4138;
+    --done:#77B294; --done-bg:#1E2C25;
+    --active:#E4894A; --active-bg:#2E2118;
+    --risk:#E08272; --risk-bg:#2E1D1A;
+    --cold:#93AFC6;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font-family:"Public Sans","Segoe UI",system-ui,sans-serif;font-size:15px;line-height:1.55;
+  -webkit-font-smoothing:antialiased}
+.page{max-width:1080px;margin:0 auto;padding:48px 28px 72px;display:flex;flex-direction:column;gap:52px}
+@media (max-width:640px){.page{padding:32px 18px 56px;gap:40px}}
+h1,h2,h3{font-family:"Archivo","Arial Narrow",Arial,sans-serif;text-wrap:balance;margin:0}
+h1{font-size:clamp(34px,6vw,54px);font-weight:700;letter-spacing:-.03em;line-height:1.02;overflow-wrap:anywhere}
+h2{font-size:22px;font-weight:600;letter-spacing:-.015em}
+h3{font-size:15px;font-weight:600;letter-spacing:-.005em}
+p{margin:0}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace}
+.eyebrow{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-size:11px;font-weight:500;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.masthead{display:flex;flex-direction:column;gap:18px}
+.lede{max-width:64ch;color:var(--muted);font-size:16.5px}
+.lede strong{color:var(--ink);font-weight:600}
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:0;
+  border-top:2px solid var(--rule);border-bottom:1px solid var(--line)}
+.readout div{padding:14px 16px 15px;border-right:1px solid var(--line)}
+.readout div:last-child{border-right:0}
+.readout dt{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-size:10.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--faint);margin:0 0 4px}
+.readout dd{margin:0;font-family:"Archivo","Arial Narrow",Arial,sans-serif;font-size:21px;font-weight:600;
+  letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.readout dd.ok{color:var(--done)} .readout dd.hot{color:var(--active)} .readout dd.bad{color:var(--risk)}
+.strip{display:flex;flex-direction:column;gap:10px}
+.strip .track + .eyebrow,.strip .aside + .eyebrow{margin-top:14px}
+.track{display:flex;flex-wrap:wrap;gap:4px;align-items:stretch}
+.ph{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-size:12.5px;font-weight:500;padding:7px 11px;
+  border:1px solid var(--line);background:var(--surface);color:var(--muted);
+  display:flex;align-items:center;gap:6px;white-space:nowrap}
+.ph.is-done{background:var(--done-bg);border-color:transparent;color:var(--done);font-weight:600}
+.ph.is-now{background:var(--active-bg);border-color:var(--active);color:var(--active);font-weight:600}
+.ph.is-gap{background:transparent;border-style:dashed;color:var(--faint)}
+.track .sep{align-self:center;color:var(--faint);font-size:14px;line-height:1;user-select:none}
+.aside{color:var(--muted);font-size:13px;max-width:74ch;border-left:2px solid var(--line);padding-left:12px}
+.aside b{color:var(--ink);font-weight:600}
+.note{color:var(--muted);font-size:13.5px;max-width:74ch}
+.note b{color:var(--ink);font-weight:600}
+section{display:flex;flex-direction:column;gap:20px}
+.head{display:flex;flex-direction:column;gap:5px;border-left:3px solid var(--rule);padding-left:14px}
+.head.done{border-color:var(--done)} .head.now{border-color:var(--active)}
+.head.next{border-color:var(--cold)} .head.open{border-color:var(--risk)}
+.head .note{margin-top:4px}
+.active-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px}
+@media (max-width:760px){.active-wrap{grid-template-columns:1fr;gap:22px}}
+.parts{display:flex;flex-direction:column}
+.part{display:grid;grid-template-columns:minmax(44px,auto) 1fr auto;align-items:baseline;gap:12px;
+  padding:9px 0;border-bottom:1px solid var(--line)}
+.part:last-child{border-bottom:0}
+.part .n{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-size:12px;color:var(--faint);font-variant-numeric:tabular-nums}
+.part .what{font-size:14px}
+.part .st{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.part.ok .st{color:var(--done)} .part.ok .what{color:var(--muted)}
+.part.now{background:var(--active-bg);margin:0 -10px;padding-left:10px;padding-right:10px}
+.part.now .st{color:var(--active)} .part.now .what{font-weight:600}
+.part.todo .st{color:var(--faint)} .part.todo .what{color:var(--muted)}
+.callout{background:var(--sunk);padding:18px 20px;display:flex;flex-direction:column;gap:10px;
+  border-top:2px solid var(--active)}
+.callout h3{color:var(--active)}
+.callout p{font-size:13.5px;color:var(--muted)}
+.depth{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.layer{display:grid;grid-template-columns:132px 1fr;gap:18px;padding:13px 0;border-bottom:1px solid var(--line)}
+@media (max-width:560px){.layer{grid-template-columns:1fr;gap:3px}}
+.layer .code{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-size:13px;font-weight:600;color:var(--cold)}
+.layer .code.ok{color:var(--done)} .layer .code.hot{color:var(--active)}
+.layer .body{font-size:14px;color:var(--muted)}
+.layer .body b{color:var(--ink);font-weight:600}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line)}
+@media (max-width:760px){.split{grid-template-columns:1fr}}
+.col{background:var(--surface);padding:20px}
+.col.warn{background:var(--risk-bg)}
+.col > .eyebrow{display:block;margin-bottom:3px}
+.col h3{margin-bottom:12px} .col.warn h3{color:var(--risk)}
+.col .why{font-size:13px;color:var(--muted);margin-bottom:16px;max-width:46ch}
+.col.warn .why{color:var(--ink);opacity:.78}
+.col .why.after{margin:14px 0 0}
+ul.items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+ul.items li{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:baseline;font-size:13.5px}
+ul.items .k{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-size:10.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--faint);padding-top:2px;white-space:nowrap}
+.col.warn ul.items .k{color:var(--risk)}
+ul.items .v b{font-weight:600}
+.gates{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.gate{display:grid;grid-template-columns:minmax(170px,260px) 130px 1fr;gap:14px;padding:10px 0;
+  border-bottom:1px solid var(--line);font-size:13.5px;align-items:baseline}
+@media (max-width:560px){.gate{grid-template-columns:1fr auto}.gate .last{grid-column:1/-1}}
+.gate .name{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-size:12.5px;color:var(--ink);overflow-wrap:anywhere}
+.gate .v{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.gate .v.ok{color:var(--done)} .gate .v.bad{color:var(--risk)}
+.gate .last{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-size:12px;color:var(--muted)}
+.unknown{background:var(--sunk);border-top:2px solid var(--rule);padding:18px 20px;
+  display:flex;flex-direction:column;gap:10px}
+.unknown h3{color:var(--muted)}
+.unknown p{font-size:13.5px;color:var(--muted);max-width:76ch}
+.unknown p b{color:var(--ink);font-weight:600}
+.unknown .tag{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-size:11px;letter-spacing:.08em;color:var(--risk)}
+footer{border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:10px;
+  color:var(--muted);font-size:12.5px}
+footer .row{display:flex;flex-wrap:wrap;gap:8px 26px}
+"""
+
+
+def mono(text):
+    return '<span class="mono">%s</span>' % html.escape(text)
+
+
+def page_cell(label, value, style):
+    return "<div><dt>%s</dt><dd%s>%s</dd></div>\n" % (html.escape(label), ' class="%s"' % style if style else "", html.escape(value))
+
+
+def page_masthead(model):
+    rows = model["gates"].get("rows", [])
+    red = sum(1 for row in rows if row["verdict"] != GREEN)
+    unplaced = sum(1 for front in model["fronts"] if not front["named_by"])
+    alive = sum(1 for debt in model["debts"] if not debt["paid"])
+    text = '<header class="masthead">\n<p class="eyebrow">Estado del proyecto · contenido de %s</p>\n' % DATE_TOKEN
+    text += "<h1>%s</h1>\n" % html.escape(model["name"] or PAGE_UNNAMED)
+    text += ('<p class="lede">Todo lo de esta página está <strong>derivado del repositorio</strong>: las cabeceras de fase, la línea de orden'
+             " de cada plan, los registros de decisión y el veredicto de las puertas. No se mantiene a mano y <strong>lo que no sabe derivar"
+             " lo dice</strong> en vez de inventarlo. La verdad vive en los documentos y en los registros; esto es su lectura.</p>\n")
+    text += '<dl class="readout">\n'
+    if rows:
+        text += page_cell("Puertas", "%d / %d verde" % (len(rows) - red, len(rows)), "bad" if red else "ok")
+    else:
+        text += page_cell("Puertas", "sin dato", "")
+    for axis in model["axes"]:
+        if axis["current"]:
+            text += page_cell("Eje %s · en curso" % axis["axis"], axis["current"]["id"], "hot")
+        else:
+            text += page_cell("Eje %s · sigue" % axis["axis"], axis["next"]["id"] if axis["next"] else "nada pendiente", "")
+    text += page_cell("Frentes abiertos", str(len(model["fronts"])), "")
+    text += page_cell("Sin fase pendiente", str(unplaced), "bad" if unplaced else "ok")
+    text += page_cell("Deudas vivas", str(alive), "")
+    return text + "</dl>\n</header>\n"
+
+
+def page_track(axis):
+    """The order line of one plan: its phases in the line's order, and under
+    them the ones the plan has and the line leaves out."""
+    text = '<p class="eyebrow">Línea de orden — eje %s · %s</p>\n<div class="track">\n' % (html.escape(axis["axis"]), html.escape(axis["file"]))
+    outside, drawn = [], 0
+    for step in axis["steps"]:
+        if step["kind"] == "outside":
+            outside.append(step["id"])
+            continue
+        css, shape = PAGE_STEP[step["marker"]]
+        if drawn:
+            text += '<span class="sep" aria-hidden="true">›</span>\n'
+        drawn += 1
+        text += '<span class="%s" title="%s">%s</span>\n' % (css, html.escape(step["label"]), html.escape(shape % step["id"]))
+    text += "</div>\n"
+    if outside:
+        text += ('<p class="aside"><b>%s: con sección y fuera de la línea.</b> El validador lo señala salvo que lleve su excepción, con el motivo,'
+                 " en %s.</p>\n") % (html.escape(" ".join(outside)), mono(BOARD_DIR + "/exceptions.txt"))
+    return text
+
+
+def page_strip(model):
+    tracks = "".join(page_track(axis) for axis in model["axes"] if axis["steps"])
+    if not tracks:
+        return ""
+    return ('<section class="strip">\n' + tracks + '<p class="note">La línea de orden de cada plan es la única que enuncia la secuencia, y se lee de'
+            " izquierda a derecha. Los números son <b>identidad, no secuencia</b>: una fase nueva encaja en medio sin renumerar ninguna."
+            " <b>Aquí solo entran fases</b>: una candidata o una duda viven en la prosa del plan o en su registro.</p>\n</section>\n")
+
+
+def page_next(axis):
+    """An axis nobody has opened a phase in: what its line reaches next, and
+    that reaching it is not a decision."""
+    letter, step = html.escape(axis["axis"]), axis["next"]
+    text = ('<section>\n<div class="head next">\n<p class="eyebrow">Eje %s · nadie ha abierto fase</p>\n'
+            "<h2>Ninguna fase del eje %s se declara IN PROGRESS</h2>\n</div>\n<div class=\"unknown\">\n") % (letter, letter)
+    if not step:
+        return text + "<p>La línea de orden de %s no tiene nada pendiente.</p>\n</div>\n</section>\n" % mono(axis["file"])
+    reached = "%s — %s" % (step["id"], step["label"]) if step["label"] else step["id"]
+    text += "<p><b>Lo que la línea alcanza a continuación:</b> %s.</p>\n" % html.escape(reached)
+    text += ("<p>Eso está <b>derivado de la secuencia y de nada más</b>. No dice que nadie esté trabajando en ello, ni que sea lo que toca:"
+             " abrir una fase es una decisión del dueño, y este tablero no la toma. Para que diga %s, alguien tiene que escribir ese marcador"
+             " en la cabecera de la fase.</p>\n</div>\n</section>\n") % mono(IN_PROGRESS)
+    return text
+
+
+def page_current(axis):
+    current = axis["current"]
+    if not current:
+        return page_next(axis)
+    parts = current["parts"]
+    done = sum(1 for part in parts if part["state"] == DONE)
+    text = '<section>\n<div class="head now">\n<p class="eyebrow">En curso · eje %s</p>\n' % html.escape(axis["axis"])
+    text += "<h2>%s — %s</h2>\n</div>\n" % (html.escape(current["id"]), html.escape(current["title"]))
+    text += '<div class="active-wrap">\n<div class="parts">\n'
+    for part in parts:
+        text += '<div class="%s"><span class="n">%s</span><span class="what">%s</span><span class="st">%s</span></div>\n' % (
+            PAGE_PART[part["state"]], html.escape(current["id"] + "." + part["number"]), html.escape(part["title"]), PART_SHOWN[part["state"]].lower())
+    text += '</div>\n<div class="callout">\n<p class="eyebrow">De dónde sale este cuadro</p>\n'
+    text += "<h3>%d de %d partes se declaran HECHAS</h3>\n" % (done, len(parts))
+    text += ("<p>Las partes salen de la lista numerada del apartado de %s en %s. Cada una lleva su marca en su nombre en negrita: la que dice"
+             " %s está hecha, la que dice %s está en curso y la que no dice ninguna está pendiente.</p>\n") % (
+                 html.escape(current["id"]), mono(axis["file"]), mono(DONE), mono(IN_PROGRESS))
+    text += "<p>El estado de la fase lo declara su cabecera, y el validador lo exige.</p>\n</div>\n</div>\n</section>\n"
+    return text
+
+
+def page_phases(model):
+    text = '<section>\n<div class="head next">\n<p class="eyebrow">Los planes enteros</p>\n<h2>Las fases y su estado</h2>\n</div>\n<div class="depth">\n'
+    for axis in model["axes"]:
+        for phase in axis["phases"].values():
+            shown = PART_SHOWN[phase["marker"]].lower() if phase["marker"] else "sin marcador"
+            text += '<div class="layer"><span class="%s">%s · %s</span><span class="body"><b>%s</b></span></div>\n' % (
+                PAGE_PHASE.get(phase["marker"], "code"), html.escape(phase["id"]), shown, html.escape(phase["title"]))
+    return text + "</div>\n</section>\n"
+
+
+def page_fronts(model):
+    placed = sorted([f for f in model["fronts"] if f["named_by"]], key=by_plan_then_name(model["axis_order"]))
+    unplaced = [f for f in model["fronts"] if not f["named_by"]]
+    text = '<section>\n<div class="head open">\n<p class="eyebrow">Lo que está abierto</p>\n<h2>Frentes abiertos</h2>\n'
+    text += ('<p class="note">Cada frente es una decisión con estado abierto en el registro, y la fase es <b>la que su registro declara en su'
+             " campo</b> %s. Es un hecho sobre el registro, no sobre el mundo: que algo empuje de verdad a un frente no es derivable. Hay"
+             " <b>%d</b> ya resueltos que conservan su rastro y no se listan.</p>\n</div>\n<div class=\"split\">\n") % (mono("phase"), model["resolved"])
+    text += '<div class="col">\n<p class="eyebrow">Su registro declara una fase pendiente</p>\n<h3>Por fase (%d)</h3>\n' % len(placed)
+    text += '<p class="why">Esto es <b>lo que una fase o un tramo arrastra de verdad</b>: al abrirla, aparecen escritos en su camino.</p>\n<ul class="items">\n'
+    for front in placed:
+        tag = " ".join(front["named_by"]["names"]) + (" ▸" if front["named_by"]["open"] else "")
+        text += '<li><span class="k">%s</span><span class="v"><b>%s</b></span></li>\n' % (html.escape(tag), html.escape(front["name"]))
+    text += '</ul>\n<p class="why after">▸ = la primera de esas fases es la que está EN CURSO ahora mismo.</p>\n</div>\n'
+    text += '<div class="col warn">\n<p class="eyebrow">Su registro no nombra ninguna fase pendiente</p>\n<h3>Sin fase pendiente (%d)</h3>\n' % len(unplaced)
+    text += ('<p class="why">O su registro dice %s y explica por qué en su cuerpo, o solo nombra fases ya hechas, y hay que actualizarlo.'
+             ' Lo que sí es seguro: ningún plan te los va a poner delante.</p>\n<ul class="items">\n') % mono(NO_PHASE)
+    for front in unplaced:
+        text += '<li><span class="k">sin fase</span><span class="v"><b>%s</b></span></li>\n' % html.escape(front["name"])
+    return text + "</ul>\n</div>\n</div>\n</section>\n"
+
+
+def page_debts(model):
+    alive = [debt for debt in model["debts"] if not debt["paid"]]
+    paid = [debt for debt in model["debts"] if debt["paid"]]
+    text = '<section>\n<div class="head">\n<p class="eyebrow">Contabilidad</p>\n<h2>Deudas técnicas (%d vivas, %d pagadas)</h2>\n' % (len(alive), len(paid))
+    text += '<p class="note">Cada una con su fase de pago y su criterio. Nadie las paga antes de su fase, ni las deja atrás en silencio.</p>\n</div>\n<div class="depth">\n'
+    for css, debts in (("code", alive), ("code ok", paid)):
+        for debt in debts:
+            tag = "pagada" if debt["paid"] else " · ".join(debt["phases"]) or "sin fase"
+            criterion = " — " + html.escape(debt["criterion"]) if debt["criterion"] else ""
+            text += '<div class="layer"><span class="%s">%s</span><span class="body"><b>%s</b>%s</span></div>\n' % (css, html.escape(tag), html.escape(debt["name"]), criterion)
+    return text + "</div>\n</section>\n"
+
+
+def page_gates(model):
+    rows = model["gates"].get("rows", [])
+    text = '<section>\n<div class="head done">\n<p class="eyebrow">Lo único que decide si algo está hecho</p>\n<h2>Las puertas</h2>\n'
+    if not rows:
+        return text + '<p class="note"><b>NO DERIVABLE:</b> no hay veredicto guardado. Lo escribe %s en su próxima corrida completa.</p>\n</div>\n</section>\n' % mono(RUNNER_FILE)
+    text += ('<p class="note">Veredicto de la última corrida completa de %s. Solo se reescribe cuando el veredicto CAMBIA, así que su fecha dice'
+             " desde cuándo es verdad: <b>%s</b>. El detalle de cada puerta no se guarda a propósito, porque una cifra envejece: para verlo se"
+             " corre %s.</p>\n</div>\n<div class=\"gates\">\n") % (mono(RUNNER_FILE), html.escape(model["gates"]["date"]), mono("python " + RUNNER_FILE))
+    for row in rows:
+        green = row["verdict"] == GREEN
+        text += '<div class="gate"><span class="name">%s</span><span class="%s">%s</span><span class="last">%s</span></div>\n' % (
+            html.escape(row["label"]), "v ok" if green else "v bad", html.escape(PAGE_VERDICT.get(row["verdict"], row["verdict"])),
+            "en verde" if green else "hay que mirarla")
+    return text + "</div>\n</section>\n"
+
+
+def page_unknown():
+    return ('<section>\n<div class="unknown">\n<p class="tag">NO DERIVABLE</p>\n<h3>El estado del árbol de trabajo no cabe en una página versionada</h3>\n'
+            "<p>Escribir aquí «árbol limpio» ensucia el árbol que la frase describe: la propia página pasaría a ser un cambio sin commitear, y la"
+            " siguiente generación tendría que desdecirse. El último commit iría siempre uno por detrás, porque la página se genera antes de"
+            " commitearla. Es un dato que solo es verdad en el instante en que se mira, así que se mira donde es verdad: %s.</p>\n"
+            "<p>Lo que sí es derivable y estable está arriba: el veredicto de las puertas con la fecha desde la que se sostiene.</p>\n"
+            "</div>\n</section>\n") % mono("git status")
+
+
+def page_footer(model):
+    sources = [CONTRACT] + [axis["file"] for axis in model["axes"]] + [REGISTRY_README]
+    text = '<footer>\n<div class="row"><span>Generado por %s · el %s cambió por última vez lo que dice esta página · no se edita a mano</span></div>\n' % (mono(BOARD_DIR), DATE_TOKEN)
+    text += '<div class="row"><span>La verdad vive en el repositorio, no aquí:</span>%s</div>\n' % "".join(mono(path) for path in sources)
+    text += ('<div class="row"><span>Canónico (el validador lo exige): el marcador de cada fase, la línea de orden de cada plan y el estado de'
+             " cada registro. No derivable: el estado del árbol de trabajo.</span></div>\n</footer>\n")
+    return text
+
+
+def render_page(model):
+    """The page as a template, with its fingerprint and its date still to
+    seal: everything it shows comes from the model, escaped, so a title with
+    markup is text and two runs over the same tree write the same bytes."""
+    text = '<!doctype html>\n<html lang="es">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n'
+    text += "<title>%s — tablero</title>\n" % html.escape(model["name"] or PAGE_UNNAMED)
+    text += "<!-- GENERADO por %s desde el repositorio. No editar a mano: se reescribe. %s%s -->\n" % (BOARD_DIR, STAMP_MARK, PRINT_TOKEN)
+    text += "<style>" + PAGE_STYLE + '</style>\n</head>\n<body>\n<main class="page">\n'
+    text += page_masthead(model) + page_strip(model)
+    text += "".join(page_current(axis) for axis in model["axes"])
+    text += page_phases(model) + page_fronts(model) + page_debts(model) + page_gates(model) + page_unknown() + page_footer(model)
+    return text + "</main>\n</body>\n</html>\n"
 
 
 DECISION_SECTIONS = [
@@ -1923,10 +2267,11 @@ def render_month_index(month, notes, dirs):
 
 def derived_of(model, dirs):
     """Every derivative the board writes, with its template: the summary, the
-    two main indexes, one index per phase that decisions name and one per
-    month that notes carry."""
+    page, the two main indexes, one index per phase that decisions name and
+    one per month that notes carry."""
     derived = [
         {"file": SUMMARY_FILE, "template": render_summary(model)},
+        {"file": PAGE_FILE, "template": render_page(model)},
         {"file": DECISIONS_INDEX_FILE, "template": render_decisions_index(model, dirs)},
         {"file": NOTES_INDEX_FILE, "template": render_notes_index(model, dirs)},
     ]
@@ -2327,7 +2672,8 @@ def load(root, reader):
             problems.append("documents.txt: 'axis' espera '<LETRA> <ruta>' y tiene '%s'" % value)
             continue
         plans.append({"axis": parts[0], "file": parts[1].strip(), "text": reader.text(parts[1].strip())})
-    return {"documents": documents, "exceptions": exceptions, "limits": limits, "prose": prose, "manifest": manifest, "plans": plans, "problems": problems}
+    return {"documents": documents, "exceptions": exceptions, "limits": limits, "prose": prose, "manifest": manifest, "plans": plans, "problems": problems,
+            "name": product_name(reader.text(PRODUCT_README))}
 
 
 def inspect(root, day=None):
@@ -2473,9 +2819,9 @@ def inspect(root, day=None):
             found += missing if value is None else judge(groups, value, name)
         return found
 
-    model = build_model(plans, records, parse_verdict(reader.text(VERDICT_FILE)))
+    model = build_model(plans, records, parse_verdict(reader.text(VERDICT_FILE)), data["name"])
     derived = derived_of(model, dirs) if model["phases"] else []
-    derived_paths = [e["file"] for e in derived] or [SUMMARY_FILE, DECISIONS_INDEX_FILE, NOTES_INDEX_FILE]
+    derived_paths = [e["file"] for e in derived] or list(FIXED_DERIVED)
 
     def adapters_check():
         """Each adapter on its own: what it lists, read by its kind, plus what
@@ -2629,7 +2975,7 @@ def build(root):
     for group in records.values():
         for problem in group["problems"]:
             print("  WARNING: " + problem)
-    model = build_model(data["plans"], records, parse_verdict(reader.text(VERDICT_FILE)))
+    model = build_model(data["plans"], records, parse_verdict(reader.text(VERDICT_FILE)), data["name"])
     if not model["phases"]:
         print("RESULT: cero cabeceras de fase; el tablero no pinta un plan vacio")
         return 1

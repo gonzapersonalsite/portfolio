@@ -63,7 +63,7 @@ def adoption(day):
 def shipped_derivatives(root, reader):
     """What the board wrote before this repository existed: every derivative
     on disk that carries the board's fingerprint."""
-    candidates = [B.SUMMARY_FILE, B.DECISIONS_INDEX_FILE, B.NOTES_INDEX_FILE] + B.index_paths(root)
+    candidates = list(B.FIXED_DERIVED) + B.index_paths(root)
     return [path for path in candidates if B.STAMP_MARK in reader.text(path)]
 
 

@@ -72,4 +72,4 @@ file stack:react-fsd | tooling/agent-files/vitePlugin.test.ts | kept
 file stack:react-fsd | tooling/agent-files/vitePlugin.ts | kept
 file stack:react-fsd | vitest.setup.ts | kept
 
-applied 27df3cfdb3a1dbbdaf19ea4425ca99c92528ad74
+applied d94a2b3b653d937f2a09bdbd5334f725511a7374

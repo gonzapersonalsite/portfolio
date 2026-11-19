@@ -30,6 +30,11 @@ import board as B
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 GIT_SECONDS = 30
 SHOWN = 10
+# verify.py exits with this, without running a gate, while another
+# verification holds the tree.
+VERIFY_REFUSED_EXIT = B.V.REFUSED_EXIT
+BUSY_WHY = ("otra verificacion corre sobre este arbol (arriba, la linea RESULT dice cual): verify.py no corrio ninguna puerta; cuando"
+            " acabe, vuelve a empujar. Push rechazado")
 
 
 def pushed_refs(text):
@@ -174,6 +179,9 @@ def main(argv, root=ROOT, stdin=None):
         return 1
     sys.stdout.flush()
     code = subprocess.run([sys.executable, os.path.join(root, "verify.py")], cwd=root, stdin=subprocess.DEVNULL).returncode
+    if code == VERIFY_REFUSED_EXIT:
+        print("pre-push: " + BUSY_WHY, file=sys.stderr)
+        return code
     if code != 0:
         print("pre-push: " + refused_why(rewritten_files(root)), file=sys.stderr)
         return code

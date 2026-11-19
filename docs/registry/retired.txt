@@ -1,0 +1,21 @@
+# The ledger of what left the registry: a decision or a lesson that stopped
+# governing leaves the tree in the same change and leaves its line here, with
+# the day it left and what its reason names. Its text is read in git. The
+# board checks that a retired identity is no file of the tree, that what its
+# line names exists, and that nothing that governs cites it; a delivery may,
+# because it is history, and its citation resolves here.
+#
+# --- KEYS ---
+# superseded : a record another one replaced, written
+#              `<id> <date> <successor-id>`; the successor is a decision, a
+#              lesson or another line of this ledger.
+# answered   : an open question another record answers, written
+#              `<id> <date> <answer-id>`, under the same rule.
+# paid       : a debt that was paid, written `<id> <date> [<delivery-id>]`.
+# applied    : a one-off piece of work or a plan that is done, written
+#              `<id> <date> [<delivery-id>]`.
+# withdrawn  : a record that left with nothing in its place, written
+#              `<id> <date>`.
+#
+applied pnpm-12-15-for-reproducible-local-gates 2026-10-24 2026-10-24-install-policy-and-pnpm-pin
+applied review-zod-lint-resource-exhaustion-advisory 2026-10-24 2026-10-24-install-policy-and-pnpm-pin

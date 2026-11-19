@@ -2,6 +2,7 @@
 title: El dueño confirma la autoridad sobre excepciones de seguridad del contrato
 state: confirmed
 date: 2026-10-24
+domain: contribution
 phase: none
 ---
 **El dueño confirma la autoridad sobre excepciones de seguridad del contrato.**

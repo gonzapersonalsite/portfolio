@@ -21,6 +21,7 @@ import sys
 import tempfile
 import threading
 import time
+import types
 import _thread
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -196,9 +197,14 @@ def legend(keys):
 
 DOCUMENT_KEYS = ["live", "closed", "axis", "decisions", "lessons", "deliveries", "startup", "timeless",
                  "code", "generated", "extension", "skills", "adapter"]
-EXCEPTION_KEYS = ["citation", "marker", "order", "shape", "slug", B.KIND_ENCODING, B.KIND_ENGINE]
+EXCEPTION_KEYS = ["citation", "marker", "order", "shape", "slug", B.KIND_ENCODING, B.KIND_ENGINE, B.KIND_NAME]
 MANIFEST_KEYS = ["version", "engine", "template"]
 LIMIT_KEYS = ["startup", "line", "identity", "index"]
+DOMAIN_KEYS = [B.DOMAIN_KEY]
+RETIRED_KEYS = list(B.RETIREMENTS)
+# The domains of the test records: what each governs, as domains.txt declares
+# them. "audio" has no record, so no page.
+DOMAINS = {"ids": ["core", "ui", "audio"], "titles": {"core": "El nucleo", "ui": "La interfaz", "audio": "El sonido"}, "findings": []}
 PROSE_KEYS = ["authority", "checklist", "fields", "state-word", "skills", "standards", B.PENDING_KEY]
 # The headings a Spanish-speaking team gives the sections the board reads.
 AUTHORITY, CHECKLIST_TITLE, FIELDS = "4. Dónde vive cada cosa", "Qué comprueba", "Campos"
@@ -227,8 +233,9 @@ def minimal_tree(root, authority=AUTHORITY):
     fields = "".join("| `%s` | x |\n" % f for f in B.all_fields() if f != "state")
     states = " · ".join("`%s`" % s for s in B.STATES)
     write(root, B.REGISTRY_README, "# Registro\n\n## %s\n\n| Campo | Valor |\n|---|---|\n%s| `state` | %s |\n" % (FIELDS, fields, states))
-    write(root, "docs/registry/decisions/la-base.md", "---\ntitle: La base\nstate: confirmed\ndate: 2026-01-01\n---\n**La base.** Cita `README.md`.\n")
-    write(root, "docs/registry/lessons/lesson-something.md", "---\ntitle: Algo\ndate: 2026-01-01\n---\n**Algo.** Se aprendio algo.\n")
+    write(root, "docs/registry/decisions/la-base.md", "---\ntitle: La base\nstate: confirmed\ndate: 2026-01-01\ndomain: core\n---\n**La base.** Cita `README.md`.\n")
+    write(root, "docs/registry/lessons/lesson-something.md", "---\ntitle: Algo\ndate: 2026-01-01\ndomain: core\n---\n**Algo.** Se aprendio algo.\n")
+    write(root, "tools/board/domains.txt", legend(DOMAIN_KEYS) + "domain core El nucleo\n")
     write(root, "docs/registry/deliveries/2026-01-01-la-base.md", "---\ntitle: La base entra\ndate: 2026-01-01\nphase: F0\n---\n**La base entra.** Por `#la-base`.\n")
     write(root, "tools/board/documents.txt", legend(DOCUMENT_KEYS) + "".join(line + "\n" for line in [
         "live AGENTS.md", "live README.md", "live " + B.REGISTRY_README, "live " + B.BOARD_README, "axis F docs/ROADMAP.md",
@@ -489,13 +496,20 @@ def record(file, fields, body="cuerpo"):
 
 
 def decision(rid, state, date, extra=None, body="cuerpo"):
-    fields = {"title": rid.replace("-", " ").capitalize(), "state": state, "date": date}
+    """A decision of the domain 'core' unless `extra` names another, or None
+    to leave the field out."""
+    fields = {"title": rid.replace("-", " ").capitalize(), "state": state, "date": date, B.DOMAIN_KEY: "core"}
     fields.update(extra or {})
-    return record("docs/registry/decisions/%s.md" % rid, fields, body)
+    return record("docs/registry/decisions/%s.md" % rid, {k: v for k, v in fields.items() if v is not None}, body)
 
 
-def lesson(rid, date):
-    return record("docs/registry/lessons/%s.md" % rid, {"title": rid, "date": date})
+def lesson(rid, date, domain="core"):
+    return record("docs/registry/lessons/%s.md" % rid, {"title": rid, "date": date, B.DOMAIN_KEY: domain})
+
+
+def left(reason, rid, date, named=""):
+    """One row of the ledger, as read_ledger gives it."""
+    return {"reason": reason, "id": rid, "date": date, "named": named, "where": "%s:20" % B.RETIRED_FILE}
 
 
 def delivery(rid, date):
@@ -515,13 +529,21 @@ def sample_records():
         decision("sonido", "open", "2026-09-12", {"phase": "none"}),
         decision("cofres", "open", "2026-09-11", {"phase": "F3"}),
         decision("ya-alcanzada", "open", "2026-09-11", {"phase": "F0"}),
-        decision("luz", "resolved", "2026-09-12"),
         decision("arneses", "open", "2026-09-13", {"phase": "H1"}),
         decision("liquidos-vivos", "open", "2026-09-13", {"phase": "F2"}),
-        decision("borde", "confirmed", "2026-09-11"),
+        decision("borde", "confirmed", "2026-09-11", {B.DOMAIN_KEY: "ui"}),
         decision("hud-monolitico", "open", "2026-09-11", {"type": "debt", "phase": "F3", "criterion": "Dividir en capas"}),
-        decision("vieja", "resolved", "2026-09-11", {"type": "debt", "criterion": "Se retiro la linea"}),
     ], [lesson("lesson-one-thing", "2026-09-12")], [delivery("2026-09-12-el-seam", "2026-09-12")])
+
+
+def sample_ledger():
+    """What left the sample registry: a question 'borde' answered and a debt
+    the delivery of the seam paid."""
+    return [left("answered", "luz", "2026-09-12", "borde"), left("paid", "vieja", "2026-09-12", "2026-09-12-el-seam")]
+
+
+def sample_model(verdict=None, name=""):
+    return B.build_model(plans(), sample_records(), verdict or {"date": "", "rows": []}, name, sample_ledger(), DOMAINS)
 
 
 def plans():
@@ -606,6 +628,17 @@ def test_citations():
     ids = [{"value": "#luz", "line": 3, "doc": "a.md", "dir": ""}, {"value": "#nadie", "line": 5, "doc": "a.md", "dir": ""}, {"value": "#nadie", "line": 6, "doc": "b.md", "dir": ""}]
     broken = B.slug_citations_resolve(ids, ["luz"])
     check(len(broken) == 1 and broken[0]["key"] == "#nadie" and "b.md:6" in broken[0]["message"], "cita de identidad: la que ningun registro declara sale, una vez por identidad (visto fallar)")
+    history = "docs/registry/deliveries/2026-09-13-la-nueva.md"
+    ledger = [left("superseded", "vieja", "2026-09-13", "nueva"), left("withdrawn", "muerta", "2026-09-13")]
+    cites = [{"value": "#vieja", "line": 2, "doc": "AGENTS.md", "dir": ""}, {"value": "#vieja", "line": 3, "doc": history, "dir": ""},
+             {"value": "#muerta", "line": 4, "doc": "docs/registry/decisions/otra.md", "dir": ""}, {"value": "#muerta", "line": 5, "doc": history, "dir": ""}]
+    gone = B.slug_citations_resolve(cites, ["nueva", "otra"], ledger, [history])
+    check([f["where"] for f in gone] == ["AGENTS.md:2", "docs/registry/decisions/otra.md:4"] and all(f["kind"] == B.KIND_SLUG for f in gone),
+          "cita de identidad: lo que salio por el libro resuelve desde una entrega, que es historia, y no desde lo que gobierna (visto fallar)")
+    check("la sustituye `#nueva`" in gone[0]["message"] and "sustituye" not in gone[1]["message"] and "'withdrawn'" in gone[1]["message"],
+          "cita de identidad: el hallazgo dice por que salio y, si la tiene, cual es su sustituta (visto fallar)")
+    check(B.slug_citations_resolve(cites[:1], ["nueva"]) != [] and B.slug_citations_resolve(cites[1:2], ["nueva"], ledger, [history]) == [],
+          "cita de identidad: sin el libro, una identidad que salio es una cita rota")
     end()
 
 
@@ -640,32 +673,40 @@ def test_order_and_titles():
 
 def test_records():
     begin("test_records")
-    text = "---\ntitle: Borde\nstate: confirmed\ndate: 2026-09-11\n---\n**Borde.** pared\n"
+    text = "---\ntitle: Borde\nstate: confirmed\ndate: 2026-09-11\ndomain: core\n---\n**Borde.** pared\n"
     rec = B.parse_record(text, "docs/registry/decisions/borde.md")
-    check(not rec["problems"] and rec["id"] == "borde" and rec["fields"]["date"] == "2026-09-11" and rec["body_line"] == 6, "registro: identidad del fichero, campos de la cabecera, cuerpo numerado")
-    check(B.validate_record(rec, "decision", ["F1"]) == [], "registro: un registro completo no tiene hallazgos")
+    check(not rec["problems"] and rec["id"] == "borde" and rec["fields"]["date"] == "2026-09-11" and rec["body_line"] == 7, "registro: identidad del fichero, campos de la cabecera, cuerpo numerado")
+    ids = DOMAINS["ids"]
+    check(B.validate_record(rec, "decision", ["F1"], ids) == [], "registro: un registro completo no tiene hallazgos")
+    check(one_says(B.validate_record(decision("sin-dominio", "confirmed", "2026-09-11", {B.DOMAIN_KEY: None}), "decision", [], ids), "falta el campo obligatorio 'domain'")
+          and one_says(B.validate_record(record("lesson-x.md", {"title": "a", "date": "2026-09-11"}), "lesson", [], ids), "falta el campo obligatorio 'domain'"),
+          "registro: toda decision y toda leccion dicen el sistema que gobiernan (visto fallar)")
+    check(one_says(B.validate_record(decision("ajena", "confirmed", "2026-09-11", {B.DOMAIN_KEY: "graficos"}), "decision", [], ids), "el dominio 'graficos' no esta"),
+          "registro: un dominio que domains.txt no declara sale (visto fallar)")
+    check(one_says(B.validate_record(record("x.md", {"title": "a", "date": "2026-09-21", B.DOMAIN_KEY: "core"}), "delivery", [], ids), "no existe"),
+          "registro: una entrega es historia y no lleva dominio")
     check(len(B.parse_record("**Sin cabecera.**\n", "x.md")["problems"]) == 1, "registro: sin cabecera es un problema (visto fallar)")
     check(len(B.parse_record("---\ntitle: a\n", "x.md")["problems"]) == 1, "registro: cabecera sin cierre (visto fallar)")
     check(len(B.parse_record("---\nsin dos puntos\n---\n", "x.md")["problems"]) == 1, "registro: linea sin 'clave: valor' (visto fallar)")
     check(len(B.parse_record("---\ndate: 2026-09-11\ndate: 2026-09-12\n---\n", "x.md")["problems"]) == 1, "registro: clave repetida (visto fallar)")
-    check(one_says(B.validate_record(record("una.md", {"title": "a", "state": "confirmed"}), "decision", []), "falta el campo obligatorio 'date'"), "registro: campo obligatorio ausente (visto fallar)")
-    check(one_says(B.validate_record(record("una.md", {"title": "a", "state": "confirmed", "date": "2026-09-11", "color": "rojo"}), "decision", []), "el campo 'color' no existe"), "registro: campo desconocido (visto fallar)")
-    check(one_says(B.validate_record(record("una.md", {"title": "a", "state": "confirmed", "date": "11 sept"}), "decision", []), "no es una fecha"), "registro: fecha con prosa (visto fallar)")
-    check(one_says(B.validate_record(record("una.md", {"title": "a", "state": "confirmed", "date": "2026-13-01"}), "decision", []), "no es una fecha"), "registro: un mes que no existe no es una fecha (visto fallar)")
-    check(one_says(B.validate_record(record("una.md", {"title": "a", "state": "CONFIRMED", "date": "2026-09-11"}), "decision", []), "no es uno de"), "registro: estado fuera del esquema (visto fallar)")
-    check(one_says(B.validate_record(record("una.md", {"title": "a", "state": "open", "date": "2026-09-11"}), "decision", []), "tiene que decir su 'phase'"), "registro: abierta sin fase (visto fallar)")
-    placed = record("una.md", {"title": "a", "state": "open", "date": "2026-09-11", "phase": "F6 H1"})
-    check(B.validate_record(placed, "decision", ["F6", "H1"]) == [] and B.phases_of(placed) == ["F6", "H1"], "registro: abierta con sus fases pasa")
-    check(one_says(B.validate_record(placed, "decision", ["F6"]), "la fase 'H1' no existe"), "registro: fase que ningun plan tiene (visto fallar)")
-    check(B.validate_record(record("una.md", {"title": "a", "state": "postponed", "date": "2026-09-11", "phase": "none"}), "decision", []) == [], "registro: 'ninguna' es una fase valida")
-    check(one_says(B.validate_record(record("una.md", {"title": "a", "state": "open", "date": "2026-09-11", "phase": "F9", "type": "debt"}), "decision", ["F9"]), "'criterion'"), "registro: deuda sin criterio (visto fallar)")
-    paid = record("una.md", {"title": "a", "state": "resolved", "date": "2026-09-11", "type": "debt", "criterion": "c"})
-    check(B.validate_record(paid, "decision", []) == [] and not B.needs_phase(paid), "registro: deuda pagada no pide fase")
-    check(one_says(B.validate_record(record("lesson-one.md", {"title": "a", "date": "2026-09-11", "state": "confirmed"}), "lesson", []), "no existe para un registro de clase 'lesson'"), "registro: cada clase tiene su esquema (visto fallar)")
-    check(one_says(B.validate_record(rec, "inventada", []), "no es una clase"), "registro: clase desconocida es hallazgo (visto fallar)")
-    check(one_says(B.validate_record(B.parse_record(text, "Borde Del Mundo.md"), "decision", []), "no es una identidad valida"), "registro: el nombre del fichero es una identidad (visto fallar)")
-    retired_open = record("una.md", {"title": "a", "state": "open", "date": "2026-09-11", "retired": "2026-09-13"})
-    check(B.validate_record(retired_open, "decision", []) == [] and not B.is_open(retired_open) and not B.governs(retired_open), "registro: una abierta retirada ni pide fase ni es un frente ni gobierna")
+    check(one_says(B.validate_record(record("una.md", {"title": "a", "state": "confirmed"}), "decision", [], ids), "falta el campo obligatorio 'date'"), "registro: campo obligatorio ausente (visto fallar)")
+    check(one_says(B.validate_record(record("una.md", {"title": "a", "state": "confirmed", "date": "2026-09-11", "color": "rojo"}), "decision", [], ids), "el campo 'color' no existe"), "registro: campo desconocido (visto fallar)")
+    check(one_says(B.validate_record(record("una.md", {"title": "a", "state": "confirmed", "date": "11 sept"}), "decision", [], ids), "no es una fecha"), "registro: fecha con prosa (visto fallar)")
+    check(one_says(B.validate_record(record("una.md", {"title": "a", "state": "confirmed", "date": "2026-13-01"}), "decision", [], ids), "no es una fecha"), "registro: un mes que no existe no es una fecha (visto fallar)")
+    check(one_says(B.validate_record(record("una.md", {"title": "a", "state": "CONFIRMED", "date": "2026-09-11"}), "decision", [], ids), "no es uno de"), "registro: estado fuera del esquema (visto fallar)")
+    check(one_says(B.validate_record(decision("vieja", "resolved", "2026-09-11"), "decision", [], ids), "no es uno de"),
+          "registro: 'resolved' ya no es un estado: lo que se cerro sale por el libro (visto fallar)")
+    check(one_says(B.validate_record(record("una.md", {"title": "a", "state": "open", "date": "2026-09-11"}), "decision", [], ids), "tiene que decir su 'phase'"), "registro: abierta sin fase (visto fallar)")
+    placed = decision("una", "open", "2026-09-11", {"phase": "F6 H1"})
+    check(B.validate_record(placed, "decision", ["F6", "H1"], ids) == [] and B.phases_of(placed) == ["F6", "H1"], "registro: abierta con sus fases pasa")
+    check(one_says(B.validate_record(placed, "decision", ["F6"], ids), "la fase 'H1' no existe"), "registro: fase que ningun plan tiene (visto fallar)")
+    check(B.validate_record(decision("una", "postponed", "2026-09-11", {"phase": "none"}), "decision", [], ids) == [], "registro: 'ninguna' es una fase valida")
+    check(one_says(B.validate_record(record("una.md", {"title": "a", "state": "open", "date": "2026-09-11", "phase": "F9", "type": "debt"}), "decision", ["F9"], ids), "'criterion'"), "registro: deuda sin criterio (visto fallar)")
+    check(one_says(B.validate_record(record("lesson-one.md", {"title": "a", "date": "2026-09-11", "state": "confirmed"}), "lesson", [], ids), "no existe para un registro de clase 'lesson'"), "registro: cada clase tiene su esquema (visto fallar)")
+    check(one_says(B.validate_record(rec, "inventada", [], ids), "no es una clase"), "registro: clase desconocida es hallazgo (visto fallar)")
+    check(one_says(B.validate_record(B.parse_record(text, "Borde Del Mundo.md"), "decision", [], ids), "no es una identidad valida"), "registro: el nombre del fichero es una identidad (visto fallar)")
+    check(one_says(B.validate_record(decision("una", "confirmed", "2026-09-11", {"retired": "2026-09-13"}), "decision", [], ids), "el campo 'retired' no existe"),
+          "registro: 'retired' ya no es un campo: lo que deja de gobernar sale del arbol (visto fallar)")
     walked = B.read_dir("docs/registry/decisions", ["dos.md", "una.md", "notas.txt"], lambda f: text if f.endswith(".md") else "")
     check(len(walked["records"]) == 2 and walked["records"][0]["id"] == "dos" and len(walked["problems"]) == 1, "registro: el directorio se lee en orden y un fichero que no es .md es un problema (visto fallar)")
     longest = B.longest_line(B.parse_record("---\ntitle: a\ndate: 2026-09-11\n---\ncorta\n" + "x" * 300 + "\n| " + "y" * 400 + " |\n", "una.md"))
@@ -680,14 +721,14 @@ def test_record_checks():
     begin("test_record_checks")
     groups = sample_records()
     known = ["F0", "F2", "F3", "H1"]
-    check(B.records_are_well_formed(list(groups.values()), known) == [], "registros: un juego bien formado no tiene hallazgos")
+    check(B.records_are_well_formed(list(groups.values()), known, DOMAINS["ids"]) == [], "registros: un juego bien formado no tiene hallazgos")
     broken = sample_records()
     broken["decisions"]["records"].append(decision("rota", "open", "2026-09-11"))
-    found = B.records_are_well_formed(list(broken.values()), known)
+    found = B.records_are_well_formed(list(broken.values()), known, DOMAINS["ids"])
     check(len(found) == 1 and found[0]["kind"] == B.KIND_RECORD and found[0]["key"] == "#rota" and "'phase'" in found[0]["message"], "registros: un registro mal formado sale con su identidad y su campo (visto fallar)")
     dirless = sample_records()
     dirless["lessons"]["problems"].append("el directorio no existe")
-    check(len(B.records_are_well_formed(list(dirless.values()), known)) == 1, "registros: un problema del directorio es un hallazgo (visto fallar)")
+    check(len(B.records_are_well_formed(list(dirless.values()), known, DOMAINS["ids"])) == 1, "registros: un problema del directorio es un hallazgo (visto fallar)")
     check(B.record_ids_are_unique(list(groups.values())) == [], "identidad: sin repeticiones no hay hallazgo")
     twice = sample_records()
     twice["lessons"]["records"].append(lesson("sonido", "2026-09-12"))
@@ -704,7 +745,7 @@ def test_record_checks():
     repeated = B.record_bodies_declare_no_state(list(prose.values()), B.state_words(["ABIERTA"]))
     check(len(repeated) == 1 and repeated[0]["key"] == "#vieja-forma" and "'ABIERTA'" in repeated[0]["message"], "cuerpo: un cuerpo que repite el estado en su nombre sale (visto fallar)")
     lesson_word = sample_records()
-    lesson_word["lessons"]["records"].append(record("docs/registry/lessons/lesson-x.md", {"title": "X", "date": "2026-09-11"}, "**Una ABIERTA que nadie lee.** x"))
+    lesson_word["lessons"]["records"].append(record("docs/registry/lessons/lesson-x.md", {"title": "X", "date": "2026-09-11", B.DOMAIN_KEY: "core"}, "**Una ABIERTA que nadie lee.** x"))
     check(B.record_bodies_declare_no_state(list(lesson_word.values()), B.state_words(["ABIERTA"])) == [], "cuerpo: solo se mira el cuerpo de las decisiones")
     fields, states = ["title", "state", "date"], ["open", "confirmed"]
     table = "## Campos\n\n| Campo | Valor |\n|---|---|\n| `title` | una frase |\n| `state` | `open` · `confirmed` |\n| `date` | AAAA-MM-DD |\n"
@@ -746,6 +787,10 @@ def test_sections_and_lists():
     check(len(B.apply_exceptions(findings, [{"keyword": "order", "value": "F3", "line": 7, "motive": "m"}])) == 1, "excepciones: excusa la suya y solo la suya")
     orphan = B.apply_exceptions(findings, [{"keyword": "order", "value": "F9", "line": 7, "motive": "m"}])
     check(len(orphan) == 3 and "huerfana" in orphan[2]["message"], "excepciones: una que ya no excusa nada es un hallazgo (visto fallar)")
+    broken = [B.finding(B.KIND_RECORD, "#roto", "r.md", "x")]
+    kept = B.apply_exceptions(broken, [{"keyword": "record", "value": "#roto", "line": 9, "motive": "m"}])
+    check([f["kind"] for f in kept] == [B.KIND_RECORD, B.KIND_DATA] and "no se excusa" in kept[1]["message"],
+          "excepciones: un hallazgo de registro, derivado o dato no se excusa aunque la leyenda lo declare, y la excepcion sale (visto fallar)")
     end()
 
 
@@ -784,14 +829,13 @@ def test_startup_and_timeless():
 def test_settled_citations_and_verify():
     begin("test_settled_citations_and_verify")
     records = {"luz": {"kind": "decision", "fields": {"state": "confirmed"}},
-               "vieja": {"kind": "decision", "fields": {"state": "confirmed", "retired": "2026-09-13"}},
+               "vieja": {"kind": "decision", "fields": {"state": "discarded"}},
                "idea": {"kind": "decision", "fields": {"state": "provisional"}},
-               "cerrada": {"kind": "decision", "fields": {"state": "resolved", "retired": "2026-09-12"}},
                "lesson-x": {"kind": "lesson", "fields": {}}}
-    cites = [{"value": v, "line": i + 1, "doc": "AGENTS.md"} for i, v in enumerate(["#luz", "#lesson-x", "#idea", "#vieja", "#cerrada", "#nadie", "core/blocks.py"])]
+    cites = [{"value": v, "line": i + 1, "doc": "AGENTS.md"} for i, v in enumerate(["#luz", "#lesson-x", "#idea", "#vieja", "#nadie", "core/blocks.py"])]
     found = B.timeless_cites_only_settled(cites, records)
-    check([f["key"] for f in found] == ["#idea", "#vieja"], "asentado: confirmada, resuelta (aun retirada) y leccion valen; la provisional y la confirmada retirada salen; lo que no resuelve es de otra comprobacion (visto fallar)")
-    check("provisional" in found[0]["message"] and "retired" in found[1]["message"] and found[1]["where"] == "AGENTS.md:4", "asentado: el hallazgo dice por que y donde")
+    check([f["key"] for f in found] == ["#idea", "#vieja"], "asentado: confirmada y leccion valen; la provisional y la descartada salen; lo que no resuelve es de otra comprobacion (visto fallar)")
+    check("provisional" in found[0]["message"] and "discarded" in found[1]["message"] and found[1]["where"] == "AGENTS.md:4", "asentado: el hallazgo dice por que y donde")
     files = {"tools/board/t.py", "gradlew", "a b.py", "docs/x.md"}
     check(B.named_files('{python} tools/board/t.py --x "a b.py" {local:gradlew} docs .\\tools\\board\\t.py -c "print(1)"', files) == ["tools/board/t.py", "a b.py", "gradlew"],
           "arneses: los ficheros del arbol que nombra un comando, una vez cada uno, con {local:...} y barras de Windows (visto fallar)")
@@ -815,7 +859,7 @@ def test_settled_citations_and_verify():
 
 def test_model_and_render():
     begin("test_model_and_render")
-    model = B.build_model(plans(), sample_records(), {"date": "2026-09-12", "rows": [{"label": "tests", "verdict": B.GREEN}]}, "Juego")
+    model = sample_model({"date": "2026-09-12", "rows": [{"label": "tests", "verdict": B.GREEN}]}, "Juego")
     f_axis = model["axes"][0]
     check(len(f_axis["phases"]) == 5 and f_axis["phases"]["F2"]["marker"] == B.IN_PROGRESS and f_axis["phases"]["F2"]["title"] == "Liquidos", "modelo: fases con marcador y titulo limpio")
     check([s["kind"] for s in f_axis["steps"]] == ["phase", "phase", "phase", "phase", "outside"], "modelo: la linea da sus fases en orden, y F9 queda FUERA (visto fallar)")
@@ -825,44 +869,44 @@ def test_model_and_render():
     check(model["axes"][1]["phases"]["H1"]["marker"] == B.PENDING and model["axes"][1]["next"]["id"] == "H1", "modelo: el segundo eje se lee con la misma gramatica y tiene su siguiente")
     unnamed = [f["name"] for f in model["fronts"] if not f["named_by"]]
     named = [f["name"] for f in model["fronts"] if f["named_by"]]
-    check(len(model["fronts"]) == 5 and model["resolved"] == 1, "modelo: cinco frentes abiertos; la resuelta es rastro y la deuda va aparte (visto fallar)")
+    check(len(model["fronts"]) == 5 and model["retired"] == 2, "modelo: cinco frentes abiertos; lo que salio se cuenta del libro y la deuda va aparte (visto fallar)")
     check(unnamed == ["Sonido", "Ya alcanzada"] and named == ["Cofres", "Arneses", "Liquidos vivos"], "modelo: sin fase pendiente queda 'ninguna' y la fase ya HECHA; el resto declara la suya")
     check(model["fronts"][4]["named_by"]["open"] and not model["fronts"][1]["named_by"]["open"], "modelo: el frente que nombra la fase EN CURSO lo sabe")
-    check(len(model["debts"]) == 2 and model["debts"][0]["phases"] == ["F3"] and model["debts"][0]["criterion"] == "Dividir en capas" and model["debts"][1]["paid"], "modelo: deudas con fase, criterio y pagada")
+    check(len(model["debts"]) == 2 and model["debts"][0]["phases"] == ["F3"] and model["debts"][0]["criterion"] == "Dividir en capas" and model["debts"][1]["paid"]
+          and model["debts"][1]["id"] == "vieja", "modelo: deudas vivas de su registro, con fase y criterio, y pagadas del libro (visto fallar)")
     check(B.next_step([{"kind": "phase", "id": "F0", "marker": B.DONE}, {"kind": "outside", "id": "F3", "marker": B.PENDING}, {"kind": "phase", "id": "F6", "marker": B.PENDING}])["id"] == "F6", "modelo: la siguiente salta lo hecho y lo de fuera (visto fallar)")
     text = B.render_summary(model)
     check(text.startswith("ESTADO DEL PROYECTO") and B.PRINT_TOKEN in text and B.DATE_TOKEN in text, "resumen: sale como plantilla con huella y fecha por sellar")
     check("1 de 1 en verde" in text and "ORDEN F      F0 ✔ > F1 ✔ > F2 (en curso)" in text and "ORDEN H      H1 > H2" in text, "resumen: veredicto y una linea de orden por eje")
     check("EN CURSO — F2: Liquidos" in text and "NO DERIVABLE" in text, "resumen: la fase en curso y lo que no sabe derivar")
-    check("FRENTES ABIERTOS  5 vivos (1 resueltos" in text and "DE LA FASE EN CURSO (1)" in text and "Liquidos vivos" in text and "DEL RESTO, POR FASE (2): F3 1 · H1 1" in text, "resumen: lista los frentes de la fase en curso y cuenta el resto (visto fallar)")
+    check("FRENTES ABIERTOS  5 vivos (2 registros salieron por %s)" % B.RETIRED_FILE in text and "DE LA FASE EN CURSO (1)" in text and "Liquidos vivos" in text and "DEL RESTO, POR FASE (2): F3 1 · H1 1" in text, "resumen: lista los frentes de la fase en curso y cuenta el resto (visto fallar)")
     check("· F3             Cofres" not in text and "SIN FASE PENDIENTE (2)" in text and "DEUDAS       1 vivas, 1 pagadas" in text, "resumen: acotado, y las deudas de sus registros")
     idle = B.render_summary(B.build_model([{"axis": "F", "file": "p.md", "text": PLAN.replace("F2 (IN PROGRESS)", "F2").replace("(IN PROGRESS)", "(PENDING)")}], sample_records(), {"date": "", "rows": []}, ""))
     check("POR FASE (2)" in idle and "Cofres" in idle and "SIN FASE PENDIENTE (3)" in idle and "NO DERIVABLE: no hay veredicto" in idle, "resumen: sin fase en curso se listan todos; sin el eje H, 'Arneses' queda sin fase; y sin veredicto lo dice (visto fallar)")
     dirs = {"decisions": "docs/registry/decisions", "lessons": "docs/registry/lessons", "deliveries": "docs/registry/deliveries"}
     index = B.render_decisions_index(model, dirs)
-    check(index.startswith("# ") and "## ABIERTAS (5)" in index and "## DEUDAS VIVAS (1)" in index and "CONFIRMADAS 1" in index and "RESUELTAS 2" in index, "indice: lo que pide trabajo en su seccion, con su cuenta, y las deudas aparte; lo demas, contado")
-    check("## EL RESTO (3), SOLO CONTADAS" in index, "indice: la cabecera de lo contado suma lo que cuenta (visto fallar)")
-    both = sample_records()
-    both["decisions"]["records"].append(decision("two-phases", "confirmed", "2026-09-10", {"phase": "F3 H1"}))
-    both_files = {e["file"]: e["template"] for e in B.derived_of(B.build_model(plans(), both, {"date": "", "rows": []}, ""), dirs)}
-    check(all("`#two-phases`" in both_files[B.decisions_index_file(key)] for key in ("F3", "H1")) and "`#two-phases`" not in both_files[B.decisions_index_file(B.NO_PHASE)],
-          "indice: una decision que nombra dos fases esta en el indice de cada una, y no en el de las que no nombran ninguna (visto fallar)")
+    check(index.startswith("# ") and "## ABIERTAS (5)" in index and "## DEUDAS VIVAS (1)" in index and "CONFIRMADAS 1 · DESCARTADAS 0" in index, "indice: lo que pide trabajo en su seccion, con su cuenta, y las deudas aparte; lo demas, contado")
+    check("## EL RESTO (1), SOLO CONTADAS" in index and "## Retiradas (2), en `%s`" % B.RETIRED_FILE in index, "indice: la cabecera de lo contado suma lo que cuenta, y lo que salio se cuenta del libro (visto fallar)")
+    pages = {e["file"]: e["template"] for e in B.derived_of(model, dirs)}
+    core, ui = pages[B.domain_index_file("core")], pages[B.domain_index_file("ui")]
+    check("`#borde`" in ui and "`#borde`" not in core and "`#cofres`" in core and "`#lesson-one-thing`" in core and "## Lecciones (0)" in ui
+          and B.domain_index_file("audio") not in pages and ui.startswith("# La interfaz (índice)"),
+          "indice: cada dominio tiene su pagina con todo lo que lo gobierna, se decidiera en la fase que fuera, y uno sin registros no tiene (visto fallar)")
+    check("- `%s` — El nucleo: 6 decisiones, 1 lecciones" % B.domain_index_file("core") in index and index.find("domain-core") < index.find("domain-ui"),
+          "indice: el principal apunta a cada pagina de dominio, en el orden de domains.txt (visto fallar)")
+    stray = sample_records()
+    stray["decisions"]["records"].append(decision("de-nadie", "confirmed", "2026-09-10", {B.DOMAIN_KEY: "graficos"}))
+    check(not any("`#de-nadie`" in e["template"] for e in B.derived_of(B.build_model(plans(), stray, {"date": "", "rows": []}, "", (), DOMAINS), dirs) if "domain-" in e["file"]),
+          "indice: un dominio que no se declara no inventa pagina; el registro sale en su comprobacion")
     check("- `#cofres` — Cofres (OPEN 2026-09-11) · F3" in index and index.find("`#arneses`") < index.find("`#cofres`"), "indice: cada linea con identidad, titulo, estado, fecha y fases; la mas reciente primero (visto fallar)")
     covered = {s for sec in B.DECISION_SECTIONS for s in sec["states"]}
     check(all(s in covered for s in B.STATES), "indice: todo estado del esquema tiene seccion")
-    retired = sample_records()
-    retired["decisions"]["records"].append(decision("vieja-regla", "confirmed", "2026-09-10", {"retired": "2026-09-13"}))
-    retired_model = B.build_model(plans(), retired, {"date": "", "rows": []}, "")
-    by_file = {e["file"]: e["template"] for e in B.derived_of(retired_model, dirs)}
-    with_retired = by_file[B.INDEX_DIR + "/decisions-" + B.NO_PHASE + ".md"]
-    check("## RETIRADAS (1)" in with_retired and "· retired 2026-09-13" in with_retired and "## CONFIRMADAS (1)" in with_retired and "RETIRADAS 1" in by_file[B.DECISIONS_INDEX_FILE],
-          "indice: una retirada sale de su estado y va a RETIRADAS (visto fallar)")
     notes = B.render_notes_index(model, dirs)
     check("## Entregas (1" in notes and "- 2026-09-12 `#2026-09-12-el-seam`" in notes and "- `#lesson-one-thing`" in notes, "indice de notas: entregas con fecha e identidad, lecciones con la suya")
     files = B.derived_of(model, dirs)
     paths = [f["file"] for f in files]
     check(paths[:4] == list(B.FIXED_DERIVED) and len(set(paths)) == len(paths) and all(B.is_index_file(f) for f in paths[4:]),
-          "derivados: el resumen, la pagina, los dos indices principales y, en su directorio, los de fase y mes, cada uno una vez")
+          "derivados: el resumen, la pagina, los dos indices principales y, en su directorio, los de dominio y mes, cada uno una vez")
     fresh = [{"file": f["file"], "template": f["template"], "stored": B.stamp(f["template"], "2026-09-12")} for f in files]
     check(B.derived_files_are_current(fresh, "2026-09-12") == [], "derivados: el que dice lo mismo no sale")
     today = "hoy " + B.STAMP_MARK + B.PRINT_TOKEN
@@ -944,7 +988,7 @@ def test_links_and_comments():
 def test_page():
     begin("test_page")
     verdict = {"date": "2026-09-12", "rows": [{"label": "tests", "verdict": B.GREEN}, {"label": "lint", "verdict": V.RED}]}
-    model = B.build_model(plans(), sample_records(), verdict, "Juego <b>de</b> barro")
+    model = sample_model(verdict, "Juego <b>de</b> barro")
     page = B.render_page(model)
     check(page.startswith("<!doctype html>") and page.endswith("</html>\n") and page.count(B.STAMP_MARK + B.PRINT_TOKEN) == 1 and page.count(B.DATE_TOKEN) == 2,
           "pagina: sale como plantilla, con una huella y su fecha por sellar")
@@ -968,10 +1012,10 @@ def test_page():
           "pagina: un eje sin fase abierta dice lo que su linea alcanza, sin darlo por decidido (visto fallar)")
     check("<h3>Por fase (3)</h3>" in page and '<span class="k">F2 ▸</span><span class="v"><b>Liquidos vivos</b>' in page and "<h3>Sin fase pendiente (2)</h3>" in page
           and page.find("<b>Liquidos vivos</b>") < page.find("<b>Cofres</b>") < page.find("<b>Arneses</b>") < page.find("<b>Sonido</b>")
-          and '<dt>Frentes abiertos</dt><dd>5</dd>' in page and '<dt>Sin fase pendiente</dt><dd class="bad">2</dd>' in page and "Hay <b>1</b> ya resueltos" in page,
+          and '<dt>Frentes abiertos</dt><dd>5</dd>' in page and '<dt>Sin fase pendiente</dt><dd class="bad">2</dd>' in page and 'dejó su línea en <span class="mono">%s</span>: <b>2</b>.' % B.RETIRED_FILE in page,
           "pagina: los frentes por la fase que su registro declara, en el orden de los planes, y aparte los que no nombran ninguna pendiente (visto fallar)")
     check("Deudas técnicas (1 vivas, 1 pagadas)" in page and '<span class="code">F3</span><span class="body"><b>Hud monolitico</b> — Dividir en capas</span>' in page
-          and '<span class="code ok">pagada</span><span class="body"><b>Vieja</b> — Se retiro la linea</span>' in page and "<dt>Deudas vivas</dt><dd>1</dd>" in page,
+          and '<span class="code ok">pagada</span><span class="body"><b>#vieja</b> — la cerró #2026-09-12-el-seam</span>' in page and "<dt>Deudas vivas</dt><dd>1</dd>" in page,
           "pagina: las deudas con su fase y su criterio, y las pagadas como pagadas (visto fallar)")
     check('<span class="code ok">F0 · hecha</span>' in page and '<span class="code hot">F2 · en curso</span>' in page and '<span class="code">F9 · pendiente</span>' in page
           and '<span class="code">H2 · pendiente</span>' in page, "pagina: todas las fases de todos los planes, con su estado")
@@ -986,7 +1030,7 @@ def test_page():
           "pagina: un plan con todo hecho no anuncia una fase siguiente (visto fallar)")
     sealed = B.stamp(page, "2026-09-12")
     check(B.stored_stamp(sealed) == B.fingerprint(page) and B.stored_date(sealed, page) == "2026-09-12" and B.is_current(sealed, page)
-          and B.derived_state(sealed, page, "2026-09-13")["state"] == B.DERIVED_CURRENT and sealed.count("2026-09-12") == 3,
+          and B.derived_state(sealed, page, "2026-09-13")["state"] == B.DERIVED_CURRENT and sealed.count("2026-09-12") == page.count("2026-09-12") + 2,
           "pagina: sellada lleva su huella y su fecha donde el tablero las lee, y al dia no se reescribe (visto fallar)")
     check(B.derived_state(sealed.replace("<h1>Juego", "<h1>Otro"), page, "2026-09-13")["state"] == B.DERIVED_EDITED
           and B.derived_state(sealed, page.replace("Liquidos", "Lava"), "2026-09-13")["state"] == B.DERIVED_STALE,
@@ -1323,7 +1367,7 @@ def test_verify_main():
         write(root, "t.py", "print('ok sin guardas')\n")
         write(root, "tools/board/documents.txt", "harness otro.py\n")
         red, said = quietly(V.main, [], root)
-        check(red == 1 and "exit=3" in said and "    | se rompio" in said and "WARNING: ninguna puerta se llama" in said, "verify: una puerta roja sale con su codigo y su cola")
+        check(red == 1 and "exit=3" in said and "    | se rompio" in said and "WARNING: ninguna puerta se llama" in said, "verify: una puerta roja sale con su codigo y su salida")
         check("salio 0 sin imprimir sus guardas: guard finished" in said and said.count("sin imprimir sus guardas") == 1,
               "verify: la fila marcada [harness] que sale 0 sin sus guardas es roja, y la que no lleva la marca no (visto fallar)")
         write(root, "gates.txt", "colgada | - | " + HUNG + "\n")
@@ -1378,6 +1422,93 @@ def test_verify_main():
         derived_red, said = quietly(V.main, [], root)
         check(derived_red == 1 and "RESULT: 1 puertas, 1 en rojo -> board: build" in said,
               "verify: si regenerar los derivados falla tras escribir el veredicto, la puerta sale en rojo en RESULT (visto fallar)")
+        remove_tree(os.path.join(root, "tools"))
+        lines = "[print('linea %d' % n) for n in range(200)]; "
+        long_red = PY + ' -c "import sys; ' + lines + 'sys.exit(1)"'
+        long_derived = PY + ' -c "import os, sys; ' + lines + "sys.exit(1 if os.path.exists('tools/board/verdict.txt') else 0)" + '"'
+        write(root, "gates.txt", "larga | - | " + long_red + "\nboard: build | - | " + long_derived + "\n")
+        whole, said = quietly(V.main, [], root)
+        shown = [line for line in said.splitlines() if line.startswith("    | linea ")]
+        check(whole == 1 and shown == ["    | linea %d" % n for n in range(200)] * 2,
+              "verify: una puerta en rojo, y la regeneracion de derivados que falla, ensenan toda su salida, no su cola (visto fallar)")
+        write(root, "gates.txt", "verde | - | " + PY + ' -c "' + lines + '"\n')
+        green, said = quietly(V.main, ["--", "verde"], root)
+        check(green == 0 and "    | " not in said, "verify: una puerta en verde da solo su linea de resumen")
+    end()
+
+
+def holding_verify(root, release):
+    """The real verify.py of `root` running a gate that waits for the file
+    `release`; it returns once that gate runs, so the lock is held."""
+    write(root, "verify.py", read_bytes(V.ROOT, "verify.py"))
+    wait = (PY + ' -c "import os, time; open(\'runs.txt\', \'a\').write(\'run\\n\'); '
+            "[time.sleep(0.05) for _ in range(1200) if not os.path.exists('" + release + "')]" + '"')
+    write(root, "gates.txt", "espera | - | " + wait + "\n")
+    before = runs_in(root)
+    holder = subprocess.Popen([sys.executable, os.path.join(root, "verify.py")], cwd=root, env=sanitized_env(),
+                              stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    deadline = time.monotonic() + 30
+    while time.monotonic() < deadline and runs_in(root) == before:
+        time.sleep(0.05)
+    return holder
+
+
+def runs_in(root):
+    path = os.path.join(root, "runs.txt")
+    return len(read_bytes(root, "runs.txt").splitlines()) if os.path.exists(path) else 0
+
+
+def test_verify_lock():
+    begin("test_verify_lock")
+    with scratch_tree() as root:
+        write(root, "repo/.git/HEAD", "ref: refs/heads/main\n")
+        write(root, "repo/sub/x.txt", "x\n")
+        write(root, "linked/.git", "gitdir: ../repo/.git/worktrees/linked\n")
+        write(root, "loose/.git", "sin linea gitdir\n")
+        repo, sub, linked = os.path.join(root, "repo"), os.path.join(root, "repo", "sub"), os.path.join(root, "linked")
+        check(V.git_dir_of(repo) == os.path.join(repo, ".git") and V.git_dir_of(sub) == os.path.join(repo, ".git"),
+              "cerrojo: el directorio de git se busca hacia arriba desde el arbol, como hace git (visto fallar)")
+        check(V.git_dir_of(linked) == os.path.join(repo, ".git", "worktrees", "linked"),
+              "cerrojo: un worktree enlazado lo guarda donde dice su linea gitdir (visto fallar)")
+        check(V.git_dir_of(os.path.join(root, "loose")) is None, "cerrojo: un .git sin linea gitdir no es un repositorio")
+        in_repo, in_sub = V.lock_path(repo, V.git_dir_of(repo)), V.lock_path(sub, V.git_dir_of(sub))
+        outside = V.lock_path(repo, None)
+        check(os.path.dirname(in_repo) == os.path.join(repo, ".git") and in_repo != in_sub
+              and in_repo == V.lock_path(repo + os.sep, os.path.join(repo, ".git")),
+              "cerrojo: vive en el directorio de git y su nombre es el del arbol: dos arboles de un repositorio no se excluyen (visto fallar)")
+        check(os.path.dirname(outside) == tempfile.gettempdir() and os.path.basename(outside) == os.path.basename(in_repo),
+              "cerrojo: sin git, en la carpeta temporal y con el mismo nombre")
+    with scratch_tree() as root:
+        write(root, ".git/HEAD", "ref: refs/heads/main\n")
+        holder = holding_verify(root, "suelta-1")
+        try:
+            busy, said = quietly(V.main, [], root)
+            filtered, said_filtered = quietly(V.main, ["--", "espera"], root)
+            last = said.strip().splitlines()[-1] if said.strip() else ""
+            check(busy == V.REFUSED_EXIT == 3 and last.startswith("RESULT: no se verifica -> otra verificacion corre sobre este arbol")
+                  and "pid %d" % holder.pid in said and filtered == 3 and "no se verifica" in said_filtered,
+                  "cerrojo: con otra verificacion en curso sobre el arbol, la completa y la filtrada salen con 3 y su motivo (visto fallar)")
+            check(runs_in(root) == 1 and not os.path.exists(os.path.join(root, "tools", "board", "verdict.txt")),
+                  "cerrojo: la rechazada no corre ninguna puerta ni toca el veredicto (visto fallar)")
+        finally:
+            write(root, "suelta-1", "")
+            holder.wait(60)
+        after, said = quietly(V.main, ["--", "espera"], root)
+        check(after == 0 and runs_in(root) == 2, "cerrojo: la duena lo suelta al terminar y la siguiente corre (visto fallar)")
+        killed = holding_verify(root, "suelta-2")
+        killed.kill()
+        killed.wait(60)
+        write(root, "suelta-2", "")
+        reclaimed, said = quietly(V.main, ["--", "espera"], root)
+        check(reclaimed == 0 and runs_in(root) == 4, "cerrojo: si matan a la duena, el sistema lo suelta y la siguiente no se queda fuera (visto fallar)")
+        # The gate the killed holder left behind sees its release file and ends.
+        time.sleep(0.5)
+    with scratch_tree() as root:
+        write(root, ".git", "gitdir: no-existe/nada\n")
+        write(root, "gates.txt", "uno | - | {python} -c \"open('runs.txt', 'a').write('run')\"\n")
+        broken, said = quietly(V.main, [], root)
+        check(broken == 3 and "RESULT: no se verifica -> no se puede crear el cerrojo de verificacion" in said and runs_in(root) == 0,
+              "cerrojo: si no se puede crear, no se verifica y se dice donde, sin correr puertas (visto fallar)")
     end()
 
 
@@ -1516,18 +1647,20 @@ def test_board_end_to_end():
         code, said = quietly(B.build, root)
         check(code == 0 and "reescrito docs/registry/NOTES.md" in said and findings_of(root) == [], "integracion: build escribe el derivado que falta, en verde: nadie lo edito")
         notes, summary = read_bytes(root, "docs/registry/NOTES.md"), read_bytes(root, "STATUS.txt")
-        write(root, "docs/registry/lessons/lesson-another.md", "---\ntitle: Otra\ndate: 2026-01-02\n---\n**Otra.** mas\n")
+        write(root, "docs/registry/lessons/lesson-another.md", "---\ntitle: Otra\ndate: 2026-01-02\ndomain: core\n---\n**Otra.** mas\n")
         code, said = quietly(B.build, root)
-        check(code == 0 and "reescrito docs/registry/NOTES.md" in said and "STATUS.txt" not in said.split("RESULT")[-1]
-              and read_bytes(root, "docs/registry/NOTES.md") != notes and read_bytes(root, "STATUS.txt") == summary, "integracion: build reescribe solo el derivado cuyas fuentes cambiaron")
+        rewritten = said.split("RESULT")[-1]
+        check(code == 0 and "docs/registry/NOTES.md" in rewritten and B.domain_index_file("core") in rewritten and "STATUS.txt" not in rewritten
+              and read_bytes(root, "docs/registry/NOTES.md") != notes and read_bytes(root, "STATUS.txt") == summary,
+              "integracion: build reescribe solo los derivados cuyas fuentes cambiaron: una leccion nueva, las notas y la pagina de su dominio")
     with scratch_tree() as root:
         minimal_tree(root)
-        write(root, "docs/registry/lessons/lesson-something.md", "---\ntitle: Algo\ndate: 2026-01-01\n---\n**Algo.** café\n".encode("cp1252"))
+        write(root, "docs/registry/lessons/lesson-something.md", "---\ntitle: Algo\ndate: 2026-01-01\ndomain: core\n---\n**Algo.** café\n".encode("cp1252"))
         code, said = quietly(B.build, root)
         found = findings_of(root)
         check(len(found) == 1 and found[0]["kind"] == B.KIND_DATA and "lesson-something.md' no es UTF-8" in found[0]["message"] and code == 0,
               "integracion: un registro en cp1252 es UN hallazgo de datos, sin traceback en build ni en check (visto fallar)")
-        write(root, "docs/registry/lessons/lesson-something.md", B.UTF8_BOM + b"---\ntitle: Algo\ndate: 2026-01-01\n---\n**Algo.** bien\n")
+        write(root, "docs/registry/lessons/lesson-something.md", B.UTF8_BOM + b"---\ntitle: Algo\ndate: 2026-01-01\ndomain: core\n---\n**Algo.** bien\n")
         found = findings_of(root)
         check(len(found) == 1 and "BOM" in found[0]["message"], "integracion: un registro con BOM es UN hallazgo que dice BOM, no tres de cabecera (visto fallar)")
     with scratch_tree() as root:
@@ -1819,6 +1952,13 @@ def test_pre_push():
     unknown = P.refused_why(None)
     check("rojo" in red and "commitea" not in red and "verdict.txt" in changed and "commitea" in changed and "rojo" in changed and "rojo" in unknown and "commitea" in unknown,
           "pre-push: tras unas puertas que no salen en verde dice lo que toca: arreglar las rojas, o commitear los derivados si solo cambio el veredicto (visto fallar)")
+    check(P.VERIFY_REFUSED_EXIT == V.REFUSED_EXIT, "pre-push: el codigo de una verificacion rechazada es el de verify.py (las dos copias se cruzan)")
+    refused = types.SimpleNamespace(returncode=V.REFUSED_EXIT)
+    with patched(P, check_push=lambda root, refs: {"problems": []}, rewritten_files=unexpected), \
+            patched(P.subprocess, run=lambda *args, **kwargs: refused):
+        code, said = quietly(P.main, [], "unused", io.StringIO("refs/heads/main %s refs/heads/main %s\n" % (head, zero)))
+    check(code != 0 and "otra verificacion corre sobre este arbol" in said and "rojo" not in said and "Push rechazado" in said,
+          "pre-push: si otra verificacion retiene el arbol, lo dice en vez de hablar de puertas en rojo (visto fallar)")
     if shutil.which("git") is not None:
         with scratch_tree() as root:
             write(root, "a.txt", "a\n")
@@ -2038,9 +2178,9 @@ def test_record_rules():
     walked = B.read_dir("docs/registry/deliveries", [".gitkeep", "una.md"], lambda f: "---\ntitle: a\ndate: 2026-01-01\n---\n")
     check(len(walked["records"]) == 1 and walked["problems"] == [],
           "registro: un fichero oculto ('.gitkeep', que guarda en git un directorio vacio) no es un registro ni un problema (visto fallar)")
-    seed = record("hook.md", {"title": "a", "state": "confirmed", "date": "2026-09-21", "origin": "agentic-scaffold"})
-    check(B.validate_record(seed, "decision", []) == [], "registro: una decision puede declarar su origen, como una leccion (visto fallar)")
-    check(one_says(B.validate_record(record("x.md", {"title": "a", "date": "2026-09-21", "origin": "x"}), "delivery", []), "no existe"),
+    seed = decision("hook", "confirmed", "2026-09-21", {"origin": "agentic-scaffold"})
+    check(B.validate_record(seed, "decision", [], DOMAINS["ids"]) == [], "registro: una decision puede declarar su origen, como una leccion (visto fallar)")
+    check(one_says(B.validate_record(record("x.md", {"title": "a", "date": "2026-09-21", "origin": "x"}), "delivery", [], DOMAINS["ids"]), "no existe"),
           "registro: una entrega no lleva origen")
     groups = groups_of([decision("d" * 80, "confirmed", "2026-09-11")], [lesson("l" * 81, "2026-09-11")])
     long_ids = B.record_ids_within(list(groups.values()), 80, B.IDENTITY_LIMIT)
@@ -2048,7 +2188,7 @@ def test_record_rules():
           "identidad: una de 81 caracteres pasa del tope de 80 y una de 80 no (visto fallar)")
     with scratch_tree() as root:
         minimal_tree(root)
-        write(root, "docs/registry/lessons/lesson-%s.md" % ("x" * 80), "---\ntitle: Larga\ndate: 2026-01-02\n---\n**Larga.** x\n")
+        write(root, "docs/registry/lessons/lesson-%s.md" % ("x" * 80), "---\ntitle: Larga\ndate: 2026-01-02\ndomain: core\n---\n**Larga.** x\n")
         found = [f for f in findings_of(root) if f["kind"] == B.KIND_RECORD]
         check(len(found) == 1 and B.IDENTITY_LIMIT in found[0]["message"], "integracion: una identidad que pasa del tope de limits.txt sale como registro (visto fallar)")
         write(root, "tools/board/limits.txt", limits_data().replace("identity 80\n", ""))
@@ -2077,7 +2217,7 @@ def test_prose_is_data():
         os.remove(os.path.join(root, "docs", "notas.md"))
         write(root, "tools/board/prose.txt", prose_data(authority="4. Where each thing lives", words=["ZANJADA"]))
         append(root, "docs/registry/decisions/la-base.md", "\n**Otra (ZANJADA).**\n")
-        write(root, "docs/registry/decisions/repetida.md", "---\ntitle: Repetida\nstate: confirmed\ndate: 2026-01-01\n---\n**Repetida (ZANJADA).** x\n")
+        write(root, "docs/registry/decisions/repetida.md", "---\ntitle: Repetida\nstate: confirmed\ndate: 2026-01-01\ndomain: core\n---\n**Repetida (ZANJADA).** x\n")
         found = [f for f in findings_of(root) if f["kind"] == B.KIND_RECORD]
         check(len(found) == 1 and found[0]["key"] == "#repetida", "prosa: la palabra de estado declarada en prose.txt la lee la comprobacion del cuerpo (visto fallar)")
         write(root, "tools/board/prose.txt", legend(PROSE_KEYS) + "authority 4. Where each thing lives\nfields Campos\nfields Otra\n")
@@ -2122,26 +2262,112 @@ def test_order_line_and_parts():
     end()
 
 
+BIG_DOMAINS = {"ids": ["d%d" % n for n in range(8)], "titles": {"d%d" % n: "Dominio %d" % n for n in range(8)}, "findings": []}
+
+
 def big_registry():
     """Eight hundred decisions over ten product phases, two tooling ones and
-    none; three hundred deliveries over three months; fifty lessons."""
-    states = ["confirmed"] * 6 + ["resolved", "discarded", "open", "provisional"]
+    none, and over eight domains; three hundred deliveries over three months;
+    fifty lessons."""
+    states = ["confirmed"] * 6 + ["postponed", "discarded", "open", "provisional"]
     decisions = []
     for n in range(800):
         extra = {"phase": "F%d" % (n % 10)} if n % 4 else {}
         if n % 50 == 0:
             extra = {"phase": "H%d" % (n % 2)}
+        extra[B.DOMAIN_KEY] = "d%d" % (n % 8)
         state = states[n % len(states)]
-        if state == "open" and "phase" not in extra:
+        if state in B.OPEN_STATES and "phase" not in extra:
             extra["phase"] = "none"
-        if n % 37 == 0 and state == "confirmed":
-            extra["retired"] = "2026-09-30"
         if n % 41 == 0:
             extra.update({"type": "debt", "criterion": "Se paga", "phase": extra.get("phase", "F1")})
         decisions.append(decision("decision-%03d" % n, state, "2026-%02d-%02d" % (7 + n % 3, 1 + n % 28), extra))
     deliveries = [delivery("2026-%02d-%02d-entrega-%03d" % (7 + n % 3, 1 + n % 28, n), "2026-%02d-%02d" % (7 + n % 3, 1 + n % 28)) for n in range(300)]
-    lessons = [lesson("lesson-%02d" % n, "2026-09-%02d" % (1 + n % 28)) for n in range(50)]
+    lessons = [lesson("lesson-%02d" % n, "2026-09-%02d" % (1 + n % 28), "d%d" % (n % 8)) for n in range(50)]
     return groups_of(decisions, lessons, deliveries)
+
+
+def test_plan_position():
+    begin("test_plan_position")
+    # The numbers are identity, not sequence: a phase that enters between two
+    # keeps its number and the line puts it where it goes.
+    product = ("**F0 ✔ → F13 (IN PROGRESS) → F7**\n\n## F0 — Base (DONE)\n\n## F13 — Puertos (IN PROGRESS)\n\n"
+               "## F7 — Mapas (PENDING)\n\n## F2 — Aparte (PENDING)\n")
+    tooling = "**H0 ✔ → H1**\n\n## H0 — Andamio (DONE)\n\n## H1 — Puertas (PENDING)\n"
+    registry = groups_of([decision("mapas-y-puertos", "open", "2026-09-12", {"phase": "F7 F13"}),
+                          decision("solo-mapas", "open", "2026-09-11", {"phase": "F7"}),
+                          decision("solo-puertos", "open", "2026-09-10", {"phase": "F13"}),
+                          decision("de-las-puertas", "open", "2026-09-09", {"phase": "H1"}),
+                          decision("la-aparte", "open", "2026-09-08", {"phase": "F2"})])
+    model = B.build_model([{"axis": "F", "file": "p.md", "text": product}, {"axis": "H", "file": "t.md", "text": tooling}],
+                          registry, {"date": "", "rows": []}, "")
+    both = [f for f in model["fronts"] if f["id"] == "mapas-y-puertos"][0]
+    check(both["named_by"] == {"names": ["F13", "F7"], "open": True},
+          "orden: un frente que nombra F7 y F13 cae en F13, la que la linea pone antes y esta en curso (visto fallar)")
+    summary = B.render_summary(model)
+    check(summary.find("· F13 F7") >= 0 and "DEL RESTO, POR FASE (3): F7 1 · F2 1 · H1 1" in summary,
+          "orden: el resumen cuenta el resto por la linea de cada plan, con la fase fuera de ella al final de su plan (visto fallar)")
+    page = B.render_page(model)
+    check(page.find("Solo puertos") < page.find("Solo mapas") < page.find("La aparte") < page.find("De las puertas"),
+          "orden: la pagina lista los frentes por la linea de su plan (visto fallar)")
+    end()
+
+
+def test_live_debts():
+    begin("test_live_debts")
+    debt = lambda rid, state, extra=None: decision(rid, state, "2026-09-12", dict({"type": "debt", "phase": "F3", "criterion": "c"}, **(extra or {})))
+    registry = groups_of([debt("viva", "open"), debt("confirmada", "confirmed"), debt("descartada", "discarded")])
+    ledger = [left("paid", "pagada", "2026-09-13", "2026-09-13-la-paga"), left("paid", "pagada-sin-entrega", "2026-09-13"),
+              left("withdrawn", "retirada-sin-pagar", "2026-09-13")]
+    model = B.build_model(plans(), registry, {"date": "", "rows": []}, "", ledger, DOMAINS)
+    alive = sorted(d["id"] for d in model["debts"] if not d["paid"])
+    paid = sorted(d["id"] for d in model["debts"] if d["paid"])
+    check(alive == ["confirmada", "viva"], "deudas: viva es la que esta en el arbol y no esta descartada (visto fallar)")
+    check(paid == ["pagada", "pagada-sin-entrega"], "deudas: pagada es la que salio por el libro como 'paid', y la retirada sin pagar no lo es (visto fallar)")
+    summary = B.render_summary(model)
+    index = B.render_decisions_index(model, {"decisions": "docs/registry/decisions", "lessons": "docs/registry/lessons", "deliveries": "docs/registry/deliveries"})
+    check("DEUDAS       2 vivas, 2 pagadas" in summary and "## DEUDAS VIVAS (2)" in index,
+          "deudas: el resumen y el indice cuentan las mismas vivas (visto fallar)")
+    check(not B.needs_phase(debt("descartada", "discarded", {"phase": ""})) and B.needs_phase(debt("viva", "open")),
+          "deudas: solo una deuda viva necesita su fase (visto fallar)")
+    end()
+
+
+def test_one_phase_in_progress():
+    begin("test_one_phase_in_progress")
+    two = "**F0 (IN PROGRESS) → F1 (IN PROGRESS)**\n\n## F0 — Base (IN PROGRESS)\n\n## F1 — Siguiente (IN PROGRESS)\n"
+    headers = B.phase_headers(two, ["F"])
+    found = B.order_and_headers_agree(headers, B.order_lines(two, ["F"]), "p.md", ["F"])
+    check([(f["kind"], f["key"]) for f in found] == [(B.KIND_ORDER, "F1")] and "F0" in found[0]["message"],
+          "orden: la segunda fase en curso de un plan sale, aunque la linea case con sus cabeceras, y nombra la primera (visto fallar)")
+    one = "**F0 ✔ → F1 (IN PROGRESS) → F2**\n\n## F0 — Base (DONE)\n\n## F1 — Siguiente (IN PROGRESS)\n\n## F2 — Otra (PENDING)\n"
+    check(B.order_and_headers_agree(B.phase_headers(one, ["F"]), B.order_lines(one, ["F"]), "p.md", ["F"]) == [],
+          "orden: una fase en curso por plan no sale")
+    end()
+
+
+def test_provisional_is_not_done():
+    begin("test_provisional_is_not_done")
+    known = {"F0", "F1"}
+    bare = decision("a-prueba", "provisional", "2026-09-12")
+    messages = B.validate_record(bare, "decision", known, DOMAINS["ids"])
+    check(any("'criterion'" in m for m in messages) and any("'phase'" in m for m in messages),
+          "provisional: declara con que se revisa y donde cae (visto fallar)")
+    check(B.validate_record(decision("a-prueba", "provisional", "2026-09-12", {"phase": "none", "criterion": "El dueno la ve en la app"}), "decision", known, DOMAINS["ids"]) == [],
+          "provisional: con fase y criterio esta bien formada")
+    phases = {"F0": {"marker": B.DONE}, "F1": {"marker": B.PENDING}}
+    decisions = [decision("colgada", "open", "2026-09-12", {"phase": "F0"}),
+                 decision("colgada-con-none", "provisional", "2026-09-12", {"phase": "F0 none", "criterion": "c"}),
+                 decision("deuda-colgada", "confirmed", "2026-09-12", {"type": "debt", "phase": "F0", "criterion": "c"}),
+                 decision("recogida", "open", "2026-09-12", {"phase": "F0 F1"}),
+                 decision("sin-fase", "open", "2026-09-12", {"phase": "none"}),
+                 decision("cerrada", "confirmed", "2026-09-12", {"phase": "F0"}),
+                 decision("descartada", "discarded", "2026-09-12", {"phase": "F0"})]
+    found = B.done_phases_leave_nothing_alive(decisions, phases)
+    check(sorted(f["key"] for f in found) == ["#colgada", "#colgada-con-none", "#deuda-colgada"] and all(f["kind"] == B.KIND_RECORD for f in found),
+          "provisional: una fase hecha no deja viva una decision ni una deuda que solo la nombre a ella (visto fallar)")
+    check(all("libro de retiradas" in f["message"] for f in found), "provisional: el hallazgo dice como sale lo que ya no pide trabajo (visto fallar)")
+    end()
 
 
 def test_split_indexes():
@@ -2149,7 +2375,7 @@ def test_split_indexes():
     product = "**" + " → ".join("F%d" % n for n in range(10)) + "**\n\n" + "".join("## F%d — Fase %d (PENDING)\n\n" % (n, n) for n in range(10))
     tooling = "**H0 → H1**\n\n## H0 — Uno (PENDING)\n\n## H1 — Dos (PENDING)\n"
     registry = big_registry()
-    model = B.build_model([{"axis": "F", "file": "p.md", "text": product}, {"axis": "H", "file": "t.md", "text": tooling}], registry, {"date": "", "rows": []}, "")
+    model = B.build_model([{"axis": "F", "file": "p.md", "text": product}, {"axis": "H", "file": "t.md", "text": tooling}], registry, {"date": "", "rows": []}, "", (), BIG_DOMAINS)
     dirs = {"decisions": "docs/registry/decisions", "lessons": "docs/registry/lessons", "deliveries": "docs/registry/deliveries"}
     derived = {entry["file"]: entry["template"] for entry in B.derived_of(model, dirs)}
     main, notes = derived[B.DECISIONS_INDEX_FILE], derived[B.NOTES_INDEX_FILE]
@@ -2160,28 +2386,29 @@ def test_split_indexes():
     check(every and lost == [], "indices: todo registro aparece en algun indice derivado (visto fallar)")
     decisions = registry["decisions"]["records"]
     working = {False: ("open", "postponed", "provisional"), True: ("open", "postponed", "provisional", "confirmed")}
-    asks_work = [r["id"] for r in decisions if not B.is_retired(r) and r["fields"]["state"] in working[B.is_debt(r)]]
+    asks_work = [r["id"] for r in decisions if r["fields"]["state"] in working[B.is_debt(r)]]
     settled = [r["id"] for r in decisions if r["id"] not in asks_work]
     check(all("`#%s`" % rid in main for rid in asks_work) and not any("`#%s`" % rid in main for rid in settled),
           "indices: el principal lista enteras las abiertas, las deudas vivas y las provisionales, y de las demas solo da la cuenta (visto fallar)")
-    f3 = derived[B.INDEX_DIR + "/decisions-F3.md"]
-    named_f3 = [r["id"] for r in decisions if "F3" in B.phases_of(r)]
-    check(sorted(named_f3) == sorted(rid for rid in every if "`#%s`" % rid in f3), "indices: el de una fase lista todas las decisiones que la nombran, y solo esas")
-    nowhere = derived[B.INDEX_DIR + "/decisions-" + B.NO_PHASE + ".md"]
-    check("`#decision-004`" in nowhere and "`#decision-001`" not in nowhere and B.INDEX_DIR + "/decisions-F3.md" in main,
-          "indices: la que no nombra fase va al indice de 'none', y el principal apunta a cada indice de fase")
+    d3 = derived[B.domain_index_file("d3")]
+    of_d3 = [r["id"] for g in ("decisions", "lessons") for r in registry[g]["records"] if r["fields"][B.DOMAIN_KEY] == "d3"]
+    check(sorted(of_d3) == sorted(rid for rid in every if "`#%s`" % rid in d3) and all(B.domain_index_file(d) in main for d in BIG_DOMAINS["ids"]),
+          "indices: la pagina de un dominio lista todo lo que lo gobierna y solo eso, y el principal apunta a cada una (visto fallar)")
+    pages = [text for path, text in derived.items() if B.is_capped_index(path) and "domain-" in path]
+    check(len(pages) == 8 and all(len(B.stamp(p, "2026-10-01").encode("utf-8")) < 30000 for p in pages),
+          "indices: con 800 decisiones en ocho dominios, cada pagina de dominio queda bajo el tope de los indices")
     september = derived[B.INDEX_DIR + "/notes-2026-09.md"]
     month_ids = [r["id"] for r in registry["deliveries"]["records"] + registry["lessons"]["records"] if r["fields"]["date"].startswith("2026-09")]
     check(all("`#%s`" % rid in september for rid in month_ids) and notes.count("`#2026-") == B.RECENT_NOTES and notes.count("`#lesson-") == B.RECENT_NOTES,
           "indices: las notas del mes van enteras a su indice y el principal da solo las mas recientes de cada clase (visto fallar)")
     with scratch_tree() as root:
         minimal_tree(root)
-        check(os.path.isfile(os.path.join(root, *(B.INDEX_DIR + "/decisions-none.md").split("/"))) and findings_of(root) == [],
-              "integracion: build escribe los indices por fase y por mes, y check los da por al dia")
+        check(os.path.isfile(os.path.join(root, *B.domain_index_file("core").split("/"))) and findings_of(root) == [],
+              "integracion: build escribe los indices por dominio y por mes, y check los da por al dia")
         write(root, B.INDEX_DIR + "/decisions-F7.md", "# Sobra\n\n" + B.STAMP_MARK + "0123456789abcdef\n")
         found = findings_of(root)
         check(len(found) == 1 and found[0]["kind"] == B.KIND_DERIVED and "decisions-F7.md" in found[0]["key"],
-              "integracion: un indice que ya no genera ninguna fuente sale como derivado, no como documento sin casa (visto fallar)")
+              "integracion: un indice que ya no genera ninguna fuente (el de una fase, de antes de los dominios) sale como derivado, no como documento sin casa (visto fallar)")
         code, said = quietly(B.build, root)
         check(code == 0 and not os.path.exists(os.path.join(root, *(B.INDEX_DIR + "/decisions-F7.md").split("/"))) and findings_of(root) == [],
               "integracion: build borra el indice que sobra si lleva la huella del tablero (visto fallar)")
@@ -2196,13 +2423,13 @@ def test_split_indexes():
               "integracion: lo que no es markdown en el directorio de indices (un .gitkeep) no es un indice: build no lo toca ni sale rojo (visto fallar)")
         write(root, "tools/board/limits.txt", limits_data(index=100))
         found = findings_of(root)
-        none_index = B.INDEX_DIR + "/decisions-" + B.NO_PHASE + ".md"
-        check(sorted(f["where"] for f in found) == sorted([B.DECISIONS_INDEX_FILE, B.NOTES_INDEX_FILE, none_index])
+        page = B.domain_index_file("core")
+        check(sorted(f["where"] for f in found) == sorted([B.DECISIONS_INDEX_FILE, B.NOTES_INDEX_FILE, page])
               and all(f["kind"] == B.KIND_SHAPE and f["key"] == B.INDEX_LIMIT for f in found),
-              "integracion: los indices principales y el de 'none', que una sesion consulta antes de tocar nada, salen por encima de su tope de limits.txt,"
-              " uno por indice (visto fallar)")
-        check(one_says([f for f in found if f["where"] == none_index], "cómo se parte"),
-              "integracion: el indice de 'none' por encima del tope pregunta como se parte, porque no se cierra nunca (visto fallar)")
+              "integracion: los indices principales y la pagina de cada dominio, que una sesion consulta antes de tocar nada, salen por encima de su tope"
+              " de limits.txt, uno por indice; los de cada mes no (visto fallar)")
+        check(one_says([f for f in found if f["where"] == page], "si el dominio son dos"),
+              "integracion: la pagina de un dominio por encima del tope pregunta si el dominio son dos (visto fallar)")
         write(root, "tools/board/limits.txt", limits_data().replace("index 30000\n", ""))
         check(one_says(findings_of(root), "tope '%s'" % B.INDEX_LIMIT), "integracion: limits.txt sin tope de indice es un hallazgo de datos (visto fallar)")
     with scratch_tree() as root:
@@ -2541,7 +2768,8 @@ def fake_template(root):
     write(root, ".editorconfig", "root = true\n\n[*]\ncharset = utf-8\n")
     write(root, "verify.py", "# el runner\n")
     write(root, "tools/board/board.py", "# el tablero\n")
-    write(root, "docs/registry/lessons/lesson-a-cap-schedules-the-next-crisis.md", "---\ntitle: Un tope\ndate: 2026-01-01\norigin: x\n---\n**Un tope.** x\n")
+    write(root, "docs/registry/lessons/lesson-a-cap-schedules-the-next-crisis.md", "---\ntitle: Un tope\ndate: 2026-01-01\norigin: x\ndomain: core\n---\n**Un tope.** x\n")
+    ships_what_adoption_names(root)
     append(root, "tools/board/MANIFEST.txt", "\n# Solo en la plantilla.\ntemplate overlays\n")
     write(root, "overlays/demo/layer.txt", DEMO_LAYER)
     write(root, "overlays/demo/files/docs/ARCH.md", "# Arquitectura\n")
@@ -2820,6 +3048,14 @@ def test_instantiate():
         check(code == 1 and "'%s'" % B.PENDING_KEY in said and untouched(unheaded),
               "instantiate: sin la cabecera por fusionar en el prose.txt de la plantilla, el contrato de un repositorio no se fusiona y nada se escribe (visto fallar)")
     end()
+
+
+def ships_what_adoption_names(root):
+    """What the adoption decision names besides its lesson, as the template
+    ships it: its domain and the ledger it points to."""
+    import adopt
+    append(root, "tools/board/domains.txt", "domain %s Tablero y registro\n" % adopt.DOMAIN)
+    write(root, B.RETIRED_FILE, legend(RETIRED_KEYS))
 
 
 def A_ID():
@@ -4678,12 +4914,13 @@ def test_adopt():
     with scratch_tree() as root:
         minimal_tree(root)
         write(root, "gates.txt", "uno | - | {python} -c \"print(1)\"\n")
-        write(root, "docs/registry/lessons/lesson-a-cap-schedules-the-next-crisis.md", "---\ntitle: Un tope\ndate: 2026-01-01\norigin: x\n---\n**Un tope.** x\n")
+        write(root, "docs/registry/lessons/lesson-a-cap-schedules-the-next-crisis.md", "---\ntitle: Un tope\ndate: 2026-01-01\norigin: x\ndomain: core\n---\n**Un tope.** x\n")
+        ships_what_adoption_names(root)
         quietly(B.build, root)
         code, said = quietly(A.main, [], root, "2026-02-03")
         path = "docs/registry/decisions/%s.md" % A.DECISION_ID
         text = read_bytes(root, path).decode("utf-8") if os.path.exists(os.path.join(root, *path.split("/"))) else ""
-        check(code == 0 and text.startswith("---\ntitle: ") and "\nstate: confirmed\ndate: 2026-02-03\n---\n" in text and path in said,
+        check(code == 0 and text.startswith("---\ntitle: ") and "\nstate: confirmed\ndate: 2026-02-03\ndomain: %s\n---\n" % A.DOMAIN in text and path in said,
               "adopt: escribe la decision de adopcion, confirmada y con la fecha del dia en que corre (visto fallar)")
         quietly(B.build, root)
         check(findings_of(root) == [], "adopt: la decision que escribe pasa todas las comprobaciones del tablero")
@@ -4710,7 +4947,8 @@ def test_adopt():
         # The template ships its verdict and its derivatives sealed on the days it was built.
         minimal_tree(root)
         write(root, "gates.txt", "uno | - | {python} -c \"print(1)\"\n")
-        write(root, "docs/registry/lessons/lesson-a-cap-schedules-the-next-crisis.md", "---\ntitle: Un tope\ndate: 2026-01-01\norigin: x\n---\n**Un tope.** x\n")
+        write(root, "docs/registry/lessons/lesson-a-cap-schedules-the-next-crisis.md", "---\ntitle: Un tope\ndate: 2026-01-01\norigin: x\ndomain: core\n---\n**Un tope.** x\n")
+        ships_what_adoption_names(root)
         shipped = "2001-01-01"
         write(root, B.VERDICT_FILE, V.render_verdict([("board: tests", V.GREEN)], shipped))
         quietly(B.build, root)
@@ -4733,16 +4971,108 @@ def test_adopt():
     end()
 
 
+def ledger_data(*rows):
+    return legend(RETIRED_KEYS) + "".join(row + "\n" for row in rows)
+
+
+def test_registry_says_what_holds_today():
+    """What governs is rewritten, never appended to; what stops governing
+    leaves through the ledger; and it names only code that exists."""
+    begin("test_registry_says_what_holds_today")
+    problems = []
+    entries = B.parse_data(legend(DOMAIN_KEYS) + "domain core El nucleo\ndomain ui La interfaz\ndomain Mal Titulo\ndomain core Otra vez\ndomain suelto\n",
+                           B.DOMAINS_FILE, problems)
+    domains = B.read_domains(B.values_entries(entries, B.DOMAIN_KEY))
+    check(not problems and domains["ids"] == ["core", "ui"] and domains["titles"]["ui"] == "La interfaz",
+          "dominios: cada fila declara una identidad y su titulo, en orden (visto fallar)")
+    check(sorted(f["key"] for f in domains["findings"]) == ["Mal Titulo", "core", "suelto"] and all(f["kind"] == B.KIND_DATA for f in domains["findings"]),
+          "dominios: una identidad que no lo es, una repetida o una sin titulo son hallazgos de datos (visto fallar)")
+    rows = ["superseded vieja 2026-09-13 nueva", "answered pregunta 2026-09-13 nueva", "paid deuda 2026-09-13 2026-09-13-la-paga",
+            "paid deuda-sin-entrega 2026-09-13", "applied plan 2026-09-13", "withdrawn muerta 2026-09-13",
+            "superseded sin-sustituta 2026-09-13", "withdrawn con-algo 2026-09-13 nueva", "paid fecha-mala 13-09-2026", "applied Mayus 2026-09-13"]
+    p2 = []
+    ledger = B.read_ledger(B.parse_data(ledger_data(*rows), B.RETIRED_FILE, p2))
+    check(not p2 and [r["id"] for r in ledger["rows"]] == ["vieja", "pregunta", "deuda", "deuda-sin-entrega", "plan", "muerta"]
+          and ledger["rows"][2]["named"] == "2026-09-13-la-paga" and ledger["rows"][3]["named"] == "",
+          "libro: cada linea es un motivo, una identidad, el dia y lo que su motivo nombra (visto fallar)")
+    check(sorted(f["key"] for f in ledger["findings"]) == sorted(r.split(" ", 1)[1] for r in rows[6:]) and all(f["kind"] == B.KIND_RECORD for f in ledger["findings"])
+          and one_says(ledger["findings"], "<identidad> <fecha> <sustituta>"),
+          "libro: una sustituta que falta, algo de mas, una fecha mala o una identidad que no lo es salen con la forma que pide su motivo (visto fallar)")
+    kinds = {"nueva": "decision", "lesson-x": "lesson", "2026-09-13-la-paga": "delivery", "sigue": "decision"}
+    sound = [left("superseded", "vieja", "2026-09-13", "nueva"), left("superseded", "antigua", "2026-09-13", "vieja"),
+             left("answered", "pregunta", "2026-09-13", "lesson-x"), left("paid", "deuda", "2026-09-13", "2026-09-13-la-paga"),
+             left("applied", "plan", "2026-09-13"), left("withdrawn", "muerta", "2026-09-13")]
+    check(B.ledger_is_sound(sound, kinds) == [], "libro: lo que salio no esta en el arbol, y su sustituta es una decision, una leccion u otra linea del libro")
+    unsound = B.ledger_is_sound([left("superseded", "sigue", "2026-09-13", "nueva"), left("withdrawn", "doble", "2026-09-13"), left("withdrawn", "doble", "2026-09-14"),
+                                 left("superseded", "huerfana", "2026-09-13", "nadie"), left("answered", "por-entrega", "2026-09-13", "2026-09-13-la-paga"),
+                                 left("paid", "por-decision", "2026-09-13", "nueva")], kinds)
+    check([f["key"] for f in unsound] == ["#sigue", "#doble", "#huerfana", "#por-entrega", "#por-decision"] and all(f["kind"] == B.KIND_RECORD for f in unsound),
+          "libro: lo que sigue en el arbol, lo que sale dos veces, una sustituta que no existe o que es una entrega, y una entrega que no lo es salen (visto fallar)")
+    check(one_says(unsound[:1], "sigue en el arbol") and one_says(unsound[2:3], "'nadie'") and one_says(unsound[4:], "ninguna entrega"),
+          "libro: cada hallazgo dice que falla de la linea")
+    dated = groups_of([decision("con-fecha", "confirmed", "2026-09-11", body="**Con fecha.** Desde el 2026-09-12 rige.\nLo cambio `#2026-09-13-la-paga`.\n"),
+                       decision("con-historia", "confirmed", "2026-09-11", body="**Con historia.** Vale hoy.\n- 2026-09-14: se amplio.\n")],
+                      [record("docs/registry/lessons/lesson-y.md", {"title": "Y", "date": "2026-09-11", B.DOMAIN_KEY: "core"}, "**Y.** El 2026-02-30 no existe; el 2026-09-15 si.")],
+                      [delivery("2026-09-16-una", "2026-09-16")])
+    dated["deliveries"]["records"][0] = record("docs/registry/deliveries/2026-09-16-una.md", {"title": "Una", "date": "2026-09-16"}, "**Una.** El 2026-09-16 cambio.")
+    found = B.record_bodies_carry_no_dates(list(dated.values()))
+    check([(f["key"], f["where"]) for f in found] == [("#con-fecha", "docs/registry/decisions/con-fecha.md:7"), ("#con-historia", "docs/registry/decisions/con-historia.md:8"),
+                                                      ("#lesson-y", "docs/registry/lessons/lesson-y.md:6")] and all(f["kind"] == B.KIND_RECORD for f in found),
+          "fechas: lo que gobierna no lleva fechas en su cuerpo, una cita a una entrega no es una fecha, y la entrega, que es historia, si las lleva (visto fallar)")
+    check("2026-09-15" in found[2]["message"] and "2026-02-30" not in found[2]["message"], "fechas: solo cuenta un dia que existe, y el hallazgo lo nombra")
+    names = {"`board.py`": "board.py", "`#la-base`": "", "`tools/board/`": "", "`open`": "", "`BOARD_OK`": "BOARD_OK", "`PENDING`": "", "`Settings`": "", "`a.b`": "a.b",
+             "`read_ledger`": "read_ledger", "`readLedger`": "readLedger", "`read_ledger()`": "read_ledger", "`B.read_ledger(rows, kinds)`": "B.read_ledger",
+             "`pnpm install --frozen-lockfile`": "", "`F3`": "", "`2026-09-12`": ""}
+    shown = {quoted: B.code_name(quoted[1:-1]) for quoted in names}
+    check(shown == names, "codigo: un nombre con punto, guion bajo, llamada o mayusculas mezcladas es codigo (un fichero tambien, y lo juzga la cita); una palabra, una cita o un comando no (visto fallar)")
+    words = B.code_words(["def read_ledger(rows):\n    return B.parse(rows)\n", "class LedgerRow: pass\n"])
+    quoting = groups_of([decision("cita-codigo", "confirmed", "2026-09-11", body="**Cita.** `read_ledger` y `B.parse` y `LedgerRow` existen.\n`read_domains` y `B.gone` no.\n"
+                                  "En un bloque no se mira:\n```\nfuera_de_vista()\n```\nY `tools/board/board.py` es una ruta.\n")],
+                        [], [record("docs/registry/deliveries/2026-09-12-x.md", {"title": "X", "date": "2026-09-12"}, "**X.** Quito `old_name`.")])
+    named = B.named_code_exists(list(quoting.values()), words, ["tools/board/board.py"])
+    check([(f["key"], f["where"]) for f in named] == [("read_domains", "docs/registry/decisions/cita-codigo.md:8"), ("B.gone", "docs/registry/decisions/cita-codigo.md:8")]
+          and all(f["kind"] == B.KIND_NAME for f in named) and "'gone'" in named[1]["message"] and "'B'" not in named[1]["message"],
+          "codigo: lo que gobierna nombra codigo que existe, parte a parte; una entrega, un bloque y una ruta no cuentan (visto fallar)")
+    with scratch_tree() as root:
+        minimal_tree(root)
+        write(root, "src/ledger.py", "def read_ledger(rows):\n    return rows\n")
+        write(root, "docs/registry/decisions/nueva.md", "---\ntitle: Nueva\nstate: confirmed\ndate: 2026-01-02\ndomain: core\n---\n"
+              "**Nueva.** Sustituye a la vieja, con `read_ledger`.\n")
+        write(root, "docs/registry/deliveries/2026-01-02-la-nueva.md", "---\ntitle: La nueva\ndate: 2026-01-02\n---\n**La nueva.** Sustituye a `#vieja`.\n")
+        write(root, B.RETIRED_FILE, ledger_data("superseded vieja 2026-01-02 nueva"))
+        code, said = quietly(B.build, root)
+        check(code == 0 and findings_of(root) == [] and "FRENTES ABIERTOS  0 vivos (1 registros salieron por %s)" % B.RETIRED_FILE in read_bytes(root, "STATUS.txt").decode("utf-8"),
+              "integracion: un libro sano, una entrega que cita lo que salio y un nombre de codigo que existe no salen, y el resumen cuenta lo que salio (visto fallar)")
+        append(root, "docs/registry/decisions/la-base.md", "Antes rigio `#vieja`; desde el 2026-01-02, `read_domains`.\n")
+        found = sorted((f["kind"], f["key"]) for f in findings_of(root))
+        check(found == sorted([(B.KIND_RECORD, "#la-base"), (B.KIND_SLUG, "#vieja"), (B.KIND_NAME, "read_domains")]),
+              "integracion: lo que gobierna con una fecha, una cita a lo que salio y un nombre que el codigo no tiene sale tres veces (visto fallar)")
+        append(root, "tools/board/exceptions.txt", "# Es la API de otro programa.\n%s read_domains\n" % B.KIND_NAME)
+        check(sorted(f["kind"] for f in findings_of(root)) == sorted([B.KIND_RECORD, B.KIND_SLUG]), "integracion: un nombre ajeno se excusa con su motivo; la fecha no (visto fallar)")
+        write(root, "docs/registry/decisions/vieja.md", "---\ntitle: Vieja\nstate: confirmed\ndate: 2026-01-01\ndomain: core\n---\n**Vieja.** x\n")
+        check(one_says(findings_of(root), "su fichero sigue en el arbol"), "integracion: lo que salio por el libro y sigue en el arbol sale (visto fallar)")
+        write(root, B.RETIRED_FILE, "superseded vieja 2026-01-02 nueva\n")
+        check(any(f["kind"] == B.KIND_DATA and B.RETIRED_FILE in f["where"] + f["message"] for f in findings_of(root)),
+              "integracion: un libro sin su leyenda es un hallazgo de datos (visto fallar)")
+    with scratch_tree() as root:
+        minimal_tree(root)
+        os.remove(os.path.join(root, "tools", "board", B.DOMAINS_FILE))
+        found = findings_of(root)
+        check(any(f["kind"] == B.KIND_DATA and B.DOMAINS_FILE in f["message"] for f in found) and one_says(found, "el dominio 'core' no esta"),
+              "integracion: sin domains.txt es un hallazgo de datos, y ningun dominio existe (visto fallar)")
+    end()
+
+
 def main():
     B.utf8_console()
     print("=== TESTS DEL TABLERO ===")
     tests = [test_data_files, test_docs, test_citations, test_order_and_titles, test_records,
              test_record_checks, test_sections_and_lists, test_startup_and_timeless, test_model_and_render, test_page,
              test_settled_citations_and_verify, test_encoding, test_links_and_comments, test_derived_strict,
-             test_gates_file, test_run_gate, test_gate_environment, test_kill_report, test_verify_main, test_atomic_writes, test_board_end_to_end,
+             test_gates_file, test_run_gate, test_gate_environment, test_kill_report, test_verify_main, test_verify_lock, test_atomic_writes, test_board_end_to_end,
              test_tree_listing_with_git, test_adapters, test_harness_rows, test_skills, test_commit_message, test_pre_push,
-             test_hooks_through_git, test_long_paths, test_python_discovery, test_hook_modes, test_guard_adapters, test_dart_test_adapter, test_runner_by_its_path, test_instantiate_merges, test_instantiate, test_instantiate_command_line, test_layer_readiness, test_template_layers, test_accept, test_accept_posix_lifetime, test_python_layer_needs, test_released_engine, test_layer_requires_its_engine, test_engine_manifest, test_upgrade_plan, test_upgrade, test_components_model, test_component_creation_and_update, test_component_safety, test_component_review_safety, test_component_rendered_paths, test_component_blob_failure, test_component_physical_paths, test_component_unreadable_gate_row, test_scratch_tree_is_physical, test_stack_rendered_destinations, test_component_adoption, test_stack_templates, test_record_rules, test_prose_is_data, test_order_line_and_parts, test_split_indexes,
-             test_adopt]
+             test_hooks_through_git, test_long_paths, test_python_discovery, test_hook_modes, test_guard_adapters, test_dart_test_adapter, test_runner_by_its_path, test_instantiate_merges, test_instantiate, test_instantiate_command_line, test_layer_readiness, test_template_layers, test_accept, test_accept_posix_lifetime, test_python_layer_needs, test_released_engine, test_layer_requires_its_engine, test_engine_manifest, test_upgrade_plan, test_upgrade, test_components_model, test_component_creation_and_update, test_component_safety, test_component_review_safety, test_component_rendered_paths, test_component_blob_failure, test_component_physical_paths, test_component_unreadable_gate_row, test_scratch_tree_is_physical, test_stack_rendered_destinations, test_component_adoption, test_stack_templates, test_record_rules, test_prose_is_data, test_order_line_and_parts, test_plan_position, test_live_debts, test_one_phase_in_progress, test_provisional_is_not_done, test_split_indexes,
+             test_registry_says_what_holds_today, test_adopt]
     for test in tests:
         try:
             test()

@@ -2,6 +2,7 @@
 title: La vista previa social del repositorio en GitHub es una copia de la tarjeta, tolerada y con su paso escrito
 state: confirmed
 date: 2026-10-27
+domain: brand
 phase: none
 ---
 **La vista previa social del repositorio `gonzapersonalsite/portfolio` en GitHub
@@ -17,10 +18,9 @@ esta es la tolerancia registrada:
   Inspector y Facebook Sharing Debugger, que también es manual.
 
 Lo propone el agente después de que el dueño encontrara en GitHub la tarjeta
-anterior, con `GONZALO.DEV`, que ningún inventario había visto
-(`#visible-brand-is-the-owner-name`). El dueño subió la tarjeta nueva el
-2026-10-27, y la imagen publicada coincide píxel a píxel con la del
-repositorio.
+anterior, con «GONZALO.DEV», que ningún inventario había visto
+(`#visible-brand-is-the-owner-name`). El dueño subió la tarjeta nueva, y la
+imagen publicada coincide píxel a píxel con la del repositorio.
 
 No abre fase: es un paso de operación, no una funcionalidad.
 
@@ -38,7 +38,5 @@ No abre fase: es un paso de operación, no una funcionalidad.
   mantener la copia, basta con quitarla en GitHub y borrar esa frase de los dos
   `OPERATIONS.md`.
 
-2026-10-27: el dueño elige esta opción entre las que le puso el agente. Queda
-provisional hasta que la confirme después de releer esta refutación.
-
-2026-10-27: el dueño la confirma después de leer esta refutación.
+El dueño eligió esta opción entre las que le puso el agente y la confirmó
+después de leer esta refutación.

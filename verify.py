@@ -9,11 +9,15 @@ The verdict of a gate is its exit code and its last line, never a partial print.
     python verify.py                 GREEN: "0 en rojo" + exit 0
     python verify.py -- "etiqueta"   one gate only, for iterating (not for verifying)
 
+Another run on the same tree, full or filtered, is refused with exit 3 and
+"RESULT: no se verifica -> ..." before any gate runs.
+
 Requires Python 3.8+ and nothing else.
 """
 import contextlib
 import errno
 import functools
+import hashlib
 import math
 import os
 import re
@@ -58,7 +62,6 @@ WAIT_SLICE_SECONDS = 0.25
 # replace, which is idempotent, is tried again after each of these pauses. A
 # holder that keeps it longer gets an error that names the file.
 REPLACE_PAUSES = (0.05, 0.1, 0.2, 0.4, 0.8)
-TAIL_ON_FAILURE = 25
 PYTHON_TOKEN = "{python}"
 # '{local:gradlew}' runs a script of the repository's root the way this system
 # runs one: cmd.exe may be told not to look in the current directory
@@ -74,6 +77,14 @@ REDIRECTION = (">", "<")
 CHAINING_SAID = {"\n": "salto de linea"}
 UTF8_BOM = b"\xef\xbb\xbf"
 INTERRUPTED_EXIT = 130
+# One verification runs on a tree at a time: two would race on its verdict, its
+# derivatives and whatever its gates build. The second one runs no gate and
+# exits with this code, which tools that run verify.py tell apart from red.
+REFUSED_EXIT = 3
+LOCK_NAME = "verify-%s.lock"
+# The locked byte lies past the owner's line: on Windows a locked range cannot
+# be read, and the refusal quotes that line.
+LOCK_OFFSET = 1 << 20
 # A daemon the gate asks to start something (dockerd and its containers) is
 # outside the gate's job or process group on every system: a kill's report says
 # so, because a container was seen running long after a gate's tree was dead.
@@ -114,6 +125,11 @@ class GateInterrupted(KeyboardInterrupt):
         super().__init__(name)
         self.kill = kill
         self.name = name
+
+
+class TreeBusy(Exception):
+    """Another verification holds this tree, or its lock cannot be taken; the
+    message says which and where."""
 
 
 class TreeUnavailable(Exception):
@@ -807,6 +823,107 @@ def report_line(label, verdict, result, reference, tail):
     used = "%.1fs/%gs" % (result["seconds"], result["budget"])
     return "%-24s %-8s exit=%-4d %12s %-6s %s" % (label, verdict, result["code"], used, growth_of(result["seconds"], reference), tail)
 
+
+def failure_transcript(lines):
+    """Everything a gate that is not green printed, none of it cut: a long
+    suite writes its failure among thousands of lines, and a tail can leave
+    out the very cause."""
+    return ["    | " + line for line in lines]
+
+# ----------------------------------------------------------------- lock
+
+def git_dir_of(root):
+    """The git directory of the repository `root` is in, looking up from it as
+    git does: a `.git` folder, or the folder the `gitdir:` line of a `.git`
+    file names (a linked worktree's own). None outside any repository;
+    TreeBusy when a `.git` file cannot be read."""
+    here = os.path.abspath(root)
+    while True:
+        candidate = os.path.join(here, ".git")
+        if os.path.isdir(candidate):
+            return candidate
+        if os.path.isfile(candidate):
+            try:
+                text = read_text(candidate)[0]
+            except OSError as error:
+                raise TreeBusy("no se puede leer %s para saber donde va el cerrojo de verificacion (%s)" % (candidate, error.strerror or error))
+            for line in text.splitlines():
+                if line.startswith("gitdir:"):
+                    return os.path.normpath(os.path.join(here, line[len("gitdir:"):].strip()))
+            return None
+        parent = os.path.dirname(here)
+        if parent == here:
+            return None
+        here = parent
+
+
+def lock_path(root, git_dir):
+    """The lock of the tree `root`, named after the tree, so two trees of one
+    repository do not exclude each other. It lives in the git directory, which
+    every run on the tree sees whatever its environment and git never lists;
+    without git, in the temporary folder."""
+    key = hashlib.sha256(os.path.normcase(os.path.realpath(root)).encode("utf-8")).hexdigest()[:16]
+    return os.path.join(git_dir or tempfile.gettempdir(), LOCK_NAME % key)
+
+
+def lock_byte(handle):
+    """An operating system lock, which the system drops when its process dies:
+    a run that was killed leaves nothing to clean up. OSError when another
+    process holds it."""
+    if os.name == "nt":
+        import msvcrt
+        handle.seek(LOCK_OFFSET)
+        msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+    else:
+        import fcntl
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+
+def unlock_byte(handle):
+    if os.name == "nt":
+        import msvcrt
+        handle.seek(LOCK_OFFSET)
+        msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+    else:
+        import fcntl
+        fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
+def owner_of(path):
+    try:
+        line = read_text(path)[0].strip()
+    except OSError:
+        return ""
+    return " (%s)" % line if line else ""
+
+
+def take_lock(path):
+    """The open, locked file that keeps every other verification off the tree
+    while it stays open; TreeBusy when another one holds it or it cannot be
+    made. It never waits: a full run lasts minutes, and a silent wait is worse
+    than a refusal that says who holds the tree."""
+    try:
+        handle = open(path, "a+b")
+    except OSError as error:
+        raise TreeBusy("no se puede crear el cerrojo de verificacion %s (%s)" % (path, error.strerror or error))
+    try:
+        lock_byte(handle)
+    except OSError:
+        handle.close()
+        raise TreeBusy("otra verificacion corre sobre este arbol y retiene su cerrojo%s: %s" % (owner_of(path), path))
+    handle.seek(0)
+    handle.truncate()
+    handle.write(("pid %d, desde %s\n" % (os.getpid(), time.strftime("%Y-%m-%d %H:%M:%S"))).encode("utf-8"))
+    handle.flush()
+    return handle
+
+
+def release_lock(handle):
+    try:
+        unlock_byte(handle)
+    finally:
+        handle.close()
+
 # ----------------------------------------------------------------- guards
 
 def missing_guards(lines, guards):
@@ -948,8 +1065,8 @@ def run_all(gates, filter_labels, guards, root):
         rows.append((gate["label"], verdict))
         if verdict != GREEN:
             red.append(gate["label"])
-            for line in result["lines"][-TAIL_ON_FAILURE:]:
-                print("    | " + line)
+            for line in failure_transcript(result["lines"]):
+                print(line)
     return {"red": red, "rows": rows}
 
 
@@ -960,8 +1077,8 @@ def refresh_derived(gates, root):
             verdict = verdict_of(result)
             print(report_line(gate["label"] + " *", verdict, result, gate["reference"], last_line(result)))
             if verdict != GREEN:
-                for line in result["lines"][-TAIL_ON_FAILURE:]:
-                    print("    | " + line)
+                for line in failure_transcript(result["lines"]):
+                    print(line)
             return verdict == GREEN
     print("WARNING: ninguna puerta se llama '%s': los derivados se quedan citando el veredicto anterior" % DERIVED_GATE)
     return True
@@ -1039,8 +1156,16 @@ def main(argv, root=ROOT):
     if unknown:
         print("RESULT: etiquetas desconocidas -> %s (puertas: %s)" % (", ".join(unknown), ", ".join(labels)))
         return 1
-    with stop_signals():
-        return run_and_store(gates, filter_labels, listing["guards"], root)
+    try:
+        lock = take_lock(lock_path(root, git_dir_of(root)))
+    except TreeBusy as busy:
+        print("RESULT: no se verifica -> %s" % busy)
+        return REFUSED_EXIT
+    try:
+        with stop_signals():
+            return run_and_store(gates, filter_labels, listing["guards"], root)
+    finally:
+        release_lock(lock)
 
 
 if __name__ == "__main__":

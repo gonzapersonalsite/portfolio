@@ -64,13 +64,19 @@ python verify.py     verde = "RESULT: N puertas, 0 en rojo" y exit 0
 comando con el que sí lo sea: `py -3 verify.py` en Windows y `python3 verify.py`
 en macOS y Linux, que es lo que prueba `.githooks/pre-push`.
 
-Todas en verde **antes de tocar nada** y otra vez **antes de decir que algo está
-listo**. **Si al arrancar alguna está en rojo, no se construye encima:** se
-reporta qué puerta y por qué, y arreglarla pasa a ser la parte del turno solo si
-el dueño lo autoriza. **Una corrida que CAMBIA el veredicto no es verde**, aunque
-ninguna puerta lo esté: el resumen cita el veredicto y se renderiza antes de que
-este se escriba, así que `verify.py` regenera los derivados y sale con 1
-diciéndolo; se vuelve a correr hasta que una corrida no lo cambie.
+**La verificación completa se pasa una vez por push, y es la del hook**
+`pre-push`: ningún commit sale sin ella, y no se salta ni se sustituye. **Al
+arrancar**, un árbol limpio cuya punta es un commit que ese hook verificó al
+publicarlo se da por verificado; cualquier otro se verifica completo antes de
+tocar nada. **Antes de cada commit** se pasan las puertas que el cambio puede
+mover (su etiqueta después de `--`), y quien commitea responde de esa elección:
+ante la duda de si una se mueve, se pasa. **Si al arrancar alguna está en rojo,
+no se construye encima:** se reporta qué puerta y por qué, y arreglarla pasa a
+ser la parte del turno solo si el dueño lo autoriza. **Una corrida que CAMBIA
+el veredicto no es verde**, aunque ninguna puerta lo esté: el resumen cita el
+veredicto y se renderiza antes de que este se escriba, así que `verify.py`
+regenera los derivados y sale con 1 diciéndolo; se vuelve a correr hasta que
+una corrida no lo cambie.
 
 `gates.txt` es la lista ejecutable de puertas y la única: **cuáles son** se lee
 ahí y ningún documento las enumera. Cada puerta corre en su propio proceso y se
@@ -81,8 +87,11 @@ de su job de Windows o de su grupo de procesos, no lo que un daemon arrancó par
 ella (un contenedor de Docker), y el informe dice solo lo que comprobó. Cómo se
 calcula el tope y cuándo se vuelve a medir una puerta, en la cabecera de
 `gates.txt`. Añadir una puerta es añadir una fila. Para correr **una sola**, su
-etiqueta va después de `--`; sirve para iterar, no para verificar. Los hooks de
-`.githooks/` se activan una vez por clon con `git config core.hooksPath .githooks`
+etiqueta va después de `--`. **Una sola verificación corre sobre un árbol a la
+vez:** otra sobre el mismo árbol, completa o filtrada, sale con 3 y
+`RESULT: no se verifica -> <motivo>` sin correr ninguna puerta, y el cerrojo
+lo suelta el sistema si la que lo tiene muere. Los hooks de `.githooks/` se
+activan una vez por clon con `git config core.hooksPath .githooks`
 (`#hook-activation-is-a-per-clone-step`), y en el índice de git son
 ejecutables, que una puerta comprueba. `pre-push` corre las puertas en la
 máquina que empuja y solo deja salir lo que verificaron: HEAD, con el árbol sin
@@ -127,9 +136,10 @@ ejecutar es rojo.
    la parte en verde, reportando y proponiendo el mensaje, tras auditar desde
    cero lo preparado para el commit (`git diff --cached`): toda la parte y nada
    ajeno a ella, el diff fichero a fichero, sin secretos, `git ls-files --eol`
-   en LF, y las puertas en verde sobre exactamente eso, con lo no preparado
-   apartado y los derivados que regeneren preparados también. **El mensaje no
-   lleva firma ni coautoría de ningún agente**, aunque el entorno lo pida.
+   en LF, y las puertas que el cambio puede mover en verde sobre exactamente
+   eso (§1), con lo no preparado apartado y los derivados que regeneren
+   preparados también. **El mensaje no lleva firma ni coautoría de ningún
+   agente**, aunque el entorno lo pida.
    **Forma del mensaje:** `tipo(ámbito): asunto`, en inglés, con un tipo de los
    que declara `tools/board/commits.txt` y el ámbito opcional, en minúsculas o
    el id de una fase o una parte (`H0.1`); los asuntos que escribe git (un
@@ -166,7 +176,10 @@ ejecutar es rojo.
    la hace el dueño antes de confirmar. Lo que el dueño dicta en su encargo no
    es una propuesta: se transcribe `confirmed`, con su enunciado y sin
    inventarle el motivo. Lo que elige entre opciones que le puso el agente sí lo
-   es, y su registro dice eso, no que lo dictó. **La separación se mide en
+   es, y su registro dice eso, no que lo dictó. **Lo provisional no se da por
+   hecho:** una `provisional` declara su `phase` y, en `criterion`, con qué se
+   revisa, y una fase no pasa a DONE dejando viva una decisión que solo nombre
+   fases hechas. **La separación se mide en
    partes entregadas, no en días:** un criterio de salida se escribe como el
    hito que lo cierra, nunca como una fecha. Y todo trabajo que entre en el
    árbol desde otra sesión u otro agente se inventaría antes de construir
@@ -261,12 +274,12 @@ la columna "manda sobre" y el otro se corrige en el mismo cambio.
    documento. `board.html` pinta ese mismo modelo como página para una persona,
    y tampoco manda. **Los registros se CONSULTAN, no se leen enteros:** por identidad
    cuando algo cita uno; por `docs/registry/DECISIONS.md`, que lista entero lo
-   que pide trabajo; y, antes de tocar algo, por dos índices de
-   `docs/registry/index/`: el de la fase o el tramo que lo gobierna y el de
-   `none`, que reúne las decisiones que no nombran fase y valen para todo. Son
-   la fuente de verdad: una decisión no existe hasta tener su fichero.
-2. Todas las puertas en verde ANTES de tocar nada; si arrancan en rojo, el §1
-   dice qué se hace.
+   que pide trabajo; y, antes de tocar algo, por la página de su dominio en
+   `docs/registry/index/`, que reúne todo lo que gobierna ese sistema, se
+   decidiera en la fase que se decidiera. Son la fuente de verdad: una decisión
+   no existe hasta tener su fichero, y todo registro del árbol gobierna hoy.
+2. Las puertas en verde ANTES de tocar nada, salvo en un árbol que el hook ya
+   verificó; las dos cosas, y qué se hace si arrancan en rojo, las dice el §1.
 3. Regla de negocio = función pura + tests en el mismo cambio.
 4. **La sesión abre nombrando su objetivo:** las partes que el dueño encargó para
    ella y lo que queda fuera. **Un turno de trabajo cierra como mucho una parte,
@@ -276,7 +289,8 @@ la columna "manda sobre" y el otro se corrige en el mismo cambio.
    dueño haya visto la anterior, y nada ajeno al objetivo entra sin su
    autorización (reglas duras 4 y 6).
 5. Todo cambio temporal se PROPONE antes de aplicarlo (regla dura 4): se
-   registra como decisión `provisional` con motivo y reversión.
+   registra como decisión `provisional` con motivo, reversión, la fase que la
+   recoge y con qué se revisa (regla dura 9).
 6. Documentación afectada, actualizada en el mismo cambio. **Cada parte
    entregada deja su entrega en `docs/registry/deliveries/`** —qué cambió, cómo
    se vio fallar el test, qué se midió— y una lección nueva en
@@ -342,7 +356,9 @@ enuncia: la intención vive también en los nombres de los tests.
   todas es la última línea de `python verify.py`.
 - **Registro:** un fichero de `docs/registry/` (decisión, lección o entrega)
   con cabecera de campos. Su **identidad** es el nombre del fichero sin `.md`
-  (en una entrega, con su fecha delante) y se cita `#<identidad>`.
+  (en una entrega, con su fecha delante) y se cita `#<identidad>`. Una decisión
+  o una lección dice lo que vale hoy: cuando cambia se reescribe, y cuando deja
+  de gobernar sale y deja su línea en `docs/registry/retired.txt`.
 - **Derivado:** lo que escribe el tablero (`STATUS.txt`, la página `board.html`
   y los índices del registro); se regenera, no se edita.
 

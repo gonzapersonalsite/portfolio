@@ -12,9 +12,8 @@
 #            without .md).
 # index    : how many bytes, at most, each index of the registry a session
 #            consults before it touches anything may weigh: the main ones
-#            (docs/registry/DECISIONS.md and docs/registry/NOTES.md) and the one
-#            of the decisions that name no phase
-#            (docs/registry/index/decisions-none.md).
+#            (docs/registry/DECISIONS.md and docs/registry/NOTES.md) and the
+#            page of each domain (docs/registry/index/domain-<id>.md).
 
 # A MAXIMUM, not an equality: it bounds a cost that grows every time someone
 # writes a useful line. Raising it is a DECISION and is recorded; lowering it
@@ -37,10 +36,9 @@ identity 80
 # cost per session, like the startup reading. They list in full only what asks
 # for work (open decisions, live debts, provisional ones, recent notes), so they
 # grow with the work in flight, not with history; running out means work to
-# close, not a cap to raise. Half the startup budget. The per-phase and
-# per-month indexes are not capped: each keeps the history of something that
-# closes, and capping history schedules the next crisis. The `none` index is the
-# exception: it never closes, and a session consults it before touching
-# anything, so it has the same cap; when it runs out, how it splits is decided
-# then, with the data of that registry.
+# close, not a cap to raise. Half the startup budget. A domain's page lists what
+# governs that system today, and a session consults it before touching it, so
+# it has the same cap; when one runs out, the question is whether that domain
+# is two, one more row of domains.txt. The per-month indexes are not capped:
+# they keep history, and capping history schedules the next crisis.
 index 30000

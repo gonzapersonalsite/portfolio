@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { i18n } from '@/shared/config'
 import ProjectGallery, { type GallerySlide } from './ProjectGallery'
 
@@ -101,12 +101,14 @@ describe('ProjectGallery', () => {
     expect(screen.getByRole('button', { name: 'Zoom in' }).hasAttribute('disabled')).toBe(true)
   })
 
-  it('offers a manual retry with the same URL and preserves keyboard focus through it', () => {
+  it('offers a manual retry with the same URL and preserves keyboard focus through it', async () => {
     renderGallery()
     const failedImage = currentImage()
     fireEvent.error(failedImage)
     const retry = screen.getByRole('button', { name: 'Try again' })
-    retry.focus()
+    // MUI mounts its ripples lazily and starts or stops one when a promise
+    // settles, so every move of the focus here waits for those promises.
+    await act(async () => retry.focus())
     fireEvent.click(retry)
     const retriedImage = currentImage()
 
@@ -116,7 +118,7 @@ describe('ProjectGallery', () => {
     expect(document.activeElement).toBe(retry)
     fireEvent.click(retry)
     expect(currentImage()).toBe(retriedImage)
-    finishLoading(retriedImage)
+    await act(async () => finishLoading(retriedImage))
 
     expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull()
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Close gallery' }))

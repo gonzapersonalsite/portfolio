@@ -2,11 +2,12 @@
 title: La marca visible es el nombre del dueño; gonzalo.dev desaparece de todo lo que se ve
 state: confirmed
 date: 2026-10-27
+domain: brand
 phase: none
 ---
-**La marca `gonzalo.dev` (escrita `GONZALO.DEV`) desaparece de todo lo que ve
-una persona.** Lo dictó el dueño el 2026-10-27, después de comprobarse que
-`gonzalo.dev` y `gonzalomartinez.dev` son webs en uso de otros desarrolladores.
+**La marca «gonzalo.dev» (escrita «GONZALO.DEV») desaparece de todo lo que ve
+una persona.** Lo dictó el dueño después de comprobarse que «gonzalo.dev» y
+«gonzalomartinez.dev» son webs en uso de otros desarrolladores.
 Lo dictado, sin añadirle motivo:
 
 - Donde la marca nombraba a la persona o al editor, se escribe

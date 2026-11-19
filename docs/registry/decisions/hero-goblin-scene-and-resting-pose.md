@@ -2,6 +2,7 @@
 title: Escena SVG tipada en pages/home, encaje sobre el tramo recto de la tarjeta y pose central en reposo
 state: confirmed
 date: 2026-10-19
+domain: pixel-goblin
 phase: F1
 ---
 **El duende del hero se construye desde un modelo puro en `pages/home`, camina

@@ -2,6 +2,7 @@
 title: La etiqueta pública del portafolio es Full Stack Developer
 state: confirmed
 date: 2026-10-27
+domain: brand
 phase: none
 ---
 **La etiqueta pública del portafolio es Full Stack Developer, sin el adjetivo
@@ -46,9 +47,6 @@ declara.
   los textos y la imagen en una sola parte; los tests de shells, gemelos y
   del fichero de agentes lo cubren.
 
-2026-10-24: queda provisional hasta que el dueño vea el portafolio con el
-nuevo puesto; entonces se confirma o se revierte.
-
-2026-10-27: el dueño confirma este enfoque del puesto y fija además que
-`Junior` solo aparezca en textos de disponibilidad
+El dueño confirmó este enfoque del puesto después de ver el portafolio con
+él, y fijó además que `Junior` solo aparezca en textos de disponibilidad
 (`#visible-brand-is-the-owner-name`).

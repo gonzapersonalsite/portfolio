@@ -30,12 +30,12 @@ corrida.
   No está en la lectura de arranque: es para quien mira, no para el agente.
 - `../../docs/registry/DECISIONS.md`: el índice principal de las decisiones.
   Enteras, las que piden trabajo (abiertas, deudas vivas, provisionales); del
-  resto, la cuenta.
+  resto, la cuenta; la lista de dominios y cuántas salieron por el libro.
 - `../../docs/registry/NOTES.md`: el índice principal de las entregas y las
   lecciones, con las más recientes de cada clase.
-- `../../docs/registry/index/`: un índice por cada fase que nombran las
-  decisiones, otro para las que no nombran ninguna, y uno por mes de notas.
-  Todo registro está en alguno. El directorio es del tablero: un índice que ya
+- `../../docs/registry/index/`: una página por dominio de `domains.txt` con
+  registros, con todas sus decisiones y lecciones, y una por mes de notas.
+  Todo registro está en alguna. El directorio es del tablero: un índice que ya
   no genera ninguna fuente es un hallazgo, y el build lo borra si lleva su
   huella; uno sin huella no lo borra, sale rojo y lo nombra.
 
@@ -152,17 +152,24 @@ no casa con ello.
    plan.** Toda cabecera termina en `(DONE)`, `(IN PROGRESS)` o `(PENDING)`;
    cada paso de la línea, entre `→` o `·`, es una fase de su plan con `✔` o su
    estado entre paréntesis como mucho; toda fase de la línea tiene sección; toda
-   sección aparece en la línea; y el estado que da la línea es el que declara la
-   cabecera.
+   sección aparece en la línea; el estado que da la línea es el que declara la
+   cabecera; y un plan tiene a lo sumo una cabecera `(IN PROGRESS)`, porque el
+   resumen y la página pintan una sola fase en curso por plan.
 3. **Todo documento vivo empieza por su título `# `.**
 4. **Todo registro está bien formado.** Cabecera entre `---`, campos
    obligatorios presentes y ninguno desconocido, estado del esquema, fechas
-   `AAAA-MM-DD`, fases que algún plan tiene, `phase` en toda abierta y en toda
-   deuda viva, `criterion` en toda deuda, nombre de fichero que sea identidad.
+   `AAAA-MM-DD`, fases que algún plan tiene, `phase` en toda abierta, en toda
+   provisional y en toda deuda viva, `criterion` en toda deuda y en toda
+   provisional (con qué se revisa), un `domain` de `domains.txt` en toda
+   decisión y toda lección, nombre de fichero que sea identidad. Una deuda está
+   viva mientras su registro está en el árbol y no está descartada; el resumen,
+   la página y `DECISIONS.md` cuentan las mismas, y las pagadas, del libro.
 5. **Una identidad nombra un solo registro**, entre los tres directorios.
 6. **Toda cita `#<identidad>` resuelve a un registro.** En documentos vivos, en
    todos los registros y en los comentarios del código declarado, también los
-   que cierran una línea de código.
+   que cierran una línea de código. Una identidad que salió por
+   `docs/registry/retired.txt` solo resuelve desde una entrega, que es historia;
+   desde lo que gobierna, la cita pasa a su sustituta.
 7. **Cada documento conserva las secciones que este validador lee por nombre**
    (la tabla de autoridad del contrato, esta lista, la tabla de campos), con la
    cabecera que declara `prose.txt`. Una que falte o se repita allí es un
@@ -202,13 +209,11 @@ no casa con ello.
     cita un archivo declarado `closed`.
 15. **Lo que una sesión lee no pasa de su tope.** Las filas `startup` de
     `documents.txt` suman como mucho `startup` de `limits.txt`, y cada índice
-    principal del registro pesa como mucho `index`. Los índices de cada fase y
-    de cada mes no tienen tope: guardan la historia de algo que se cierra, y
-    topar la historia programa la siguiente cirugía
-    (`#lesson-a-cap-schedules-the-next-crisis`). El de `none` es la excepción:
-    no se cierra nunca y una sesión lo consulta antes de tocar nada, así que
-    lleva el tope de los principales, y cuando lo agota se decide cómo se
-    parte, con los datos de ese registro.
+    principal del registro pesa como mucho `index`, como la página de cada
+    dominio, que una sesión consulta antes de tocar ese sistema: cuando una la
+    agota, la pregunta es si ese dominio son dos. Los índices de cada mes no
+    tienen tope: guardan la historia, y topar la historia programa la siguiente
+    cirugía (`#lesson-a-cap-schedules-the-next-crisis`).
 16. **Cada adaptador lleva a su herramienta exactamente la lectura de
     arranque.** Lo que lista, más lo que su herramienta lee por sí misma, es la
     lista `startup`, una vez cada documento y en su orden, y lo que carga, con
@@ -227,16 +232,35 @@ no casa con ello.
     palabras que cuentan son las que declara `prose.txt` y los estados del
     esquema en mayúsculas.
 22. **Un documento intemporal solo se apoya en lo asentado:** cada cita
-    `#<identidad>` que hace resuelve a una lección, a una entrega, a una
-    decisión `resolved` (una pregunta cerrada es historia) o a una `confirmed`
-    que no esté retirada. Una regla apoyada en una decisión provisional,
-    abierta, postergada o descartada no tiene base, y una apoyada en una
-    confirmada retirada la perdió.
+    `#<identidad>` que hace resuelve a una lección, a una entrega o a una
+    decisión `confirmed`. Una regla apoyada en una decisión provisional,
+    abierta, postergada o descartada no tiene base.
 23. **El contrato no conserva la sección por fusionar.** Al instanciar un
     repositorio que ya existía, su `AGENTS.md` queda entero bajo la cabecera
     que declara `prose.txt` (`pending`), y mientras esa sección siga en el
     contrato mandan dos contratos sin que nada diga cuál gana.
-24. **Esta enumeración va de 1 a N y `board.py` corre N filas.** Ella misma es
+24. **Una fase hecha no deja nada suyo vivo.** Una decisión abierta,
+    postergada o provisional, o una deuda viva, que solo nombra fases `(DONE)`
+    sale como `[record]`: se le da la fase abierta que la recoge, se descarta
+    o sale por el libro: lo provisional no se da por hecho al cerrar su fase.
+    `none` no la recoge: es para lo que no cae en ninguna fase.
+25. **El libro de retiradas es verdad.** Cada línea de
+    `docs/registry/retired.txt` tiene la forma de su motivo; lo que salió no
+    sigue en el árbol ni sale dos veces; y lo que la línea nombra existe: la
+    sustituta o la respuesta es una decisión, una lección u otra línea del
+    libro, y la entrega que cerró una deuda o un trabajo es una entrega.
+26. **Lo que gobierna no lleva fechas en su cuerpo.** Una decisión o una
+    lección dice lo que vale hoy; cómo cambió lo cuenta la entrega que la
+    cambió, y una cita a esa entrega, que empieza por su día, no es una fecha.
+27. **Lo que gobierna nombra código que existe.** Cada nombre con forma de
+    código entre comillas invertidas de una decisión o una lección (con punto,
+    con guion bajo, una llamada o una palabra que mezcla mayúsculas y
+    minúsculas; no una ruta ni una cita) está, parte a parte, entre las
+    palabras del código y los datos del árbol, fuera del markdown, de los
+    derivados, de `exceptions.txt` y del libro. Sale como `[identifier]`, y un
+    nombre de otro programa se excusa con su motivo. No ve un nombre que sigue
+    existiendo y ya significa otra cosa, ni lo que va en un bloque de código.
+28. **Esta enumeración va de 1 a N y `board.py` corre N filas.** Ella misma es
     la última fila.
 
 **Añadir una comprobación es añadir una fila** en `board.py` y su entrada aquí;
@@ -273,8 +297,10 @@ y la cierra el primer comentario vacío; qué hace cada clave lo dice esta pági
 - `[citation]` — un fichero citado que no está en el árbol.
 - `[marker]` / `[order]` — cabecera sin marcador, o línea y cabeceras en
   contradicción, o una línea que nombra algo que no es una fase de su plan.
-- `[record]` — un registro mal formado, con una identidad demasiado larga, o que
-  repite su estado. No se excusa.
+- `[record]` — un registro mal formado, con una identidad demasiado larga, que
+  repite su estado, vivo en una fase que ya está hecha, con una fecha en el
+  cuerpo de lo que gobierna, o una línea del libro de retiradas que no es
+  verdad. No se excusa.
 - `[slug]` — identidad repetida, o cita `#<identidad>` que no resuelve.
 - `[shape]` — título ausente, sección leída que ya no existe, fecha en documento
   intemporal, línea larga, lápida ausente, esquema sin documentar, skill mal
@@ -282,11 +308,15 @@ y la cierra el primer comentario vacío; qué hace cada clave lo dice esta pági
   arranque, adaptador o índice principal o de `none` por encima de su tope.
 - `[derived]` — derivado que falta, viejo, editado a mano o que ya no genera
   ninguna fuente. No se excusa: se regenera.
-- `[data]` — fichero de datos roto, `gates.txt` que `verify.py` no acepta,
-  documento declarado inexistente, excepción sin motivo o huérfana, runner sin
-  guarda o guardas sin marca, markdown sin casa, adaptador que no lleva a la
-  lectura de arranque o que no se sabe leer, hook no ejecutable, fichero que no
-  es UTF-8 sin BOM, o árbol que git no pudo listar.
+- `[data]` — fichero de datos roto, excepción de una clase que no se excusa,
+  `gates.txt` que `verify.py` no acepta, documento declarado inexistente,
+  excepción sin motivo o huérfana, runner sin guarda o guardas sin marca,
+  markdown sin casa, adaptador que no lleva a la lectura de arranque o que no se
+  sabe leer, hook no ejecutable, fichero que no es UTF-8 sin BOM, o árbol que
+  git no pudo listar.
+- `[identifier]` — un nombre de código que cita lo que gobierna y que el árbol
+  no tiene. Se corrige con el código delante, o, si es de otro programa, se
+  excusa con la clave `identifier` y su motivo.
 - `[encoding]` — fuente de código declarado que no es UTF-8. Se excusa con su
   motivo mientras no se pueda convertir.
 - `[engine]` — fichero del motor cambiado, ausente o sin sellar. Se excusa con

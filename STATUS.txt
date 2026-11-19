@@ -1,13 +1,13 @@
 ESTADO DEL PROYECTO
 GENERADO por tools/board desde el repositorio. No editar a mano: se reescribe.
-board-fingerprint:138f9f3763c5ad09 — su contenido cambió por última vez el 2026-10-24.
+board-fingerprint:8578e755e99e81fb — su contenido cambió por última vez el 2026-11-19.
 Esto es un resumen derivado. Manda el documento o el registro, no este fichero.
 ------------------------------------------------------------------------------
 PUERTAS      9 de 9 en verde (sin cambios desde 2026-10-24)
 ORDEN F      F0 ✔ > F1 ✔ > F2 ✔
 ORDEN H      H0 ✔ > H1 ✔
 
-FRENTES ABIERTOS  0 vivos (0 resueltos que conservan su rastro)
+FRENTES ABIERTOS  0 vivos (2 registros salieron por docs/registry/retired.txt)
   Cada frente es una decision abierta; la fase es la que su registro declara. La
   lista entera, en el indice de decisiones (seccion ABIERTAS).
   POR FASE (0):

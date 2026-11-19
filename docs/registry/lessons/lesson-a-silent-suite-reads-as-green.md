@@ -1,6 +1,7 @@
 ---
 title: Una suite que no ejecuta un solo check se lee exactamente igual que una verde
 date: 2026-09-21
+domain: verification
 origin: clayfarer
 ---
 **Una suite que corre y no informa nada se lee igual que una que pasó.** Visto de

@@ -2,6 +2,7 @@
 title: Portales pixel 2D laterales de entrada y salida y widget compartido en widgets/pixel-goblin para Inicio y Contacto
 state: confirmed
 date: 2026-10-19
+domain: pixel-goblin
 phase: F1
 ---
 **El duende entra y sale a través de portales pixel 2D laterales y se comparte

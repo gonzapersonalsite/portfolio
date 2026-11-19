@@ -62,7 +62,7 @@ describe('ContactForm', () => {
     fireEvent.change(screen.getByRole('textbox', { name: /Mensaje/ }), { target: { value: 'Hola' } })
 
     const message = screen.getByRole<HTMLTextAreaElement>('textbox', { name: /Mensaje/ })
-    message.focus()
+    act(() => message.focus())
     fireEvent.submit(formOf(container))
 
     const button = await screen.findByRole('button', { name: /Enviando/ })

@@ -1,6 +1,7 @@
 ---
 title: Un error de script no es rojo por sí solo, es verde falso o cuelgue
 date: 2026-09-21
+domain: verification
 origin: clayfarer
 ---
 **Un error en tiempo de ejecución dentro de un test o de una puerta no garantiza

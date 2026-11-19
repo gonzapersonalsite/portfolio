@@ -2,6 +2,7 @@
 title: El duende pixelado del perfil camina y programa sobre el borde superior de la tarjeta del hero
 state: confirmed
 date: 2026-10-19
+domain: pixel-goblin
 phase: F1
 ---
 **El duende pixelado del perfil camina y programa sobre el borde superior de la

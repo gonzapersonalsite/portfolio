@@ -96,9 +96,14 @@ FIXED_DERIVED = (SUMMARY_FILE, PAGE_FILE, DECISIONS_INDEX_FILE, NOTES_INDEX_FILE
 # The document that says what the product is (AGENTS.md §4): its title is the
 # product's name, the only one the page can derive.
 PRODUCT_README = "README.md"
-# The board owns this directory: one index per phase that decisions name and
+# The board owns this directory: one index per domain that records declare and
 # one per month that notes carry, all derived. What no source generates is removed.
 INDEX_DIR = "docs/registry/index"
+# What stopped governing leaves the tree and leaves its line in this ledger;
+# the closed list of the domains a record declares is data of each repository.
+RETIRED_FILE = "docs/registry/retired.txt"
+DOMAINS_FILE = "domains.txt"
+DOMAIN_KEY = "domain"
 # How many deliveries and lessons the main notes index shows: enough to see
 # what happened lately; every one of them is in the index of its month.
 RECENT_NOTES = 20
@@ -149,7 +154,7 @@ NOT_IN_A_PATH = " ()[]{}<>*?\"'|=+,;!#$%&@^~`\\:"
 GATES_FILE = "gates.txt"
 # A word of a command: a quoted run or a run without blanks.
 COMMAND_WORD = re.compile(r"\"[^\"]*\"|'[^']*'|\S+")
-SETTLED_STATES = ["confirmed", "resolved"]
+SETTLED_STATES = ["confirmed"]
 IMPORT_MARK = "@"
 STAMP_MARK = "board-fingerprint:"
 DATE_TOKEN = "@DATE@"
@@ -167,6 +172,9 @@ KIND_DERIVED = "derived"
 KIND_DATA = "data"
 KIND_ENCODING = "encoding"
 KIND_ENGINE = "engine"
+# A name of code a record quotes and the tree does not have: excusable, with
+# its motive, for a name of another program.
+KIND_NAME = "identifier"
 
 # The engine of this copy: the template's version and the sha256 of each of
 # its files as the template shipped them. A copy that changes one declares it
@@ -182,15 +190,30 @@ VERSION_SHAPE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 # ----------------------------------------------------------------- records
 
 SCHEMA = {
-    "decision": {"required": ["title", "state", "date"], "known": ["phase", "type", "criterion", "retired", "origin"]},
-    "lesson": {"required": ["title", "date"], "known": ["origin"]},
+    "decision": {"required": ["title", "state", "date", DOMAIN_KEY], "known": ["phase", "type", "criterion", "origin"]},
+    "lesson": {"required": ["title", "date", DOMAIN_KEY], "known": ["origin"]},
     "delivery": {"required": ["title", "date"], "known": ["phase"]},
 }
-STATES = ["confirmed", "provisional", "open", "resolved", "postponed", "discarded"]
+STATES = ["confirmed", "provisional", "open", "postponed", "discarded"]
 OPEN_STATES = ["open", "postponed"]
-RESOLVED_STATE = "resolved"
+# A debt is alive while its record is in the tree and not discarded: one list
+# for the summary, the page and the index. Paying it is taking it out.
+LIVE_DEBT_STATES = ["open", "postponed", "provisional", "confirmed"]
 DEBT_TYPE = "debt"
-DATE_FIELDS = ["date", "retired"]
+DATE_FIELDS = ["date"]
+# Why a record left the tree, and what its ledger line names: the record that
+# now says the rule, the delivery that closed it, or nothing.
+SUCCESSOR, CLOSER = "successor", "closer"
+RETIREMENTS = {"superseded": SUCCESSOR, "answered": SUCCESSOR, "paid": CLOSER, "applied": CLOSER, "withdrawn": None}
+PAID = "paid"
+# A date in the body of what governs: what changed, and when, is told by the
+# delivery that changed it. A date joined to a letter or a hyphen is part of a
+# name, such as the identity of a delivery, which opens with its day.
+BODY_DATE = re.compile(r"(?<![\w-])([0-9]{4}-[0-9]{2}-[0-9]{2})(?![\w-])")
+# A name of code: dotted parts, each a word; quoted as a call, the name before the parenthesis.
+CODE_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*")
+CODE_CALL = re.compile(r"([A-Za-z_][A-Za-z0-9_.]*)\(.*\)")
+CODE_WORD = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 NO_PHASE = "none"
 FENCE = "---"
 RECORD_SUFFIX = ".md"
@@ -264,35 +287,34 @@ def is_debt(record):
     return record["fields"].get("type", "") == DEBT_TYPE
 
 
-def is_resolved(record):
-    return record["fields"].get("state", "") == RESOLVED_STATE
-
-
-def is_retired(record):
-    return "retired" in record["fields"]
-
-
 def is_open(record):
-    return record["fields"].get("state", "") in OPEN_STATES and not is_retired(record)
+    return record["fields"].get("state", "") in OPEN_STATES
+
+
+def is_live_debt(record):
+    return is_debt(record) and record["fields"].get("state", "") in LIVE_DEBT_STATES
+
+
+def is_provisional(record):
+    return record["fields"].get("state", "") == "provisional"
+
+
+def is_alive(record):
+    """What still asks for work: an open or postponed decision, a provisional
+    one and a live debt."""
+    return is_open(record) or is_provisional(record) or is_live_debt(record)
 
 
 def needs_phase(record):
-    fields = record["fields"]
-    if is_retired(record):
-        return False
-    if fields.get("state", "") in OPEN_STATES:
-        return True
-    return is_debt(record) and fields.get("state", "") != RESOLVED_STATE
+    return is_alive(record)
 
 
 def governs(record):
     state = record["fields"].get("state", "")
-    if is_retired(record):
-        return False
     return state in ("confirmed", "provisional") or state in OPEN_STATES
 
 
-def validate_record(record, kind, known_phases):
+def validate_record(record, kind, known_phases, domains):
     found = list(record["problems"])
     if kind not in SCHEMA:
         found.append("'%s' no es una clase de registro conocida" % kind)
@@ -311,6 +333,8 @@ def validate_record(record, kind, known_phases):
             found.append("'%s' no es una fecha AAAA-MM-DD: '%s'" % (key, fields[key]))
     if "state" in fields and fields["state"] not in STATES:
         found.append("el estado '%s' no es uno de %s" % (fields["state"], "/".join(STATES)))
+    if fields.get(DOMAIN_KEY) and fields[DOMAIN_KEY] not in domains:
+        found.append("el dominio '%s' no esta en tools/board/%s" % (fields[DOMAIN_KEY], DOMAINS_FILE))
     if "phase" in fields:
         for token in phases_of(record):
             if token != NO_PHASE and token not in known_phases:
@@ -320,6 +344,8 @@ def validate_record(record, kind, known_phases):
         found.append("un registro %s tiene que decir su 'phase' (o '%s' con el motivo en el cuerpo)" % (why, NO_PHASE))
     if is_debt(record) and "criterion" not in fields:
         found.append("una deuda declara su 'criterion' de pago")
+    elif is_provisional(record) and "criterion" not in fields:
+        found.append("una provisional declara su 'criterion': con que se revisa")
     return found
 
 
@@ -478,6 +504,10 @@ def parse_data(text, source, problems):
             continue
         entries.append({"keyword": keyword, "value": value, "line": number, "motive": commented})
     return entries
+
+
+def values_entries(entries, keyword):
+    return [entry for entry in entries if entry["keyword"] == keyword]
 
 
 def values_of(entries, keyword):
@@ -838,7 +868,14 @@ def dates_in(text):
 
 # ----------------------------------------------------------------- checks
 
+# A malformed record is fixed in its header, a stale derivative is rebuilt and
+# a broken data file is corrected: none is excused, whatever the legend says.
+UNEXCUSABLE = (KIND_RECORD, KIND_DERIVED, KIND_DATA)
+
+
 def apply_exceptions(findings, exceptions):
+    refused = [e for e in exceptions if e["keyword"] in UNEXCUSABLE]
+    exceptions = [e for e in exceptions if e["keyword"] not in UNEXCUSABLE]
     used = {(e["keyword"], e["value"]): False for e in exceptions}
     reported = []
     for f in findings:
@@ -851,6 +888,9 @@ def apply_exceptions(findings, exceptions):
         if not used[(e["keyword"], e["value"])]:
             reported.append(finding(KIND_DATA, e["value"], "exceptions.txt:%d" % e["line"],
                                     "excepcion huerfana: '%s %s' ya no excusa nada" % (e["keyword"], e["value"])))
+    for e in refused:
+        reported.append(finding(KIND_DATA, e["value"], "exceptions.txt:%d" % e["line"],
+                                "'%s %s': un hallazgo de la clase '%s' no se excusa, se corrige en su fuente" % (e["keyword"], e["value"], e["keyword"])))
     return reported
 
 
@@ -932,6 +972,12 @@ def order_and_headers_agree(headers, lines, doc, prefixes):
         by_id[header["id"]] = header
         if not header["marker"]:
             findings.append(finding(KIND_MARKER, header["id"], "%s:%d" % (doc, header["line"]), "la cabecera de %s no termina en %s" % (header["id"], ", ".join("(%s)" % m for m in PHASE_MARKERS))))
+    # The model paints one phase in progress per plan, and the line has one
+    # cursor.
+    in_progress = [h for h in by_id.values() if h["marker"] == IN_PROGRESS]
+    for header in in_progress[1:]:
+        findings.append(finding(KIND_ORDER, header["id"], "%s:%d" % (doc, header["line"]),
+                                "%s tambien esta (%s) y un plan tiene una sola fase en curso: ya lo esta %s" % (header["id"], IN_PROGRESS, in_progress[0]["id"])))
     if len(lines) != 1:
         findings.append(finding(KIND_ORDER, "line", doc, "se esperaba UNA linea de orden y hay %d" % len(lines)))
         return findings
@@ -964,14 +1010,150 @@ def document_opens_with_its_title(text, doc):
     return [finding(KIND_SHAPE, doc, "%s:1" % doc, "'%s' no empieza por su titulo '# ...' sino por '%s'" % (doc, shown))]
 
 
-def records_are_well_formed(groups, known_phases):
+def records_are_well_formed(groups, known_phases, domains):
     findings = []
     for group in groups:
         for record in group["records"]:
-            for message in validate_record(record, group["kind"], known_phases):
+            for message in validate_record(record, group["kind"], known_phases, domains):
                 findings.append(finding(KIND_RECORD, "#" + record["id"], record["file"], "%s: %s" % (record["file"], message)))
         for problem in group["problems"]:
             findings.append(finding(KIND_RECORD, problem, group["dir"], problem))
+    return findings
+
+
+def read_domains(entries):
+    """The closed list of domains: its ids in order, their titles, and what is
+    wrong with a row."""
+    ids, titles, findings = [], {}, []
+    for entry in entries:
+        parts = entry["value"].split(" ", 1)
+        where = "tools/board/%s:%d" % (DOMAINS_FILE, entry["line"])
+        if len(parts) != 2 or not is_slug(parts[0]) or not parts[1].strip():
+            findings.append(finding(KIND_DATA, entry["value"], where, "un dominio se escribe '%s <identidad> <titulo>' y aqui pone '%s'" % (DOMAIN_KEY, entry["value"])))
+            continue
+        if parts[0] in titles:
+            findings.append(finding(KIND_DATA, parts[0], where, "el dominio '%s' se declara dos veces" % parts[0]))
+            continue
+        ids.append(parts[0])
+        titles[parts[0]] = parts[1].strip()
+    return {"ids": ids, "titles": titles, "findings": findings}
+
+
+def read_ledger(entries):
+    """The rows of retired.txt as records of what left, with what is wrong
+    with their shape: the reason is the keyword, then the identity, the day
+    and what the reason names."""
+    rows, findings = [], []
+    for entry in entries:
+        parts = entry["value"].split()
+        where = "%s:%d" % (RETIRED_FILE, entry["line"])
+        named = RETIREMENTS.get(entry["keyword"])
+        wanted = {SUCCESSOR: (3, 3), CLOSER: (2, 3), None: (2, 2)}[named]
+        if not wanted[0] <= len(parts) <= wanted[1] or not is_slug(parts[0]) or not is_date(parts[1]):
+            shape = {SUCCESSOR: "<identidad> <fecha> <sustituta>", CLOSER: "<identidad> <fecha> [<entrega>]", None: "<identidad> <fecha>"}[named]
+            findings.append(finding(KIND_RECORD, entry["value"], where, "una linea '%s' se escribe '%s %s' y aqui pone '%s'" % (entry["keyword"], entry["keyword"], shape, entry["value"])))
+            continue
+        rows.append({"reason": entry["keyword"], "id": parts[0], "date": parts[1], "named": parts[2] if len(parts) == 3 else "", "where": where})
+    return {"rows": rows, "findings": findings}
+
+
+def ledger_is_sound(rows, kinds):
+    """What left is out of the tree, once, and what its line names is there:
+    a successor is a decision, a lesson or another line of the ledger, and a
+    closer a delivery. `kinds` maps every record in the tree to its kind."""
+    findings, seen = [], set()
+    retired = {row["id"] for row in rows}
+    for row in rows:
+        if row["id"] in seen:
+            findings.append(finding(KIND_RECORD, "#" + row["id"], row["where"], "'%s' sale dos veces en %s" % (row["id"], RETIRED_FILE)))
+            continue
+        seen.add(row["id"])
+        if row["id"] in kinds:
+            findings.append(finding(KIND_RECORD, "#" + row["id"], row["where"], "'%s' esta en %s y su fichero sigue en el arbol: lo que sale, sale del arbol en el mismo cambio" % (row["id"], RETIRED_FILE)))
+        named = RETIREMENTS[row["reason"]]
+        if not row["named"]:
+            continue
+        if named == SUCCESSOR and row["named"] not in retired and kinds.get(row["named"]) not in ("decision", "lesson"):
+            findings.append(finding(KIND_RECORD, "#" + row["id"], row["where"], "'%s' dice que la sustituye '%s', que no es ninguna decision ni leccion del arbol ni otra linea de %s" % (row["id"], row["named"], RETIRED_FILE)))
+        elif named == CLOSER and kinds.get(row["named"]) != "delivery":
+            findings.append(finding(KIND_RECORD, "#" + row["id"], row["where"], "'%s' dice que la cerro '%s', que no es ninguna entrega del arbol" % (row["id"], row["named"])))
+    return findings
+
+
+def record_bodies_carry_no_dates(groups):
+    """What governs says what holds today: a date in its body is the story of
+    how it changed, which belongs to the delivery that changed it."""
+    findings = []
+    for group in groups:
+        if group["kind"] not in ("decision", "lesson"):
+            continue
+        for record in group["records"]:
+            for offset, line in enumerate(record["body"].split("\n")):
+                for match in BODY_DATE.finditer(line):
+                    if is_date(match.group(1)):
+                        findings.append(finding(KIND_RECORD, "#" + record["id"], "%s:%d" % (record["file"], record["body_line"] + offset),
+                                                "%s lleva la fecha %s en su cuerpo: un registro se reescribe para decir lo que vale hoy, y como cambio"
+                                                " lo cuenta la entrega que lo cambio" % (record["file"], match.group(1))))
+    return findings
+
+
+def code_name(value):
+    """The name of code a quoted span states, or '' when it states none: a
+    dotted name, one with an underscore, a call, or a word that mixes cases.
+    A lower-case word, an upper-case one without underscore, a capitalized
+    word, an identity citation and a path are prose or another check's."""
+    value = value.strip()
+    call = CODE_CALL.fullmatch(value)
+    name = call.group(1) if call else value
+    if not CODE_NAME.fullmatch(name):
+        return ""
+    mixed = any(c.islower() for c in name) and any(c.isupper() for c in name[1:])
+    return name if call or "." in name or "_" in name or mixed else ""
+
+
+def code_words(texts):
+    """Every word of the code and data of the tree, the vocabulary a quoted name is looked for in."""
+    words = set()
+    for text in texts:
+        words.update(CODE_WORD.findall(text))
+    return words
+
+
+def named_code_exists(groups, words, paths):
+    """A decision or a lesson names only code that exists: each part of a
+    quoted name is a whole word of the tree's code and data. A name that is a
+    file of the tree is a citation, which another check judges."""
+    names = set(paths) | {os.path.basename(p) for p in paths}
+    findings = []
+    for group in groups:
+        if group["kind"] not in ("decision", "lesson"):
+            continue
+        for record in group["records"]:
+            for span in inline_code(record["body"]):
+                name = code_name(span["value"])
+                if not name or name in names:
+                    continue
+                missing = [part for part in name.split(".") if part not in words]
+                if missing:
+                    findings.append(finding(KIND_NAME, name, "%s:%d" % (record["file"], span["line"] + record["body_line"] - 1),
+                                            "%s nombra `%s` y el codigo del arbol no tiene %s: o se corrige con el codigo delante, o es un nombre ajeno"
+                                            " y se excusa con su motivo" % (record["file"], name, ", ".join("'%s'" % p for p in missing))))
+    return findings
+
+
+def done_phases_leave_nothing_alive(decisions, phases):
+    """A phase is DONE with nothing of its own alive: a decision or a debt that
+    still asks for work and names only phases already done is fixed in its
+    record, by giving it the open phase that will take it, by discarding it,
+    or by taking it out through the ledger."""
+    findings = []
+    for record in decisions:
+        named = [t for t in phases_of(record) if t in phases]
+        if not is_alive(record) or not named or any(phases[t]["marker"] != DONE for t in named):
+            continue
+        findings.append(finding(KIND_RECORD, "#" + record["id"], record["file"],
+                                "%s: sigue %s y solo nombra fases hechas (%s): dale la fase abierta que la recoge, descartala o sacala por el libro de retiradas"
+                                % (record["file"], record["fields"].get("state", ""), " ".join(named))))
     return findings
 
 
@@ -991,18 +1173,32 @@ def is_slug_citation(value):
     return value.startswith("#") and is_slug(value[1:])
 
 
-def slug_citations_resolve(citations, declared):
+def slug_citations_resolve(citations, declared, ledger=(), history=()):
+    """Every `#<identity>` names a record of the tree. One that left through
+    the ledger resolves there only from a delivery, which is history; from
+    anything that governs, the citation moves to its successor."""
     known, broken, order = set(declared), {}, []
+    left = {row["id"]: row for row in ledger}
+    history = set(history)
+    findings = []
     for c in citations:
         value = c["value"]
         if not is_slug_citation(value) or value[1:] in known:
+            continue
+        if value[1:] in left:
+            if c["doc"] not in history:
+                row = left[value[1:]]
+                instead = " (la sustituye `#%s`)" % row["named"] if RETIREMENTS[row["reason"]] == SUCCESSOR else ""
+                findings.append(finding(KIND_SLUG, value, "%s:%d" % (c["doc"], c["line"]),
+                                        "'%s' salio por %s como '%s'%s: lo que gobierna no cita lo que salio, cita a su sustituta o pierde la cita"
+                                        % (value, RETIRED_FILE, row["reason"], instead)))
             continue
         slug = value[1:]
         if slug not in broken:
             broken[slug] = []
             order.append(slug)
         broken[slug].append("%s:%d" % (c["doc"], c["line"]))
-    return [finding(KIND_SLUG, "#" + s, broken[s][0], "'#%s' no es ningun registro: ni decision, ni leccion, ni entrega (citado %d vez/veces: %s)" % (s, len(broken[s]), ", ".join(broken[s]))) for s in order]
+    return findings + [finding(KIND_SLUG, "#" + s, broken[s][0], "'#%s' no es ningun registro: ni decision, ni leccion, ni entrega (citado %d vez/veces: %s)" % (s, len(broken[s]), ", ".join(broken[s]))) for s in order]
 
 
 def read_sections_exist(text, headings, doc):
@@ -1409,10 +1605,9 @@ def hooks_are_executable(entries):
 
 def timeless_cites_only_settled(citations, records):
     """A timeless document states rules; a rule resting on a provisional, open,
-    postponed or discarded decision has no base, and one resting on a retired
-    confirmed decision lost it. A resolved question, a lesson and a delivery
-    are history and always qualify. Citations that resolve to nothing are the
-    identity check's business, not this one's."""
+    postponed or discarded decision has no base. A lesson and a delivery
+    always qualify. Citations that resolve to nothing, or to what left through
+    the ledger, are the identity check's business, not this one's."""
     findings = []
     for c in citations:
         if not is_slug_citation(c["value"]):
@@ -1420,12 +1615,11 @@ def timeless_cites_only_settled(citations, records):
         record = records.get(c["value"][1:])
         if record is None or record["kind"] != "decision":
             continue
-        fields = record["fields"]
-        state = fields.get("state", "")
-        if state == RESOLVED_STATE or (state in SETTLED_STATES and "retired" not in fields):
+        state = record["fields"].get("state", "")
+        if state in SETTLED_STATES:
             continue
-        why = "'retired'" if "retired" in fields else ("'%s'" % state if state else "sin estado")
-        findings.append(finding(KIND_SHAPE, c["value"], "%s:%d" % (c["doc"], c["line"]), "'%s' se apoya en '%s', una decision %s: un documento intemporal solo cita decisiones confirmadas o resueltas, lecciones y entregas" % (c["doc"], c["value"], why)))
+        why = "'%s'" % state if state else "sin estado"
+        findings.append(finding(KIND_SHAPE, c["value"], "%s:%d" % (c["doc"], c["line"]), "'%s' se apoya en '%s', una decision %s: un documento intemporal solo cita decisiones confirmadas, lecciones y entregas" % (c["doc"], c["value"], why)))
     return findings
 
 
@@ -1619,38 +1813,46 @@ def product_name(readme):
     return first[2:].strip() if first.startswith("# ") else ""
 
 
-def build_model(plans, records, verdict, name):
+def build_model(plans, records, verdict, name, ledger=(), domains=None):
     axes = [build_axis(p["axis"], p["file"], p["text"]) for p in plans]
-    anywhere, order = {}, []
+    anywhere = {}
     for axis in axes:
-        order.append(axis["axis"])
         anywhere.update(axis["phases"])
+    positions = plan_positions(axes)
     decisions = records.get("decisions", {}).get("records", [])
     return {
         "name": name,
         "axes": axes,
-        "axis_order": order,
+        "positions": positions,
         "phases": anywhere,
-        "fronts": fronts_of(decisions, anywhere, order),
-        "resolved": sum(1 for r in decisions if is_resolved(r) and not is_debt(r)),
-        "debts": debts_of(decisions),
+        "fronts": fronts_of(decisions, anywhere, positions),
+        "retired": len(ledger),
+        "debts": debts_of(decisions, ledger),
+        "domains": domains or {"ids": [], "titles": {}},
         "records": records,
         "gates": verdict,
     }
 
 
-def sort_key(order):
-    return lambda pid: (order.index(pid[0]) if pid[0] in order else 99, int(pid[1:]))
+def plan_positions(axes):
+    """Where each phase stands: its plan, in the order the plans are declared,
+    and its step in that plan's order line, the phases the line leaves out
+    after the rest. The numbers are identity, not sequence."""
+    return {step["id"]: (plan, rank) for plan, axis in enumerate(axes) for rank, step in enumerate(axis["steps"])}
 
 
-def pending_named_by(ids, phases, order):
-    pending = sorted([pid for pid in ids if phases[pid]["marker"] != DONE], key=sort_key(order))
+def by_position(positions):
+    return lambda pid: positions[pid]
+
+
+def pending_named_by(ids, phases, positions):
+    pending = sorted([pid for pid in ids if phases[pid]["marker"] != DONE], key=by_position(positions))
     if not pending:
         return {}
     return {"names": pending, "open": phases[pending[0]]["marker"] == IN_PROGRESS}
 
 
-def fronts_of(decisions, phases, order):
+def fronts_of(decisions, phases, positions):
     found = []
     for record in decisions:
         if not is_open(record) or is_debt(record):
@@ -1660,18 +1862,24 @@ def fronts_of(decisions, phases, order):
             if token in phases and token not in ids:
                 ids.append(token)
         found.append({"id": record["id"], "name": record["fields"].get("title", record["id"]),
-                      "phases": ids, "named_by": pending_named_by(ids, phases, order)})
+                      "phases": ids, "named_by": pending_named_by(ids, phases, positions)})
     return found
 
 
-def debts_of(decisions):
+def debts_of(decisions, ledger=()):
+    """The live debts, from their records, and the paid ones, from the
+    ledger: a paid debt left the tree, and its line keeps its identity."""
     found = []
     for record in decisions:
-        if not is_debt(record):
+        if not is_live_debt(record):
             continue
         ids = [t for t in phases_of(record) if t != NO_PHASE]
         found.append({"id": record["id"], "name": record["fields"].get("title", record["id"]), "phases": ids,
-                      "criterion": record["fields"].get("criterion", ""), "paid": is_resolved(record)})
+                      "criterion": record["fields"].get("criterion", ""), "paid": False})
+    for row in ledger:
+        if row["reason"] == PAID:
+            closer = "la cerró #%s" % row["named"] if row["named"] else ""
+            found.append({"id": row["id"], "name": "#" + row["id"], "phases": [], "criterion": closer, "paid": True})
     return found
 
 # ----------------------------------------------------------------- render
@@ -1679,8 +1887,8 @@ def debts_of(decisions):
 WIDTH = 78
 
 
-def by_plan_then_name(order):
-    return lambda front: (sort_key(order)(front["named_by"]["names"][0]), front["name"])
+def by_plan_then_name(positions):
+    return lambda front: (by_position(positions)(front["named_by"]["names"][0]), front["name"])
 
 
 def render_summary(model):
@@ -1721,12 +1929,12 @@ def render_summary(model):
         text += "\nEN CURSO — %s: %s\n" % (current["id"], current["title"])
         for part in current["parts"]:
             text += "  %-6s %-44s %s\n" % (current["id"] + "." + part["number"], part["title"], PART_SHOWN[part["state"]])
-    placed = sorted([f for f in model["fronts"] if f["named_by"]], key=by_plan_then_name(model["axis_order"]))
+    placed = sorted([f for f in model["fronts"] if f["named_by"]], key=by_plan_then_name(model["positions"]))
     unplaced = [f for f in model["fronts"] if not f["named_by"]]
     any_current = any(axis["current"] for axis in model["axes"])
     now = [f for f in placed if not any_current or f["named_by"]["open"]]
     rest = [f for f in placed if any_current and not f["named_by"]["open"]]
-    text += "\nFRENTES ABIERTOS  %d vivos (%d resueltos que conservan su rastro)\n" % (len(placed) + len(unplaced), model["resolved"])
+    text += "\nFRENTES ABIERTOS  %d vivos (%d registros salieron por %s)\n" % (len(placed) + len(unplaced), model["retired"], RETIRED_FILE)
     text += "  Cada frente es una decision abierta; la fase es la que su registro declara. La\n"
     text += "  lista entera, en el indice de decisiones (seccion ABIERTAS).\n"
     text += ("  DE LA FASE EN CURSO (%d) — lo que arrastra de verdad:\n" if any_current else "  POR FASE (%d):\n") % len(now)
@@ -1999,12 +2207,12 @@ def page_phases(model):
 
 
 def page_fronts(model):
-    placed = sorted([f for f in model["fronts"] if f["named_by"]], key=by_plan_then_name(model["axis_order"]))
+    placed = sorted([f for f in model["fronts"] if f["named_by"]], key=by_plan_then_name(model["positions"]))
     unplaced = [f for f in model["fronts"] if not f["named_by"]]
     text = '<section>\n<div class="head open">\n<p class="eyebrow">Lo que está abierto</p>\n<h2>Frentes abiertos</h2>\n'
     text += ('<p class="note">Cada frente es una decisión con estado abierto en el registro, y la fase es <b>la que su registro declara en su'
-             " campo</b> %s. Es un hecho sobre el registro, no sobre el mundo: que algo empuje de verdad a un frente no es derivable. Hay"
-             " <b>%d</b> ya resueltos que conservan su rastro y no se listan.</p>\n</div>\n<div class=\"split\">\n") % (mono("phase"), model["resolved"])
+             " campo</b> %s. Es un hecho sobre el registro, no sobre el mundo: que algo empuje de verdad a un frente no es derivable. Lo que"
+             " dejó de gobernar salió del registro y dejó su línea en %s: <b>%d</b>.</p>\n</div>\n<div class=\"split\">\n") % (mono("phase"), mono(RETIRED_FILE), model["retired"])
     text += '<div class="col">\n<p class="eyebrow">Su registro declara una fase pendiente</p>\n<h3>Por fase (%d)</h3>\n' % len(placed)
     text += '<p class="why">Esto es <b>lo que una fase o un tramo arrastra de verdad</b>: al abrirla, aparecen escritos en su camino.</p>\n<ul class="items">\n'
     for front in placed:
@@ -2082,13 +2290,11 @@ def render_page(model):
 
 DECISION_SECTIONS = [
     {"title": "ABIERTAS", "states": ["open", "postponed"], "debts": False, "work": True},
-    {"title": "DEUDAS VIVAS", "states": ["open", "postponed", "provisional", "confirmed"], "debts": True, "work": True},
+    {"title": "DEUDAS VIVAS", "states": LIVE_DEBT_STATES, "debts": True, "work": True},
     {"title": "PROVISIONALES", "states": ["provisional"], "debts": False, "work": True},
     {"title": "CONFIRMADAS", "states": ["confirmed"], "debts": False, "work": False},
-    {"title": "RESUELTAS", "states": ["resolved"], "debts": None, "work": False},
     {"title": "DESCARTADAS", "states": ["discarded"], "debts": None, "work": False},
 ]
-RETIRED_SECTION = "RETIRADAS"
 
 
 def by_date(records):
@@ -2109,20 +2315,17 @@ def decision_line(record):
         line += " · " + " ".join(phases)
     if is_debt(record):
         line += " · " + DEBT_TYPE
-    if is_retired(record):
-        line += " · retired " + fields["retired"]
     return line
 
 
 def decision_sections(records):
-    """Every decision under the one section its state, its debt and its
-    retirement give it, newest first: [(title, records, asks for work)]."""
+    """Every decision under the one section its state and its debt give it,
+    newest first: [(title, records, asks for work)]."""
     sections = []
     for sec in DECISION_SECTIONS:
-        rows = [r for r in by_date(records) if not is_retired(r) and r["fields"].get("state", "") in sec["states"]
+        rows = [r for r in by_date(records) if r["fields"].get("state", "") in sec["states"]
                 and (sec["debts"] is None or is_debt(r) == sec["debts"])]
         sections.append((sec["title"], rows, sec["work"]))
-    sections.append((RETIRED_SECTION, [r for r in by_date(records) if is_retired(r)], False))
     return sections
 
 
@@ -2139,25 +2342,19 @@ def index_header(title, sources, about):
     return text + about
 
 
-def phase_keys(record, phases, order):
-    """The per-phase indexes a decision belongs to: each phase of a plan it
-    names, or NO_PHASE when it names none."""
-    keys = sorted({token for token in phases_of(record) if token in phases}, key=sort_key(order))
-    return keys or [NO_PHASE]
-
-
-def decisions_by_phase(model):
-    records = model["records"].get("decisions", {}).get("records", [])
+def records_by_domain(model):
+    """The decisions and lessons of each declared domain that has any, in the
+    order domains.txt declares them: what governs a system, whatever phase it
+    was decided in."""
     grouped = {}
-    for record in records:
-        for key in phase_keys(record, model["phases"], model["axis_order"]):
-            grouped.setdefault(key, []).append(record)
-    keys = sorted([k for k in grouped if k != NO_PHASE], key=sort_key(model["axis_order"]))
-    return [(key, grouped[key]) for key in keys + ([NO_PHASE] if NO_PHASE in grouped else [])]
+    for plural in ("decisions", "lessons"):
+        for record in model["records"].get(plural, {}).get("records", []):
+            grouped.setdefault(record["fields"].get(DOMAIN_KEY, ""), {"decisions": [], "lessons": []})[plural].append(record)
+    return [(domain, grouped[domain]) for domain in model["domains"]["ids"] if domain in grouped]
 
 
-def decisions_index_file(key):
-    return "%s/decisions-%s.md" % (INDEX_DIR, key)
+def domain_index_file(domain):
+    return "%s/domain-%s.md" % (INDEX_DIR, domain)
 
 
 def month_of(record):
@@ -2197,11 +2394,10 @@ def render_decisions_index(model, dirs):
     text = index_header("Registro de decisiones", "`%s`" % dec_dir,
                         "Cada decisión es un fichero `%s<identidad>.md` con su cabecera de campos y su\n"
                         "texto; una cita `#<identidad>` resuelve abriendo ese fichero. Cómo se escribe una y cómo\n"
-                        "cambia de estado, en `%s`. Una decisión no existe hasta tener su fichero; la\n"
-                        "que deja de gobernar cambia de estado o lleva `retired`, y sigue en su índice.\n\n"
+                        "cambia, en `%s`. Una decisión no existe hasta tener su fichero, y todas las\n"
+                        "del árbol gobiernan hoy: la que deja de gobernar sale y deja su línea en `%s`.\n\n"
                         "Aquí van enteras las que piden trabajo; el resto solo se cuenta. Todas, sea cual sea su\n"
-                        "estado, están en el índice de cada fase que nombran, y las que no nombran ninguna, en el\n"
-                        "de `%s`.\n" % (dec_dir, REGISTRY_README, NO_PHASE))
+                        "estado, están en la página de su dominio.\n" % (dec_dir, REGISTRY_README, RETIRED_FILE))
     rest, counted = [], 0
     for title, rows, work in decision_sections(records):
         if work:
@@ -2210,22 +2406,25 @@ def render_decisions_index(model, dirs):
         rest.append("%s %d" % (title, len(rows)))
         counted += len(rows)
     text += "\n## EL RESTO (%d), SOLO CONTADAS\n\n%s\n" % (counted, " · ".join(rest))
-    groups = decisions_by_phase(model)
-    text += "\n## Por fase (%d índices)\n\n" % len(groups)
-    for key, group in groups:
-        text += "- `%s` — %s: %d\n" % (decisions_index_file(key), key if key != NO_PHASE else "sin fase", len(group))
+    groups = records_by_domain(model)
+    text += "\n## Por dominio (%d índices)\n\n" % len(groups)
+    for domain, group in groups:
+        text += "- `%s` — %s: %d decisiones, %d lecciones\n" % (domain_index_file(domain), model["domains"]["titles"][domain], len(group["decisions"]), len(group["lessons"]))
+    text += "\n## Retiradas (%d), en `%s`\n" % (model["retired"], RETIRED_FILE)
     return text
 
 
-def render_phase_index(key, records, dirs):
+def render_domain_index(domain, group, model, dirs):
     dec_dir = dirs.get("decisions", "docs/registry/decisions") + "/"
-    if key == NO_PHASE:
-        title, about = "Decisiones sin fase", "Las decisiones que no nombran ninguna fase de los planes: sin `phase`, o con `%s`.\n" % NO_PHASE
-    else:
-        title, about = "Decisiones de %s" % key, "Las decisiones que nombran %s en su campo `phase`, por estado.\n" % key
-    text = index_header(title, "`%s`" % dec_dir, about + "El índice principal es `%s`.\n" % DECISIONS_INDEX_FILE)
-    for section_title, rows, _ in decision_sections(records):
-        text += rendered_section(section_title, rows)
+    les_dir = dirs.get("lessons", "docs/registry/lessons") + "/"
+    text = index_header(model["domains"]["titles"][domain], "`%s` y `%s`" % (dec_dir, les_dir),
+                        "Cada decisión y cada lección del dominio `%s`, por identidad; todas rigen hoy. Antes de tocar este\n"
+                        "sistema se consulta esta página. El índice principal es `%s`.\n" % (domain, DECISIONS_INDEX_FILE))
+    for section_title, rows, _ in decision_sections(group["decisions"]):
+        if rows:
+            text += rendered_section(section_title, rows)
+    lessons = sorted(group["lessons"], key=lambda r: r["id"])
+    text += "\n## Lecciones (%d)\n\n" % len(lessons) + "".join(lesson_line(r) + "\n" for r in lessons)
     return text
 
 
@@ -2267,7 +2466,7 @@ def render_month_index(month, notes, dirs):
 
 def derived_of(model, dirs):
     """Every derivative the board writes, with its template: the summary, the
-    page, the two main indexes, one index per phase that decisions name and
+    page, the two main indexes, one index per domain that records declare and
     one per month that notes carry."""
     derived = [
         {"file": SUMMARY_FILE, "template": render_summary(model)},
@@ -2275,7 +2474,7 @@ def derived_of(model, dirs):
         {"file": DECISIONS_INDEX_FILE, "template": render_decisions_index(model, dirs)},
         {"file": NOTES_INDEX_FILE, "template": render_notes_index(model, dirs)},
     ]
-    derived += [{"file": decisions_index_file(key), "template": render_phase_index(key, records, dirs)} for key, records in decisions_by_phase(model)]
+    derived += [{"file": domain_index_file(domain), "template": render_domain_index(domain, group, model, dirs)} for domain, group in records_by_domain(model)]
     derived += [{"file": notes_index_file(month), "template": render_month_index(month, notes, dirs)} for month, notes in notes_by_month(model)]
     return derived
 
@@ -2295,16 +2494,21 @@ def stray_index_files(files, derived_paths):
 # The indexes a session consults before it opens records or touches anything
 # (AGENTS.md §5.1), each a cost per session under the `index` cap, with the
 # question its finding asks: a main index grows with the work in flight, and
-# the `none` one never closes.
+# a domain's page with what governs that system.
 CAPPED_INDEXES = {
     DECISIONS_INDEX_FILE: "lo que pide trabajo ha crecido; la pregunta es qué se cierra",
     NOTES_INDEX_FILE: "lo que pide trabajo ha crecido; la pregunta es qué se cierra",
-    decisions_index_file(NO_PHASE): "no se cierra nunca; la pregunta es cómo se parte, con los datos de este registro",
 }
+DOMAIN_CAP_REASON = "lo que gobierna ese sistema no cabe en una lectura; la pregunta es si el dominio son dos, con una fila más en domains.txt"
+
+
+def is_capped_index(path):
+    return path in CAPPED_INDEXES or (path.startswith(INDEX_DIR + "/domain-") and path.endswith(".md"))
 
 
 def indexes_within(sizes, cap, source):
-    return [finding(KIND_SHAPE, INDEX_LIMIT, path, "el índice %s pesa %d B y el tope (%s) son %d: %s, no cuánto subir el tope" % (path, size, source, cap, CAPPED_INDEXES[path]))
+    return [finding(KIND_SHAPE, INDEX_LIMIT, path, "el índice %s pesa %d B y el tope (%s) son %d: %s, no cuánto subir el tope"
+                    % (path, size, source, cap, CAPPED_INDEXES.get(path, DOMAIN_CAP_REASON)))
             for path, size in sorted(sizes.items()) if size > cap]
 
 # ----------------------------------------------------------------- encoding
@@ -2407,6 +2611,13 @@ class TreeReader:
             return None
         with open(path, "rb") as handle:
             return handle.read()
+
+    def words_text(self, rel):
+        """The text of a file read only for the words of its code: neither
+        kept, because the whole tree does not fit in memory, nor judged; a
+        file with a NUL byte is binary and has none."""
+        decoded = self._decode(rel)
+        return "" if decoded is None or "\0" in decoded["text"] else decoded["text"]
 
     def unjudged(self, rel):
         """The text of a file read only to look for names in it (what a gate
@@ -2665,6 +2876,9 @@ def load(root, reader):
     prose["state_words"] = state_words(values_of(prose_rows, STATE_WORD_KEY))
     prose[SKILLS_KEY] = values_of(prose_rows, SKILLS_KEY)
     manifest = read_manifest(parse_data(reader.text(BOARD_DIR + "/" + MANIFEST_FILE), MANIFEST_FILE, problems), problems)
+    domains = read_domains(values_entries(parse_data(reader.text(BOARD_DIR + "/" + DOMAINS_FILE), DOMAINS_FILE, problems), DOMAIN_KEY))
+    # Nothing has left a young registry yet: the ledger exists from its first line.
+    ledger = read_ledger(parse_data(reader.text(RETIRED_FILE), RETIRED_FILE, problems) if os.path.isfile(os.path.join(root, RETIRED_FILE)) else [])
     plans = []
     for value in values_of(documents, "axis"):
         parts = value.split(" ", 1)
@@ -2673,7 +2887,7 @@ def load(root, reader):
             continue
         plans.append({"axis": parts[0], "file": parts[1].strip(), "text": reader.text(parts[1].strip())})
     return {"documents": documents, "exceptions": exceptions, "limits": limits, "prose": prose, "manifest": manifest, "plans": plans, "problems": problems,
-            "name": product_name(reader.text(PRODUCT_README))}
+            "name": product_name(reader.text(PRODUCT_README)), "domains": domains, "ledger": ledger}
 
 
 def inspect(root, day=None):
@@ -2799,7 +3013,7 @@ def inspect(root, day=None):
 
     def reading_caps():
         """What a session reads: the startup reading, always, and the main
-        indexes and the `none` one, whenever it consults the registry."""
+        indexes and a domain's page, whenever it consults the registry."""
         value, found = capped(STARTUP_LIMIT)
         if value is not None and not startup:
             found.append(finding(KIND_DATA, STARTUP_LIMIT, "documents.txt", "documents.txt no declara ninguna lectura de arranque (`startup`)"))
@@ -2808,7 +3022,7 @@ def inspect(root, day=None):
         value, missing = capped(INDEX_LIMIT)
         found += missing
         if value is not None:
-            consulted = {e["file"]: len(stamp(e["template"], day).encode("utf-8")) for e in derived if e["file"] in CAPPED_INDEXES}
+            consulted = {e["file"]: len(stamp(e["template"], day).encode("utf-8")) for e in derived if is_capped_index(e["file"])}
             found += indexes_within(consulted, value, INDEX_LIMIT)
         return found
 
@@ -2819,7 +3033,8 @@ def inspect(root, day=None):
             found += missing if value is None else judge(groups, value, name)
         return found
 
-    model = build_model(plans, records, parse_verdict(reader.text(VERDICT_FILE)), data["name"])
+    ledger_rows = data["ledger"]["rows"]
+    model = build_model(plans, records, parse_verdict(reader.text(VERDICT_FILE)), data["name"], ledger_rows, data["domains"])
     derived = derived_of(model, dirs) if model["phases"] else []
     derived_paths = [e["file"] for e in derived] or list(FIXED_DERIVED)
 
@@ -2881,6 +3096,17 @@ def inspect(root, day=None):
         except TreeListError as error:
             return [finding(KIND_DATA, HOOKS_DIR, HOOKS_DIR, "los modos de %s no se pudieron leer con git (%s)" % (HOOKS_DIR, error))]
 
+    def named_code():
+        """The vocabulary is the code and data of the tree: no markdown, no
+        derivative, and not the files that only name names (the exceptions
+        and the ledger), or each of them would excuse itself."""
+        quoted = [g for g in groups if any(code_name(s["value"]) for r in g["records"] for s in inline_code(r["body"]))]
+        if not quoted:
+            return []
+        skipped = set(derived_paths) | {BOARD_DIR + "/exceptions.txt", RETIRED_FILE}
+        corpus = [p for p in listing["files"] if not p.endswith(".md") and p not in skipped and not is_index_file(p)]
+        return named_code_exists(quoted, code_words(reader.words_text(p) for p in corpus), listing["files"])
+
     def derived_current():
         if not model["phases"]:
             return [finding(KIND_DERIVED, "axis", "documents.txt", "cero cabeceras de fase: sin plan no se puede juzgar si los derivados estan al dia")]
@@ -2891,9 +3117,13 @@ def inspect(root, day=None):
         ("citations", lambda: cited_files_exist(citations, extensions, known, generated) + linked_files_exist(links, tree["paths"], generated)),
         ("order", order_of_every_plan),
         ("title", lambda: [f for doc in live for f in document_opens_with_its_title(texts[doc], doc)]),
-        ("records", lambda: records_are_well_formed(groups, known_phases)),
+        ("records", lambda: records_are_well_formed(groups, known_phases, data["domains"]["ids"]) + data["domains"]["findings"]),
         ("unique ids", lambda: record_ids_are_unique(groups)),
-        ("id citations", lambda: slug_citations_resolve(citations + identity_citations + code_citations, record_ids)),
+        ("id citations", lambda: slug_citations_resolve(citations + identity_citations + code_citations, record_ids, ledger_rows,
+                                                        [r["file"] for r in records.get("deliveries", {}).get("records", [])])),
+        ("retired ledger", lambda: data["ledger"]["findings"] + ledger_is_sound(ledger_rows, {r["id"]: g["kind"] for g in groups for r in g["records"]})),
+        ("dated bodies", lambda: record_bodies_carry_no_dates(groups)),
+        ("named code", named_code),
         ("read sections", lambda: sections_read(contract, "authority", CONTRACT)
             + sections_read(texts.get(BOARD_README, ""), "checklist", BOARD_README)
             + sections_read(texts.get(REGISTRY_README, ""), "fields", REGISTRY_README)),
@@ -2918,6 +3148,7 @@ def inspect(root, day=None):
         ("body without state", lambda: record_bodies_declare_no_state(groups, prose["state_words"])),
         ("timeless rests on settled", lambda: timeless_cites_only_settled(timeless_citations, records_by_id)),
         ("merged contract", lambda: contract_is_merged(contract, prose[PENDING_KEY], CONTRACT) if prose[PENDING_KEY] else []),
+        ("nothing alive in done", lambda: done_phases_leave_nothing_alive(records.get("decisions", {}).get("records", []), model["phases"])),
     ]
     total = len(rows) + 1
     rows.append(("numbered readme", lambda: numbered_list_matches(under(texts.get(BOARD_README, ""), prose["checklist"]), total, BOARD_README)
@@ -2975,7 +3206,7 @@ def build(root):
     for group in records.values():
         for problem in group["problems"]:
             print("  WARNING: " + problem)
-    model = build_model(data["plans"], records, parse_verdict(reader.text(VERDICT_FILE)), data["name"])
+    model = build_model(data["plans"], records, parse_verdict(reader.text(VERDICT_FILE)), data["name"], data["ledger"]["rows"], data["domains"])
     if not model["phases"]:
         print("RESULT: cero cabeceras de fase; el tablero no pinta un plan vacio")
         return 1

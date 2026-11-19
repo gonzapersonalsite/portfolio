@@ -2,6 +2,7 @@
 title: Rutas localizadas por idioma (raíz en español y /en en inglés) y shells HTML estáticos
 state: confirmed
 date: 2026-10-20
+domain: localization
 phase: F2
 ---
 **Las rutas en español viven en la raíz (inicio (/) y `/<página>`, idioma por defecto

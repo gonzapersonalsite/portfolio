@@ -20,6 +20,9 @@
 #            converted yet; its comments are read with replacements.
 # engine   : a file of the template's engine (MANIFEST.txt) changed in this
 #            copy on purpose, a local patch an upgrade has to merge by hand.
+# identifier : a name of code a decision or a lesson quotes that is another
+#            program's (a library's call, another tool's setting), so no
+#            word of this tree's code or data spells it.
 #
 # The [record], [derived] and [data] findings are NOT excused, on purpose: a
 # malformed record is fixed in its header, a stale derivative is rebuilt and a

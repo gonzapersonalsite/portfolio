@@ -23,19 +23,19 @@
 #            instantiate.py writes a copy's manifest without them, adopt.py
 #            refuses where they are and seal where they are not.
 #
-version 0.4.0
+version 0.6.0
 
 # The runner, the board, their tests and the tools around them.
-engine verify.py 7e9f7c6b7a55e9c0f3c74bd4fd6beec916ad5d48fb999f19de1dbd1e00a63b17
-engine tools/board/board.py b2b92d4359fdd337b40d5d5fce96cc4182081e76a26499a38d795b658153527d
-engine tools/board/test_board.py 579fcc7024bb6fb2f876cbdc214605235fef848c4ada151088eb72a48f52a937
-engine tools/board/adopt.py 4d13ed56d786c7180ffecc457a14d3a4ad11f42205b16a3bc61dc4598a8ff60b
+engine verify.py 02ffe1dc437dd8414e5566a2755f2ba181003dc01804bf19ad4e9a6bec7989fb
+engine tools/board/board.py ff86bd10991f62a577fcb7f9fc8f30e9744b405131d6b35026da919f76bf5bad
+engine tools/board/test_board.py cda928ae13b31bc12f9252b59f335b7677646f075dee5c116e17c5ab55e6da12
+engine tools/board/adopt.py f812ac94a0dd9036e64e77a5969917c1027726edb0134423415fe1d24c40450a
 engine tools/board/instantiate.py 6e5ab18a8845d5c27d1b706fc7ac102220954e2ac18f73d3ac940bd49dedecdf
 engine tools/board/components.py 5f22e492a995dd26ea5c367cf8cca3f5bae220c71f489017c718515916c910a9
 engine tools/board/commit_message.py 9497e180e4e9156e7aaca3351aba635f79f0ce55297b41709c0fa6e8efc1f669
-engine tools/board/pre_push.py 6075738ef29a7c2e1bf11fc0193e0f75d54d6b0a7aa8808289dd12754b3d598a
-engine tools/board/README.md b4e212cce40776cb8db288e2d63f90cbd2024ce770fd448f1db236e2e9866adb
-engine docs/registry/README.md 77c65c5996fc7b449b42625894645dd91d9b43a45816af66a1e985820e2351ce
+engine tools/board/pre_push.py 55ac5b9b995727c735d573333a6907608e1a66a79abc2db1ee36aa5c4aa44337
+engine tools/board/README.md c57340c8fd690afdf8cb6fb57bd4d876234b69577aec9469c223c711b3a9071e
+engine docs/registry/README.md 0e74568f7e0b560d4c8e2f454c1dca064cfbc1158c49cda2b535500a093bfdba
 
 # The adapters that print the guards of runners other than the board's.
 engine tools/guards/python_unittest.py cd42a705023b625245854563000bab3343e645a34e73252e6492a3985ae9ad42

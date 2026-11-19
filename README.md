@@ -73,7 +73,8 @@ pnpm --dir frontend dev
 
 ### Quality Gates
 ```bash
-python verify.py                      # Canonical runner: runs all 9 repository and frontend gates
+python verify.py                      # Canonical runner: runs all 9 repository and frontend gates; the full run is the pre-push hook's
+python verify.py -- <label>           # Before a commit, the gates the change can move
 pnpm --dir frontend run format:check  # Prettier formatting check
 pnpm --dir frontend run lint          # ESLint: architecture (FSD) rules + TS rules; any warning fails it
 pnpm --dir frontend run typecheck     # TypeScript strict solution check (tsc -b)

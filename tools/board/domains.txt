@@ -1,0 +1,19 @@
+# The domains of this repository's registry: the closed list a decision and a
+# lesson name in their `domain` field, which says what system the rule is of:
+# that of whoever would have to change the record if the rule changed, not
+# that of the file that cites it. The board derives one page per domain under
+# docs/registry/index/, the one a session consults before touching that
+# system (AGENTS.md §5.1).
+#
+# --- KEYS ---
+# domain : a domain, written `<id> <title>`: the id in lower case, digits and
+#          hyphens, and the title in the team's language. Adding a domain is
+#          adding a row; a record never moves to a folder for it.
+#
+
+domain brand Marca, identidad pública, icono y vista previa social
+domain pixel-goblin El duende pixelado: escena del hero, portales y panel de contacto
+domain localization Idiomas, rutas localizadas y shells HTML
+domain contribution Contrato de contribución, idioma, commits y agentes
+domain verification Puertas, pruebas, herramientas y su medición
+domain board-and-registry Tablero, registro y documentos

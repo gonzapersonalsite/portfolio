@@ -1,6 +1,7 @@
 ---
 title: Para ver fallar un test, cambia un valor o una comparación; nunca quites el uso de un símbolo
 date: 2026-09-21
+domain: verification
 origin: clayfarer
 ---
 **Un test de regresión no vale hasta haberlo visto fallar con el defecto original

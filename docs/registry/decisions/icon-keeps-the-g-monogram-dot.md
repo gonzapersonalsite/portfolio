@@ -2,6 +2,7 @@
 title: El icono conserva el monograma G con su punto, con nombres de fichero nuevos
 state: confirmed
 date: 2026-10-27
+domain: brand
 phase: none
 ---
 **El icono del portafolio sigue siendo la «G» blanca con un punto azul claro
@@ -24,7 +25,5 @@ No abre fase: es un detalle de presentación de la marca
   regeneran antes del despliegue con los mismos nombres nuevos, porque esos
   nombres aún no se han publicado.
 
-2026-10-27: el dueño elige esta opción entre las que le puso el agente. Queda
-provisional hasta que la confirme después de releer esta refutación.
-
-2026-10-27: el dueño la confirma después de leer esta refutación.
+El dueño eligió esta opción entre las que le puso el agente y la confirmó
+después de leer esta refutación.

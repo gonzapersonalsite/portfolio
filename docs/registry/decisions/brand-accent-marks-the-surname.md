@@ -2,6 +2,7 @@
 title: La marca de la barra pinta el apellido en el color de acento
 state: confirmed
 date: 2026-10-27
+domain: brand
 phase: none
 ---
 **En la marca `GONZALO MARTÍNEZ`, el apellido lleva el color de acento del
@@ -26,7 +27,5 @@ No abre fase: es un detalle de presentación de la marca
   opción toca dos líneas (`Navbar.tsx` y `frontend/index.html`) y ningún test,
   porque los tests comprueban el texto, no el color.
 
-2026-10-27: el dueño elige esta opción entre las que le puso el agente. Queda
-provisional hasta que la confirme después de releer esta refutación.
-
-2026-10-27: el dueño la confirma después de leer esta refutación.
+El dueño eligió esta opción entre las que le puso el agente y la confirmó
+después de leer esta refutación.

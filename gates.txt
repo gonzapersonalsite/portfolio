@@ -62,9 +62,9 @@ board: documents       | 0.1  | {python} tools/board/board.py check
 # build. Each enters in the change that makes it green.
 #
 # The react-vite layer:
-dependencies    | 0.2 | pnpm --dir frontend install --frozen-lockfile --offline
-format          | 0.6 | pnpm --dir frontend run format:check
-lint            | 3.3 | pnpm --dir frontend run lint
-typecheck       | 1.3 | pnpm --dir frontend run typecheck
-tests [harness] | 7.2 | {python} tools/guards/junit.py --forbid-skipped --report frontend/reports/vitest -- pnpm --dir frontend run test --reporter=default --reporter=junit --outputFile.junit=reports/vitest/junit.xml
-build           | 1.6 | pnpm --dir frontend run build
+dependencies    | 0.2 | @stack:dependencies
+format          | 0.6 | @stack:format
+lint            | 3.3 | @stack:lint
+typecheck       | 1.3 | @stack:typecheck
+tests [harness] | 7.2 | @stack:tests
+build           | 1.6 | @stack:build

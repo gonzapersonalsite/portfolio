@@ -17,10 +17,13 @@ entre comillas (una plantilla de texto, aunque no tenga huecos, o una
 variable), ni un tipo que importa (`typeof import('…')` o `import('…').Tipo`):
 lo que se importa así es convención, y `frontend/eslint.config.test.ts` tiene sus casos.
 Un comentario no apaga ninguna regla: el lint da por aviso un
-`eslint-disable`, y un aviso es rojo (`--max-warnings=0` en `pnpm --dir frontend run lint`),
+`eslint-disable`, y un aviso es rojo (`--max-warnings=0` en la puerta `lint`),
 así que una excepción vive en `frontend/eslint.config.js`, junto a su decisión. Las que
 dicen «convención» no las comprueba nada: las sostiene la revisión del diff, y
 se convierten en regla de lint con su caso en cuanto alguien encuentra cómo.
+El runtime Node/pnpm del desarrollo y las puertas corre en Docker Compose
+(`compose.yaml`, `Dockerfile`, `tools/stack.txt` y `tools/react.sh`) sobre
+`frontend/`, sin instalar Node ni Python en el host.
 
 ## Capas
 

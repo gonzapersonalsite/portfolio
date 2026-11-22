@@ -54,23 +54,29 @@ empujar: la da el dueño, en la conversación, para cada trabajo (regla dura 3).
 ## 1. Puertas (ejecutables, bloquean)
 
 Forma canónica, desde la raíz del repositorio y desde cualquier herramienta
-(Python 3.8 o posterior, sin dependencias):
+(motor Docker Linux con Compose; sin instalar Python ni el SDK del producto en
+el host):
 
 ```
-python verify.py     verde = "RESULT: N puertas, 0 en rojo" y exit 0
+./dev prepare        una vez por clon o al cambiar la imagen/dependencias
+./dev verify         verde = "RESULT: N puertas, 0 en rojo" y exit 0
 ```
 
-`python` es el intérprete de Python 3; donde ese nombre no lo es, el mismo
-comando con el que sí lo sea: `py -3 verify.py` en Windows y `python3 verify.py`
-en macOS y Linux, que es lo que prueba `.githooks/pre-push`.
+En Windows, la entrada equivalente es `.\dev.cmd prepare` y `.\dev.cmd verify`
+(PowerShell nativo, sin Git Bash). El lanzador coordina el contenedor del
+andamio (`tools/board/compose.scaffold.yaml`) y, si existe, los servicios del
+stack desde el host sin exponer el socket de Docker a ningún contenedor; dentro
+del contenedor del andamio corre `verify.py`. Los hooks `.githooks/commit-msg`
+y `.githooks/pre-push` llaman al mismo lanzador (`tools/launcher/dev.sh`).
 
 **La verificación completa se pasa una vez por push, y es la del hook**
 `pre-push`: ningún commit sale sin ella, y no se salta ni se sustituye. **Al
 arrancar**, un árbol limpio cuya punta es un commit que ese hook verificó al
 publicarlo se da por verificado; cualquier otro se verifica completo antes de
 tocar nada. **Antes de cada commit** se pasan las puertas que el cambio puede
-mover (su etiqueta después de `--`), y quien commitea responde de esa elección:
-ante la duda de si una se mueve, se pasa. **Si al arrancar alguna está en rojo,
+mover (su etiqueta después de `--`, p. ej. `./dev verify -- <etiqueta>`), y
+quien commitea responde de esa elección: ante la duda de si una se mueve, se
+pasa. **Si al arrancar alguna está en rojo,
 no se construye encima:** se reporta qué puerta y por qué, y arreglarla pasa a
 ser la parte del turno solo si el dueño lo autoriza. **Una corrida que CAMBIA
 el veredicto no es verde**, aunque ninguna puerta lo esté: el resumen cita el
@@ -215,8 +221,8 @@ No son preferencias de estilo: son propiedades que un cambio no puede degradar.
   una excepción registrada como decisión.
 - **Las excepciones a este apartado no las concede el agente.** Siguen la regla
   dura 4: se propone, el dueño decide, y solo existe si queda registrada.
-- **Las dependencias son exactamente las que fija `frontend/pnpm-lock.yaml`**: la puerta `dependencies` las instala sin red desde el almacén y la caché de pnpm de la máquina, y falla si el lockfile no casa con `frontend/package.json` o si a la máquina le falta algo de lo que fija. Cambiar una dependencia cambia los dos en el mismo cambio, y en una máquina nueva la primera instalación necesita red. Puerta: `dependencies`.
-- **El formato del código lo fija Prettier** (`frontend/.prettierrc.json`), y no se discute en la revisión: lo que la puerta rechaza se arregla con `pnpm --dir frontend run format`. Puerta: `format`.
+- **Las dependencias son exactamente las que fija `frontend/pnpm-lock.yaml`**: `./dev prepare` (en Windows `.\dev.cmd prepare`) las instala con scripts desactivados y la puerta `dependencies` las comprueba sin red; falla si el lockfile no casa con `frontend/package.json` o si el entorno no está preparado. Cambiar una dependencia cambia los dos en el mismo cambio. Puerta: `dependencies`.
+- **El formato del código lo fija Prettier** (`frontend/.prettierrc.json`), y no se discute en la revisión: lo que la puerta rechaza se arregla con `./dev format-fix` (en Windows `.\dev.cmd format-fix`). Puerta: `format`.
 - **La arquitectura Feature-Sliced Design la hace cumplir el lint, no la revisión**: capas que solo importan hacia abajo, slices que no se importan entre sí y a los que solo se entra por su índice, nada de UI en `model`, `api` ni `lib`, en `frontend/src/` solo las seis capas y solo `.ts` y `.tsx`, ningún test saltado y ningún comentario que apague una regla. Cada regla tiene en `frontend/eslint.config.test.ts` el caso que la hace saltar, y `docs/ARCHITECTURE.md` cuenta el resto; un aviso de ESLint es un error. Puerta: `lint`.
 - **TypeScript estricto**: `tsc -b` comprueba el código, sus tests y la configuración con `strict` y sin locales ni parámetros sin usar. Puerta: `typecheck`.
 - **Toda regla de negocio tiene su test al lado de su fichero**, con Vitest y Testing Library, en el mismo cambio: la puerta `tests` lo corre con las guardas, y un test que no comprueba nada o un `.only` commiteado la dejan en rojo (`requireAssertions` y `allowOnly` en `frontend/vite.config.ts`), como cualquier caso que el informe de Vitest dé por saltado (`--forbid-skipped`). Puerta: `tests`.
@@ -238,6 +244,7 @@ escribe aquí cite algo que no existe. Lo que no sostiene una puerta no entra.
 |---|---|---|
 | Cómo se trabaja en este repositorio | `AGENTS.md` (raíz, este fichero) | **Contrato de contribución**: qué manda, puertas, reglas duras, estándares, protocolo e idioma |
 | Qué es el producto y cómo se usa | `README.md` | Uso del producto y puesta en marcha de un clon |
+| Cómo actualizar el andamio y conciliar cambios del producto | `docs/ACTUALIZAR.md` | Procedimiento de actualización desde el catálogo de origen |
 | Qué se ha decidido, qué se entregó y qué se aprendió | `docs/registry/README.md` | **Todos los registros**: decisiones, entregas y lecciones, un fichero cada uno; sus índices son DERIVADOS |
 | Qué fase toca y de qué depende | `docs/ROADMAP.md` | **Única autoridad de numeración de fases** del producto, y la gramática de los dos planes |
 | Qué toca del andamio y en qué orden | `docs/TOOLING.md` | **Única autoridad de numeración de tramos** de herramienta |
@@ -353,7 +360,7 @@ enuncia: la intención vive también en los nombres de los tests.
   `docs/ROADMAP.md` y una propiedad del andamio en `docs/TOOLING.md`. El tablero
   y el campo `phase` de los registros los tratan igual.
 - **Puerta:** una fila de `gates.txt`. **Verde:** sale con 0; el veredicto de
-  todas es la última línea de `python verify.py`.
+  todas es la última línea de `./dev verify` (en Windows `.\dev.cmd verify`).
 - **Registro:** un fichero de `docs/registry/` (decisión, lección o entrega)
   con cabecera de campos. Su **identidad** es el nombre del fichero sin `.md`
   (en una entrega, con su fecha delante) y se cita `#<identidad>`. Una decisión

@@ -60,7 +60,10 @@ Requires Python 3.8+ and git.
 """
 import fnmatch
 import json
+import ntpath
 import os
+import re
+import shlex
 import shutil
 import stat
 import subprocess
@@ -97,15 +100,16 @@ SCAFFOLD_MARKS = ("verify.py", "tools/board/board.py")
 SAMPLE_HOOK = ".sample"
 GIT_SECONDS = 30
 FROM_US = "# From the agentic scaffold"
-USAGE = "uso: python tools/board/instantiate.py <destino> [--layer <nombre> | --stack <id> [--param <nombre>=<valor>]...] [--apply]"
+USAGE = "uso: templates new <destino> [--layer <nombre> | --stack <id> [--stack-only] [--param <nombre>=<valor>]...] [--apply]"
 HELP_WORDS = ("-h", "--help")
 HELP = USAGE + """
 
 Crea una instancia del andamio desde esta plantilla commiteada, le anade una
 capa de tecnologia, o crea un producto nuevo desde una plantilla de stack con
-su capa. Sin --apply ensena el plan y no escribe nada; con --apply escribe
-solo si el plan no encontro nada que lo pararia, y registra en
-tools/board/components.txt la capa y la plantilla de stack que trajo.
+su capa (o solo el stack con --stack-only). Sin --apply ensena el plan y no
+escribe nada; con --apply escribe solo si el plan no encontro nada que lo
+pararia, y registra en tools/board/components.txt (o .template-receipt.txt con
+--stack-only) lo que trajo.
 
   <destino>         un directorio vacio o que no existe (repositorio nuevo), un
                     repositorio git con el arbol limpio (uno que ya existe) o
@@ -114,6 +118,8 @@ tools/board/components.txt la capa y la plantilla de stack que trajo.
                     lo que la capa necesita (en la de python, el primer test)
   --stack <id>      la plantilla de stack de ese id (su template.txt): crea en
                     el destino, vacio, un producto con ella y con su capa
+  --stack-only      con --stack, crea solo el producto del stack sin instalar
+                    el andamio, y deja un recibo versionado (.template-receipt.txt)
   --param <n>=<v>   un parametro de creacion de esa plantilla de stack; el que
                     no se da toma su valor por defecto
   --apply           escribe lo que dice el plan
@@ -604,6 +610,9 @@ def repository_problems(target):
     if status["code"] != 0 or status["out"].strip():
         found.append("el arbol del destino no esta limpio (o git fallo: %s): commitea o aparta antes, para que lo escrito sea el diff que se revisa"
                      % (status["err"] or "cambios sin commitear"))
+    if os.path.isfile(os.path.join(target, ".git")):
+        # Linked worktrees retain the user's hook policy; we never replace it.
+        return found
     hooks_path = run_git(target, "config", "--get", "core.hooksPath")["out"].strip()
     if hooks_path and hooks_path != B.HOOKS_DIR:
         found.append("core.hooksPath ya es '%s': activar %s apagaria esos hooks; decidelo antes" % (hooks_path, B.HOOKS_DIR))
@@ -617,14 +626,134 @@ def repository_problems(target):
     return found
 
 
-def plan(source, target, layer_name, stack_request=None):
+def catalog_source_id(source):
+    """Public catalog identifier from catalog.json at the template repository
+    root when present, else 'templates-catalog'."""
+    top = run_git(source, "rev-parse", "--show-toplevel")
+    if top["code"] == 0 and top["out"].strip():
+        meta = os.path.join(os.path.normpath(top["out"].strip()), "catalog.json")
+        if os.path.isfile(meta):
+            try:
+                data = json.loads(read_bytes(meta).decode("utf-8"))
+                cid = data.get("id", "") if isinstance(data, dict) else ""
+                if isinstance(cid, str) and C.SOURCE_SHAPE.match(cid):
+                    return cid
+            except (OSError, ValueError):
+                pass
+    return "templates-catalog"
+
+
+def read_stack_receipt(text, problems):
+    """Read an existing standalone receipt. An empty file is not an untracked project."""
+    record = C.read_record(text, problems)
+    if not record["source"] or not record["components"] or any(C.component_kind(cid) != C.STACK for cid in record["components"]):
+        problems.append("%s necesita un catalogo de origen y componentes de stack con sus commits" % C.RECEIPT_FILE)
+    return record
+
+
+def record_history_problems(source, record, revision):
+    """Every recorded catalog baseline must be reachable from the proposed release."""
+    if record["source"] and record["source"] != catalog_source_id(source):
+        return ["el recibo pertenece a otro catalogo: no se pueden mezclar sus revisiones"]
+    commits = {component["commit"] for component in record["components"].values()}
+    if record["applied"]:
+        commits.add(record["applied"])
+    problems = []
+    for origin in sorted(commits):
+        result = run_git(source, "merge-base", "--is-ancestor", origin, revision)
+        if result["code"] == 1:
+            problems.append("el commit de origen %s no es antecesor de %s: no se baja de version ni se mezclan historias" % (origin, revision))
+        elif result["code"] != 0:
+            problems.append("no se puede comprobar el commit de origen %s frente a %s: recupera la historia del catalogo original para revisar las piezas y el contrato" %
+                            (origin, revision))
+    return problems
+
+
+def command_text(words, windows):
+    """Format arguments for the shell the owner will paste them into."""
+    if windows:
+        return " ".join(word if re.fullmatch(r"[A-Za-z0-9_./:=\\-]+", word) else "'" + word.replace("'", "''") + "'" for word in words)
+    return shlex.join(words)
+
+
+def catalog_target(target):
+    """Host display path only for the project actually mounted by this launcher."""
+    return os.environ.get("TPL_CATALOG_TARGET", "") if target == "/target" else ""
+
+
+def catalog_help(text):
+    if not os.environ.get("TPL_CATALOG_ROOT"):
+        return text
+    launcher = ".\\templates.cmd" if os.environ.get("TPL_HOST_OS") == "windows" else "sh templates"
+    return text.replace("templates ", launcher + " ")
+
+
+def upgrade_command(target, options):
+    """Render a follow-up through the same entry point, keeping host paths out of project data."""
+    displayed = catalog_target(target)
+    if displayed:
+        windows = os.environ.get("TPL_HOST_OS") == "windows"
+        catalog = os.environ["TPL_CATALOG_ROOT"]
+        if windows:
+            return "& " + command_text([ntpath.join(catalog, "templates.cmd"), "upgrade", displayed, *options], True)
+        return command_text(["sh", os.path.join(catalog, "templates"), "upgrade", displayed, *options], False)
+    script = os.path.join(HERE, "upgrade.py")
+    try:
+        script = os.path.relpath(script)
+    except ValueError:
+        pass  # Keep the absolute path when the working directory is on another drive.
+    return command_text(["python", script, target, *options], os.name == "nt")
+
+
+def same_content(source, target, found, rel):
+    """Whether an existing/incoming file at `rel` has the exact same LF-folded
+    content as the scaffold's file at `rel`."""
+    try:
+        ours = read_bytes(os.path.join(source, *rel.split("/")))
+        if rel in found["incoming"]:
+            theirs = found["incoming"][rel]["data"]
+        else:
+            theirs = read_bytes(contained_path(target, rel))
+    except OSError:
+        return False
+    return C.content_hash(ours) == C.content_hash(theirs)
+
+
+def windows_git_config():
+    """Git settings required on Windows hosts (including when running inside a
+    Linux container over a Windows bind mount via TPL_HOST_OS=windows): long
+    paths and core.filemode=false so Windows git add does not downgrade +x
+    hooks/launchers to 100644."""
+    win_host = os.name == "nt" or os.environ.get("TPL_HOST_OS") == "windows"
+    if not win_host:
+        return []
+    return ["git config core.longpaths true"] + (["git config core.filemode false"] if os.name != "nt" else [])
+
+
+def creation_git(target, executable, with_hooks):
+    git_entry = os.path.join(target, ".git")
+    linked = os.path.isfile(git_entry)
+    commands = [] if os.path.exists(git_entry) else ["git init"]
+    if not linked:
+        commands += windows_git_config()
+        if with_hooks:
+            commands.append("git config core.hooksPath " + B.HOOKS_DIR)
+    if executable:
+        # In a linked worktree, indexing our files must not run an inherited
+        # post-index-change hook from the main checkout.
+        add = "git -c core.hooksPath=/dev/null add" if linked else "git add"
+        commands.append(add + " --chmod=+x -- " + " ".join(executable))
+    return commands
+
+
+def plan(source, target, layer_name, stack_request=None, stack_only=False):
     """What instantiating, adding a layer, or creating a product from a stack
-    template (`stack_request`: its id and the parameters given) would do,
-    without doing it."""
-    found = {"mode": "", "copy": [], "merge": [], "conflicts": [], "git": [], "layer": None, "problems": [], "version": "", "pending": "",
-             "stack": None, "incoming": {}}
+    template (`stack_request`: its id and the parameters given; `stack_only`:
+    without installing the scaffold) would do, without doing it."""
+    found = {"mode": "", "copy": [], "reuse": [], "merge": [], "conflicts": [], "git": [], "layer": None, "problems": [], "version": "", "pending": "",
+             "stack": None, "incoming": {}, "receipt": None}
     source, target = os.path.abspath(source), os.path.abspath(target)
-    found["problems"] += destination_problems(target, [MANIFEST_FILE, C.RECORD_FILE, ".git"] + list(SCAFFOLD_MARKS))
+    found["problems"] += destination_problems(target, [MANIFEST_FILE, C.RECORD_FILE, C.RECEIPT_FILE, ".git"] + list(SCAFFOLD_MARKS))
     if found["problems"]:
         return found
     manifest = manifest_of(source)
@@ -641,19 +770,36 @@ def plan(source, target, layer_name, stack_request=None):
     if listing["problem"]:
         found["problems"].append(listing["problem"])
         return found
+    if stack_only and not stack_request:
+        found["problems"].append("--stack-only va con --stack <id>")
+        return found
     if stack_request:
         if layer_name:
             found["problems"].append("--stack aplica la capa de su plantilla de stack: va sin --layer")
             return found
         if not is_empty(target):
-            found["problems"].append("--stack crea un producto nuevo, y %s no esta vacio: un producto que ya existe incorpora sus piezas con"
-                                     " upgrade.py <instancia> --adopt %s:%s" % (target, C.STACK, stack_request["id"]))
+            adopt = upgrade_command(target, ["--adopt", "%s:%s" % (C.STACK, stack_request["id"])])
+            found["problems"].append("--stack crea un producto nuevo, y %s no esta vacio: un producto que ya existe incorpora sus piezas con %s" %
+                                     (catalog_target(target) or target, adopt))
             return found
-        found["stack"] = stack_plan(source, stack_request, listing["files"])
+        found["stack"] = stack_plan(source, stack_request, listing["files"], stack_only)
         found["problems"] += found["stack"]["problems"]
         if found["problems"]:
             return found
-        found["incoming"], layer_name = found["stack"]["files"], found["stack"]["layer"]
+        found["incoming"] = found["stack"]["files"]
+        if stack_only:
+            found["mode"] = "stack-only"
+            found["version"] = manifest["version"]
+            found["problems"] += destination_problems(target, list(found["incoming"]) + [C.RECEIPT_FILE, ".git"])
+            if found["problems"]:
+                return found
+            git_dir = os.path.exists(os.path.join(target, ".git"))
+            if git_dir:
+                found["problems"] += repository_problems(target)
+            executable = sorted(path for path, incoming in found["incoming"].items() if incoming["executable"])
+            found["git"] = creation_git(target, executable, with_hooks=False)
+            return found
+        layer_name = found["stack"]["layer"]
     if layer_name:
         found["layer"] = read_layer(source, layer_name, listing["files"])
         found["problems"] += found["layer"]["problems"]
@@ -676,6 +822,13 @@ def plan(source, target, layer_name, stack_request=None):
     found["mode"] = "stack" if found["stack"] else ("new" if is_empty(target) else "existing")
     found["version"] = manifest["version"]
     found["pending"] = prose_of(B.TreeReader(source).text(PROSE_FILE))[B.PENDING_KEY]
+    receipt_path = os.path.join(target, C.RECEIPT_FILE)
+    if found["mode"] == "existing" and os.path.isfile(receipt_path):
+        r_problems = []
+        found["receipt"] = read_stack_receipt(B.TreeReader(target).text(C.RECEIPT_FILE), r_problems)
+        if not r_problems:
+            r_problems += record_history_problems(source, found["receipt"], "HEAD")
+        found["problems"] += ["%s no se puede leer (%s): arreglalo antes" % (C.RECEIPT_FILE, p) for p in r_problems]
     merging = merges(found["pending"])
     for path in files:
         if path not in found["incoming"] and not os.path.lexists(os.path.join(target, *path.split("/"))):
@@ -683,6 +836,10 @@ def plan(source, target, layer_name, stack_request=None):
         elif path in merging:
             found["merge"].append(path)
             found["problems"] += merge_problems(source, path, merging[path], lambda rel=path: their_text(target, found, rel))
+        elif path in C.LAUNCHER_FILES.union(C.SHARED_GUARDS) and same_content(source, target, found, path):
+            found["reuse"].append(path)
+        elif path in C.LAUNCHER_FILES.union(C.SHARED_GUARDS) and found["receipt"]:
+            found["conflicts"].append("%s ya existe en el destino con otro contenido que el catalogo actual: actualiza primero el proyecto con upgrade o reconcilia el archivo antes de anadir el andamio" % path)
         else:
             found["conflicts"].append("%s ya existe en el destino y no es de los que se fusionan: renombralo o decide antes" % path)
     if CONTRACT in found["merge"] and not found["pending"]:
@@ -697,15 +854,17 @@ def plan(source, target, layer_name, stack_request=None):
         found["problems"].append("un repositorio que ya existe se instancia sobre git con el arbol limpio, para que lo escrito sea el diff que se revisa: git init y un commit antes")
     elif git_dir:
         found["problems"] += repository_problems(target)
-    # git on Windows refuses a path past 260 characters without it, and a record id under a clone's path can get there.
-    long_paths = ["git config core.longpaths true"] if os.name == "nt" else []
-    executable = hooks_of(files) + sorted(path for path, incoming in found["incoming"].items() if incoming["executable"])
-    found["git"] = ([] if git_dir else ["git init"]) + long_paths + \
-                   ["git config core.hooksPath %s" % B.HOOKS_DIR, "git add --chmod=+x -- %s" % " ".join(executable)]
+    launcher_exec = [path for path in files if path in ("dev", "tools/launcher/dev.sh")]
+    executable = list(dict.fromkeys(hooks_of(files) + launcher_exec + sorted(path for path, incoming in found["incoming"].items() if incoming["executable"])))
+    found["git"] = creation_git(target, executable, with_hooks=True)
+    if os.path.isfile(os.path.join(target, ".git")) and run_git(target, "config", "--get", "core.hooksPath")["out"].strip() != B.HOOKS_DIR:
+        found["hook_note"] = ("Se conserva la configuración Git del worktree enlazado. Para activar sus hooks solo aquí,"
+                              " si ya está habilitada extensions.worktreeConfig, ejecuta git config --worktree core.hooksPath .githooks."
+                              " En otro caso, decide la política de hooks del repositorio desde Git en el host.")
     return found
 
 
-def stack_plan(source, request, listing):
+def stack_plan(source, request, listing, standalone=False):
     """A stack template of the template's repository as a new product gets
     it: the template is the folder whose template.txt declares the id asked
     for, and what it ships is what git versions there, committed. Every path
@@ -713,7 +872,7 @@ def stack_plan(source, request, listing):
     copied byte for byte, and a file that is not UTF-8. It also names the
     layer whose 'external' row is that folder, and the pieces the record
     keeps, with the sha256 of what is written."""
-    found = {"id": request["id"], "folder": "", "params": {}, "files": {}, "pieces": {}, "layer": "", "problems": []}
+    found = {"id": request["id"], "folder": "", "params": {}, "files": {}, "pieces": {}, "launcher_pieces": {}, "layer": "", "problems": []}
     top = run_git(source, "rev-parse", "--show-toplevel")
     if top["code"] != 0:
         found["problems"].append("git no dice cual es el repositorio de la plantilla (%s): las plantillas de stack se leen de el" % top["err"])
@@ -755,6 +914,20 @@ def stack_plan(source, request, listing):
                                  " antes" % (folder, status["err"] if dirty is None else P.shown(dirty["tracked"] + dirty["untracked"])))
     prefix = folder + "/" if folder else ""
     files = sorted(p[len(prefix):] for p in modes if p.startswith(prefix) and p[len(prefix):] != C.STACK_FILE)
+    shared = C.shared_paths(stack, files)
+    conflict = shared.intersection(files)
+    if conflict:
+        found["problems"].append("el stack duplica ficheros compartidos: %s" % ", ".join(sorted(conflict)))
+    if standalone:
+        engine_prefix = os.path.relpath(source, root).replace(os.sep, "/")
+        for rel in sorted(shared):
+            entry = rel if engine_prefix == "." else engine_prefix + "/" + rel
+            if entry not in modes or rel not in listing:
+                found["problems"].append("falta en el catalogo el fichero compartido %s" % rel)
+                continue
+            data = read_bytes(os.path.join(source, *rel.split("/")))
+            found["files"][rel] = {"data": data, "executable": modes[entry] == B.EXECUTABLE_MODE}
+            found["launcher_pieces"][rel] = C.content_hash(data)
     found["params"], wrong = C.creation_params(stack, request["params"])
     found["problems"] += wrong
     pieces = C.stack_pieces(stack, files, found["problems"])
@@ -780,6 +953,8 @@ def stack_plan(source, request, listing):
         found["files"][product] = {"data": data, "executable": modes[prefix + rel] == B.EXECUTABLE_MODE}
         if rel in pieces:
             found["pieces"][product] = C.content_hash(data)
+        elif product in C.LAUNCHER_FILES:
+            found["launcher_pieces"][product] = C.content_hash(data)
     layers = sorted({p.split("/")[1] for p in listing if p.startswith(LAYERS_DIR + "/") and p.endswith("/" + LAYER_FILE) and p.count("/") == 2})
     for name in layers:
         externals = read_layer(source, name, listing)["external"]
@@ -918,23 +1093,41 @@ def layer_written(source, layer, read, copies):
     return {"files": files, "items": items}
 
 
-def record_problems(target):
+def record_problems(source, target):
     """What keeps the instance's components.txt from being read, which a run
     that records a component would rewrite and lose."""
     if not os.path.isfile(os.path.join(target, *C.RECORD_FILE.split("/"))):
         return []
     problems = []
-    C.read_record(B.TreeReader(target).text(C.RECORD_FILE), problems)
+    record = C.read_record(B.TreeReader(target).text(C.RECORD_FILE), problems)
+    if not problems:
+        problems += record_history_problems(source, record, "HEAD")
     return ["%s no se puede leer y esta corrida lo reescribiria (%s): arreglalo antes" % (C.RECORD_FILE, problem) for problem in problems]
 
 
-def recorded(target, found, written, commit):
+def recorded(target, found, written, commit, source=None):
     """The text of the instance's components.txt with what this run brought
     in: the layer, with what layer_written says, and the stack template the
-    product is created from, with its parameters and its pieces; the
-    components it already recorded stay as they are."""
+    product is created from, with its parameters and its pieces; migrates any
+    prior stack-only receipt into components.txt (moving launcher files to
+    the engine)."""
     path = os.path.join(target, *C.RECORD_FILE.split("/"))
     record = C.read_record(B.TreeReader(target).text(C.RECORD_FILE) if os.path.isfile(path) else "", [])
+    if source and not record.get("source"):
+        record["source"] = catalog_source_id(source)
+    if found.get("receipt"):
+        prev = found["receipt"]
+        if prev.get("source") and not record.get("source"):
+            record["source"] = prev["source"]
+        for cid, meta in prev["components"].items():
+            if cid not in record["components"]:
+                record["components"][cid] = dict(meta)
+                record["files"][cid] = {p: sha for p, sha in prev["files"].get(cid, {}).items()
+                                        if p not in C.LAUNCHER_FILES.union(C.SHARED_GUARDS)}
+                record["items"][cid] = dict(prev["items"].get(cid, {}))
+        if prev.get("applied") and not record.get("applied"):
+            record["applied"] = prev["applied"]
+        record["pending"] += [item for item in prev["pending"] if item not in record["pending"]]
     if written is not None:
         cid = "%s:%s" % (C.LAYER, found["layer"]["name"])
         record["components"][cid] = {"commit": commit, "params": {}}
@@ -943,6 +1136,17 @@ def recorded(target, found, written, commit):
         cid = "%s:%s" % (C.STACK, found["stack"]["id"])
         record["components"][cid] = {"commit": commit, "params": dict(found["stack"]["params"])}
         record["files"][cid], record["items"][cid] = dict(found["stack"]["pieces"]), {}
+    return C.render_record(record)
+
+
+def stack_only_receipt(found, commit, source):
+    record = C.empty_record()
+    record["source"] = catalog_source_id(source)
+    cid = "%s:%s" % (C.STACK, found["stack"]["id"])
+    record["components"][cid] = {"commit": commit, "params": dict(found["stack"]["params"])}
+    tracked = dict(found["stack"]["pieces"])
+    tracked.update(found["stack"].get("launcher_pieces", {}))
+    record["files"][cid], record["items"][cid] = tracked, {}
     return C.render_record(record)
 
 
@@ -958,15 +1162,20 @@ def apply(source, target, found, day):
 
 def apply_checked(source, target, found, day, done):
     source, target = os.path.abspath(source), os.path.abspath(target)
-    destinations = found["copy"] + found["merge"] + list(found["incoming"]) + list(C.ITEM_FILES.values()) + [C.RECORD_FILE, ".git"]
+    destinations = found["copy"] + found["reuse"] + found["merge"] + list(found["incoming"]) + [C.RECEIPT_FILE, ".git"]
+    if found["mode"] != "stack-only":
+        destinations += list(C.ITEM_FILES.values()) + [C.RECORD_FILE]
     if found["layer"]:
         destinations += found["layer"]["files"]
-    adoption = A.adoption_path(B.parse_data(B.TreeReader(source).text(DOCUMENTS_FILE), DOCUMENTS_FILE, []))
+    adoption = A.adoption_path(B.parse_data(B.TreeReader(source).text(DOCUMENTS_FILE), DOCUMENTS_FILE, [])) if found["mode"] != "stack-only" else ""
     problems = destination_problems(target, destinations + ([adoption] if adoption else []))
     if problems:
         raise OSError("; ".join(problems))
+    for path in found["reuse"]:
+        if not same_content(source, target, found, path):
+            raise OSError("el fichero compartido cambio despues del plan: %s" % path)
     commit = run_git(source, "rev-parse", "HEAD")["out"].strip()
-    if found["mode"] == "stack":
+    if found["mode"] in ("stack", "stack-only"):
         os.makedirs(contained_path(target), exist_ok=True)
         for path, incoming in sorted(found["incoming"].items()):
             destination = contained_path(target, path)
@@ -976,8 +1185,26 @@ def apply_checked(source, target, found, day, done):
             if incoming["executable"]:
                 os.chmod(destination, 0o755)
         done.append("escritos %d ficheros de la plantilla de stack %s (%s)" % (len(found["incoming"]), found["stack"]["id"], found["stack"]["folder"]))
+    if found["mode"] == "stack-only":
+        write_text(contained_path(target, C.RECEIPT_FILE), stack_only_receipt(found, commit, source))
+        done.append("escrito recibo de seguimiento en %s (stack:%s, commit %s)" % (C.RECEIPT_FILE, found["stack"]["id"], commit[:7]))
+        for command in found["git"]:
+            contained_path(target, ".git")
+            result = run_git(target, *command.split()[1:])
+            if result["code"] != 0:
+                return {"code": 1, "done": done, "said": "'%s' fallo: %s" % (command, result["err"])}
+            done.append(command)
+        return {"code": 0, "done": done, "said": ""}
     if found["mode"] in ("new", "existing", "stack"):
         os.makedirs(contained_path(target), exist_ok=True)
+        # Windows ZIP recipients may own these matching launchers on the host.
+        # Their Git executable bit is recorded below. Preserve the existing inode.
+        if os.name != "nt" and os.environ.get("TPL_HOST_OS") != "windows":
+            for path in ("dev", "tools/launcher/dev.sh"):
+                if path in found["reuse"]:
+                    destination = contained_path(target, path)
+                    if not os.access(destination, os.X_OK):
+                        os.chmod(destination, stat.S_IMODE(os.stat(destination).st_mode) | 0o111)
         for path in found["copy"]:
             destination = contained_path(target, path)
             os.makedirs(os.path.dirname(destination), exist_ok=True)
@@ -985,7 +1212,7 @@ def apply_checked(source, target, found, day, done):
                 write_text(destination, instance_manifest(ours_text(source, path)))
             else:
                 shutil.copyfile(os.path.join(source, *path.split("/")), destination)
-            if path in hooks_of(found["copy"]):
+            if path in hooks_of(found["copy"]) or path in ("dev", "tools/launcher/dev.sh"):
                 os.chmod(destination, 0o755)
         done.append("copiados %d ficheros (%s sin las filas '%s')" % (len(found["copy"]), MANIFEST_FILE, B.TEMPLATE_KEY))
         merging = merges(found["pending"])
@@ -1022,11 +1249,15 @@ def apply_checked(source, target, found, day, done):
                 write_text(path, text)
         done.append("capa %s: %d filas de puerta, %d estandares, %d ficheros" % (found["layer"]["name"], len(found["layer"]["gates"]),
                                                                                   len(found["layer"]["standards"]), len(planned["copies"])))
-    if written is not None or found["stack"]:
-        write_text(contained_path(target, C.RECORD_FILE), recorded(target, found, written, commit))
+    if written is not None or found["stack"] or found.get("receipt"):
+        write_text(contained_path(target, C.RECORD_FILE), recorded(target, found, written, commit, source))
+        if found.get("receipt") and os.path.isfile(contained_path(target, C.RECEIPT_FILE)):
+            os.remove(contained_path(target, C.RECEIPT_FILE))
+            done.append("migrado recibo %s a %s" % (C.RECEIPT_FILE, C.RECORD_FILE))
         brought = (["%s:%s" % (C.LAYER, found["layer"]["name"])] if written is not None else []) + \
                   (["%s:%s" % (C.STACK, found["stack"]["id"])] if found["stack"] else [])
-        done.append("registrado en %s: %s, del commit %s de la plantilla" % (C.RECORD_FILE, ", ".join(brought), commit[:7]))
+        if brought:
+            done.append("registrado en %s: %s, del commit %s de la plantilla" % (C.RECORD_FILE, ", ".join(brought), commit[:7]))
     return {"code": 0, "done": done, "said": ""}
 
 # ----------------------------------------------------------------- command line
@@ -1038,7 +1269,7 @@ def parse_args(argv):
     per name), --layer or --stack without a name, --param without
     '<name>=<value>' or without --stack is an error, and -h or --help
     anywhere asks for the help."""
-    request = {"target": "", "layer": "", "stack": "", "params": {}, "apply": False, "help": False, "error": ""}
+    request = {"target": "", "layer": "", "stack": "", "stack_only": False, "params": {}, "apply": False, "help": False, "error": ""}
     if any(word in HELP_WORDS for word in argv):
         request["help"] = True
         return request
@@ -1049,6 +1280,8 @@ def parse_args(argv):
             request["error"] = "la opcion %s va una sola vez" % word
         elif word == "--apply":
             request["apply"] = True
+        elif word == "--stack-only":
+            request["stack_only"] = True
         elif word in ("--layer", "--stack"):
             if not rest or not rest[0] or rest[0].startswith("-"):
                 request["error"] = "%s necesita el nombre de una capa" % word if word == "--layer" else "--stack necesita el id de una plantilla de stack"
@@ -1074,22 +1307,32 @@ def parse_args(argv):
         request["error"] = "falta el destino"
     if not request["error"] and request["params"] and not request["stack"]:
         request["error"] = "--param va con --stack: son los parametros de una plantilla de stack"
+    if not request["error"] and request["stack_only"] and not request["stack"]:
+        request["error"] = "--stack-only va con --stack: elige una plantilla de stack"
+    if not request["error"] and request["stack_only"] and request["layer"]:
+        request["error"] = "--stack-only no instala el andamio ni acepta --layer"
     return request
 
 
 def describe(found, target):
     lines = ["modo: %s" % {"new": "repositorio nuevo", "existing": "repositorio que ya existe", "layer": "solo la capa",
-                           "stack": "producto nuevo desde una plantilla de stack"}.get(found["mode"], "-")]
+                           "stack": "producto nuevo desde una plantilla de stack",
+                           "stack-only": "producto nuevo solo del stack (sin andamio)"}.get(found["mode"], "-")]
     if found["stack"] and not found["stack"]["problems"]:
         stack = found["stack"]
         lines.append("plantilla de stack %s (%s): se escriben sus %d ficheros, y %d son piezas que se registran" % (stack["id"], stack["folder"],
                                                                                                                  len(stack["files"]), len(stack["pieces"])))
         lines += ["parametro %s = %s" % (name, value) for name, value in sorted(stack["params"].items())]
-        lines.append("capa de la plantilla de stack: %s" % (stack["layer"] or "ninguna (ninguna capa la nombra en su fila 'external')"))
+        if found["mode"] != "stack-only":
+            lines.append("capa de la plantilla de stack: %s" % (stack["layer"] or "ninguna (ninguna capa la nombra en su fila 'external')"))
     if found["copy"]:
         lines.append("se copian %d ficheros a %s (%s, sin las filas '%s')" % (len(found["copy"]), target, MANIFEST_FILE, B.TEMPLATE_KEY))
+    if found["reuse"]:
+        lines.append("se conservan los ficheros compartidos existentes: " + ", ".join(found["reuse"]))
     lines += ["se fusiona %s, sin perder nada de lo que tiene%s" % (path, MERGE_NOTES.get(path, "")) for path in found["merge"]]
     lines += ["git: %s" % command for command in found["git"]]
+    if found.get("hook_note"):
+        lines.append(found["hook_note"])
     if found["mode"] in ("new", "existing", "stack"):
         lines.append("adopt: la decision de adopcion, con la fecha de hoy")
     if found["layer"] and not found["layer"]["problems"]:
@@ -1098,7 +1341,9 @@ def describe(found, target):
                      % (layer["name"], len(layer["gates"]), len(layer["documents"]), len(layer["ignore"]), len(layer["standards"]),
                         len(layer["authority"]), len(layer["files"])))
         lines += ["capa %s: entra con %s (%s)" % (layer["name"], need["what"], need["pattern"]) for need in layer["needs"]]
-    if found["layer"] or found["stack"]:
+    if found["mode"] == "stack-only":
+        lines.append("se escribe el recibo %s con la procedencia, parametros y piezas del stack" % C.RECEIPT_FILE)
+    elif found["layer"] or found["stack"] or found.get("receipt"):
         lines.append("se registra en %s lo que entra, con el commit de la plantilla del que viene" % C.RECORD_FILE)
     return lines
 
@@ -1107,22 +1352,22 @@ def main(argv, source=B.ROOT, day=None):
     B.utf8_console()
     request = parse_args(argv)
     if request["help"]:
-        print(HELP)
+        print(catalog_help(HELP))
         return 0
     if request["error"]:
-        print(USAGE)
+        print(catalog_help(USAGE))
         print("RESULT: %s; no se escribio nada" % request["error"])
         return 2
     stack_request = {"id": request["stack"], "params": request["params"]} if request["stack"] else None
-    found = plan(source, request["target"], request["layer"], stack_request)
+    found = plan(source, request["target"], request["layer"], stack_request, stack_only=request["stack_only"])
     if found["layer"] and not found["problems"]:
         found["problems"] += engine_problems(found["layer"]["requires"][0], found["version"])
     if found["layer"] and not found["problems"]:
         layered = layer_plan(source, request["target"], found["layer"], projected_texts(source, request["target"], found),
                              found["copy"] + found["merge"] + list(found["incoming"]))
         found["conflicts"] += layered["conflicts"] + layer_readiness(request["target"], found, layered)
-    if (found["layer"] or found["stack"]) and not found["problems"]:
-        found["problems"] += record_problems(request["target"])
+    if (found["layer"] or found["stack"]) and found["mode"] != "stack-only" and not found["problems"]:
+        found["problems"] += record_problems(source, request["target"])
     for line in describe(found, request["target"]):
         print("  " + line)
     stops = found["problems"] + found["conflicts"]
@@ -1140,9 +1385,13 @@ def main(argv, source=B.ROOT, day=None):
     if result["code"] != 0:
         print("RESULT: se paro a medias: %s; lo hecho queda en el destino para revisarlo con git" % result["said"])
         return 1
+    if found["mode"] == "stack-only":
+        print("RESULT: listo. Sigue: ejecuta .\\dev.cmd prepare (Windows) o ./dev prepare (POSIX) y luego verify")
+        return 0
     merge = ("lleva al contrato lo de la seccion '%s' de %s y borrala, porque el tablero sale rojo mientras este; " % (found["pending"], CONTRACT)
              if CONTRACT in found["merge"] else "")
-    print("RESULT: listo. Sigue: %spython verify.py hasta verde (la primera corrida dice que el veredicto cambio), y la entrega de la parte"
+    print("RESULT: listo. Sigue: %s./dev prepare y ./dev verify (en Windows .\\dev.cmd prepare y .\\dev.cmd verify) hasta verde"
+          " (la primera corrida dice que el veredicto cambio), y la entrega de la parte"
           " que lo instalo, con lo que dijeron las puertas" % merge)
     return 0
 

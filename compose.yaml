@@ -1,0 +1,62 @@
+x-runtime: &runtime
+  image: tpl-react-${TPL_CHECKOUT_ID:?use the project launcher}
+  pull_policy: never
+  user: "${TPL_USER:-1000:1000}"
+  init: true
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  working_dir: /workspace
+  volumes:
+    - .:/workspace
+    - modules:/workspace/frontend/node_modules
+    - store:/pnpm
+  tmpfs:
+    - /tmp:mode=1777
+  environment:
+    TPL_RUN_ID: ${TPL_RUN_ID:-}
+    TPL_VERDICT_OWNER: ${TPL_VERDICT_OWNER:-}
+    TPL_HOST_OS: ${TPL_HOST_OS:-}
+services:
+  prepare:
+    <<: *runtime
+    profiles: [prepare]
+    build:
+      context: .
+      args:
+        TPL_UID: "${TPL_UID:-1000}"
+        TPL_GID: "${TPL_GID:-1000}"
+    command: [prepare]
+  check:
+    <<: *runtime
+    profiles: [check]
+    network_mode: none
+  web:
+    <<: *runtime
+    profiles: [development]
+    entrypoint: ["sh", "tools/react.sh"]
+    command: [dev]
+    ports: ["127.0.0.1:${TPL_DEMO_PORT:-5173}:5173"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5173/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+  preview:
+    <<: *runtime
+    profiles: [preview]
+    entrypoint: ["sh", "tools/react.sh"]
+    command: [preview]
+    ports: ["127.0.0.1:${TPL_DEMO_PORT:-4173}:4173"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4173/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+volumes:
+  modules:
+    external: true
+    name: ${TPL_VOL_MODULES:?use the project launcher}
+  store:
+    external: true
+    name: ${TPL_VOL_STORE:?use the project launcher}

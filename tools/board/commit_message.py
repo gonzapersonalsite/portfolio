@@ -38,7 +38,7 @@ SCISSORS = "------------------------ >8 ------------------------"
 VERBOSE_DIFF = "diff --git "
 COMMENT = "#"
 UTF8_BOM = "\ufeff"
-USAGE = "uso: python tools/board/commit_message.py <fichero del mensaje>"
+USAGE = "uso: python tools/board/commit_message.py <fichero del mensaje | - [ruta]>"
 
 
 def data_rows(text, key):
@@ -115,11 +115,17 @@ def read_text(path):
         return handle.read().decode("utf-8", "replace")
 
 
-def main(argv, root=ROOT):
+def read_stdin():
+    if hasattr(sys.stdin, "buffer"):
+        return sys.stdin.buffer.read().decode("utf-8", "replace")
+    return sys.stdin.read()
+
+
+def main(argv, root=ROOT, stdin=None):
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8", errors="replace")
-    if len(argv) != 1:
+    if len(argv) not in (1, 2) or (len(argv) == 2 and argv[0] != "-"):
         print(USAGE)
         return 2
     try:
@@ -132,7 +138,14 @@ def main(argv, root=ROOT):
         print("commit-msg: %s no declara ningun 'type': sin tipos no hay mensaje valido" % DATA_FILE, file=sys.stderr)
         return 1
     try:
-        message = read_text(argv[0])
+        if argv[0] == "-":
+            if stdin is not None:
+                raw = stdin.read()
+                message = raw.decode("utf-8", "replace") if isinstance(raw, bytes) else raw
+            else:
+                message = read_stdin()
+        else:
+            message = read_text(argv[0])
     except OSError as error:
         print("commit-msg: el mensaje no se puede leer (%s)" % error, file=sys.stderr)
         return 1
@@ -140,7 +153,8 @@ def main(argv, root=ROOT):
     for problem in found:
         print("commit-msg: " + problem, file=sys.stderr)
     if found:
-        print("commit-msg: commit rechazado; el mensaje sigue en %s" % argv[0], file=sys.stderr)
+        shown_path = argv[1] if len(argv) == 2 else ("stdin" if argv[0] == "-" else argv[0])
+        print("commit-msg: commit rechazado; el mensaje sigue en %s" % shown_path, file=sys.stderr)
     return 1 if found else 0
 
 

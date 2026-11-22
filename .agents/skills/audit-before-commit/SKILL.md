@@ -22,9 +22,10 @@ corrige en el mismo cambio.
 5. **Finales de línea.** `git ls-files --eol` sobre lo que se toca: `i/lf`.
 6. **Las puertas sobre lo preparado.** Si `git diff` no está vacío, lo no
    preparado se aparta con la edición inversa. Después, las puertas que el
-   cambio puede mover, `python verify.py -- <etiqueta> [...]`, en verde, y
-   `git add` de los derivados que regeneren. Ante la duda de si una se mueve,
-   se pasa; la completa la corre el hook `pre-push` al empujar.
+   cambio puede mover, `./dev verify -- <etiqueta> [...]` (en Windows
+   `.\dev.cmd verify -- <etiqueta> [...]`), en verde, y `git add` de los
+   derivados que regeneren. Ante la duda de si una se mueve, se pasa; la
+   completa la corre el hook `pre-push` al empujar.
 7. **El mensaje.** Con la forma de la regla dura 3; el hook `commit-msg` lo
    comprueba al commitear.
 8. **Pedirlo.** La parte en verde, lo auditado en el informe y el mensaje

@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "composeFile": "tools/board/compose.scaffold.yaml",
+  "service": "scaffold",
+  "image": "tpl-scaffold:0.7.0",
+  "timeout": 1200
+}

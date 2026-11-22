@@ -283,7 +283,7 @@ def git(root, *args):
 
 def init_repository(root, *flags):
     """git init in `root`, with core.longpaths in the repository's own
-    configuration, as instantiate.py and overlays/accept.py set it: every git
+    configuration, as instantiate.py sets it: every git
     that runs there reads it, the engine's and a push's receiving end
     included. The suite works under the system's temporary folder, and under
     a deep one a path of the template's snapshot, or an object a push writes
@@ -1985,19 +1985,20 @@ def git_run(root, *args, **extra):
 
 def hooked_repository(root):
     """A repository with the engine's hooks, the scripts they run and one gate, committed."""
-    for rel in ["verify.py", "tools/board/board.py", ".githooks/pre-push", ".githooks/commit-msg", ".githooks/python.sh", "tools/board/commit_message.py",
-                "tools/board/pre_push.py", "tools/board/commits.txt"]:
+    for rel in ["verify.py", "tools/board/board.py", ".githooks/pre-push", ".githooks/commit-msg",
+                "tools/board/commit_message.py", "tools/board/pre_push.py", "tools/board/commits.txt",
+                "tools/launcher/dev.sh", "tools/board/scaffold.json", "tools/board/compose.scaffold.yaml"]:
         write(root, rel, read_bytes(V.ROOT, rel))
     write(root, "gates.txt", "uno | - | {python} -c \"print('verde')\"\n")
-    write(root, ".gitignore", "__pycache__/\n")
+    write(root, ".gitignore", "__pycache__/\n.dev-runtime/\n")
     # Index modes alone do not make hooks executable on a POSIX filesystem.
-    for hook in ("pre-push", "commit-msg"):
-        os.chmod(os.path.join(root, ".githooks", hook), 0o755)
+    for hook in (".githooks/pre-push", ".githooks/commit-msg", "tools/launcher/dev.sh"):
+        os.chmod(os.path.join(root, *hook.split("/")), 0o755)
     init_repository(root)
     git(root, "config", "core.hooksPath", ".githooks")
     quietly(V.main, [], root)
     git(root, "add", "-A")
-    git(root, "update-index", "--chmod=+x", ".githooks/pre-push", ".githooks/commit-msg")
+    git(root, "update-index", "--chmod=+x", ".githooks/pre-push", ".githooks/commit-msg", "tools/launcher/dev.sh")
 
 
 def whole_output(said):
@@ -2108,39 +2109,9 @@ def test_long_paths():
     end()
 
 
-def test_python_discovery():
-    """Both hooks find a real Python 3.8+ the same way (.githooks/python.sh).
-    git runs a '!' alias with the shell it runs hooks with, so the test asks
-    that shell, on a PATH where `python3` is a Store stub that runs nothing and
-    `python` is Python 2."""
-    begin("test_python_discovery")
-    if shutil.which("git") is None:
-        check(True, "hooks: sin git en esta maquina no hay shell de hooks que probar")
-        end()
-        return
-    with scratch_tree() as root:
-        real = sys.executable.replace("\\", "/")
-        for name, text in (("python3", "#!/bin/sh\nexit 9009\n"), ("python", "#!/bin/sh\nexit 1\n"),
-                           ("py", "#!/bin/sh\n[ \"$1\" = \"-3\" ] && shift\nexec \"%s\" \"$@\"\n" % real)):
-            write(root, "bin/" + name, text)
-            os.chmod(os.path.join(root, "bin", name), 0o755)
-        source = os.path.join(V.ROOT, ".githooks", "python.sh").replace("\\", "/")
-        path = os.path.join(root, "bin") + os.pathsep + os.environ.get("PATH", "")
-
-        def found(python):
-            done = git_run(root, "-c", "alias.found=!. \"%s\" && find_python" % source, "found", env={"PATH": path, "PYTHON": python})
-            return done.stdout.decode("utf-8", "replace").strip() if done.returncode == 0 else "(ninguno)"
-
-        check(found("") == "py -3", "hooks: un stub de la Store que no corre nada y un Python 2 no valen; el primero que es 3.8 o posterior si (visto fallar)")
-        check(found("no-existe -x") == "py -3", "hooks: un PYTHON del entorno que no funciona no vale, y se sigue buscando (visto fallar)")
-        if " " not in real:
-            check(found(real) == real, "hooks: el PYTHON del entorno que funciona va primero")
-    end()
-
-
 def test_hook_modes():
     begin("test_hook_modes")
-    entries = [("100644", ".githooks/pre-push"), ("100755", ".githooks/commit-msg"), ("100644", ".githooks/python.sh")]
+    entries = [("100644", ".githooks/pre-push"), ("100755", ".githooks/commit-msg"), ("100644", ".githooks/helper.sh")]
     found = B.hooks_are_executable(entries)
     check(len(found) == 1 and found[0]["key"] == ".githooks/pre-push" and "100644" in found[0]["message"] and "--chmod=+x" in found[0]["message"],
           "hooks: un hook (sin extension) que el indice no tiene como ejecutable sale; un fichero que los hooks cargan no (visto fallar)")
@@ -2762,7 +2733,7 @@ def fake_template(root):
     write(root, "README.md", "# Producto\n\nQue es.\n\n## Trabajar aqui\n\n1. Algo.\n")
     for hook in ("pre-push", "commit-msg"):
         write(root, ".githooks/" + hook, "#!/bin/sh\nexit 0\n")
-    write(root, ".githooks/python.sh", "# compartido\n")
+    write(root, ".githooks/helper.sh", "# compartido\n")
     write(root, ".gitignore", "__pycache__/\n*.pyc\n")
     write(root, ".gitattributes", "* text=auto eol=lf\n")
     write(root, ".editorconfig", "root = true\n\n[*]\ncharset = utf-8\n")
@@ -2892,7 +2863,7 @@ def test_instantiate():
               "instantiate: copia la plantilla sin lo que solo es de ella y escribe la decision de adopcion (visto fallar)")
         modes = dict((path, mode) for mode, path in B.git_modes(target))
         check(git_run(target, "config", "core.hooksPath").stdout.decode().strip() == ".githooks" and modes.get(".githooks/pre-push") == "100755"
-              and modes.get(".githooks/commit-msg") == "100755" and ".githooks/python.sh" not in modes,
+              and modes.get(".githooks/commit-msg") == "100755" and ".githooks/helper.sh" not in modes,
               "instantiate: git iniciado, hooks activados y ejecutables en el indice (visto fallar)")
         check(contract.index("**La demo.** Se comprueba. Puerta: `demo`.") < contract.index("_Nota final._") and contract.index("`docs/ARCH.md`") < contract.index("Prosa tras la tabla")
               and "- **demo-skill** — Cuando haga falta la demo.: `.agents/skills/demo-skill/SKILL.md`" in contract,
@@ -3227,7 +3198,7 @@ def test_template_layers():
     its stack template: applied too early it is refused touching nothing, and
     that stack template's sources take the scaffold and the layer at once with
     every gate of the scaffold green. Its own gates are accepted outside, by
-    overlays/accept.py."""
+    the catalog pre-push hook."""
     begin("test_template_layers")
     import instantiate as I
     folder = os.path.join(V.ROOT, I.LAYERS_DIR)
@@ -3283,216 +3254,16 @@ def test_template_layers():
 
 
 def accept_external(I, template, scratch, layer, ready, too_early):
-    """What this suite accepts of a layer whose gates it cannot run: applied
-    to a new instance it is refused for what it needs and touches nothing; it
-    has no ready/; and the sources of its stack template, committed as an
-    existing repository, take the scaffold and the layer at once with every
-    gate of the scaffold green. That proves its plan, and what it writes and
-    cites, against its real product; its own gates run outside. A clone never
-    sees the layer, so each of its 'prepare' rows is a command the README of
-    its stack template shows on a line of its own. `too_early` is what
-    applying it to the new instance did: the exit code, what it said, and the
-    instance's bytes before and after."""
+    """Self-contained check for an external layer inside the portable scaffold
+    suite: applied too early it is refused for what it needs without touching
+    anything, and it has no ready/ folder because its product lives outside
+    this standalone scaffold. Cross-checks against the four real stack
+    templates of the catalog run in tests/test_repository_integration.py."""
     name, stack = layer["name"], layer["external"][0]
     refused = (too_early["code"] != 0 and too_early["after"] == too_early["before"]
                and "NO: la capa %s entra con " % name in too_early["said"])
     check(refused and not ready, "capas (%s): sus puertas se aceptan fuera de esta suite (%s); aplicada antes de tiempo se niega sin tocar nada,"
           " y no tiene ready/, porque su producto es su plantilla de stack (visto fallar) %s" % (name, stack["why"], "" if refused else last_words(too_early["said"])))
-    tool = accept_tool()
-    try:
-        sources = tool.sources(tool.stack_folder(V.ROOT, stack["folder"])) if tool else {}
-        failed = "ni %s ni git dan las fuentes de %s" % (ACCEPT_FILE, stack["folder"])
-    except tool.Refused as error:
-        sources, failed = {}, str(error)
-    readme = [line.strip() for line in sources.get("README.md", {"data": b""})["data"].decode("utf-8", "replace").splitlines()]
-    # A README writes the interpreter as a person types it.
-    unshown = [row for row in layer["prepare"] if row.replace(V.PYTHON_TOKEN, "python") not in readme]
-    check(not unshown, "capas (%s): cada fila 'prepare' es un comando que el README de %s ensena en su propia linea, porque un clon no ve la capa"
-          " (visto fallar) %s" % (name, stack["folder"], unshown or ""))
-    existing = os.path.join(scratch, "existente")
-    if sources:
-        # The same copy overlays/accept.py makes of the stack template.
-        quietly(tool.committed_copy, sources, existing, "chore: start")
-        both, said = quietly(I.main, [existing, "--layer", name, "--apply"], template)
-    else:
-        both, said = 1, failed
-    # The layer's own gates are the ones accepted outside; its rows parse, or the plan would not have applied it.
-    own = [V.parse_gate_row(row, 0, "python")["label"] for row in layer["gates"]] if both == 0 else []
-    green, said = instance_gates(existing, own) if both == 0 else (1, said)
-    check(green == 0, "capas (%s): las fuentes de su plantilla de stack, %s, reciben el andamio y la capa a la vez, y las puertas del andamio"
-          " salen en verde (visto fallar) %s" % (name, stack["folder"], last_words(said) if green else ""))
-
-
-ACCEPT_FILE = "accept.py"
-
-
-def accept_tool():
-    """overlays/accept.py, which accepts the layers whose gates this suite
-    cannot run, loaded by its path; None in a copy, which has no overlays."""
-    import instantiate as I
-    path = os.path.join(V.ROOT, I.LAYERS_DIR, ACCEPT_FILE)
-    if not os.path.isfile(path):
-        return None
-    spec = importlib.util.spec_from_file_location("accept", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-# A layer whose gate is green only after its 'prepare' row ran in the instance.
-FAKE_EXTERNAL = ("# Una capa cuyas puertas se aceptan fuera de la suite.\n" + LAYER_LEGEND + "requires 0.0.1\n"
-                 "external stack/app | la prueba de la aceptacion de fuera\nneeds entrada.txt | la entrada del producto\n"
-                 "gate preparado | - | {python} -c \"import os, sys; sys.exit(0 if os.path.isfile('preparado/hecho.txt') else 1)\"\n"
-                 "prepare {python} -c \"import os; os.makedirs('preparado', exist_ok=True); open('preparado/hecho.txt', 'w').write('si')\"\n"
-                 "ignore preparado/\n")
-
-
-def scripted(results):
-    """A runner for the steps of accept.py that answers each one with the next
-    of `results` (an exit code and its lines, or 'timeout') and records what it
-    was asked to run, with its budget and where."""
-    ran = []
-
-    def run(command, seconds, root):
-        ran.append((command, seconds, root))
-        answer = results.pop(0)
-        if answer == "timeout":
-            kill = {"exited": False, "tree": True, "gone": True, "how": "x", "scope": "s", "pid": 1}
-            return {"timed_out": True, "code": -1, "lines": [], "seconds": seconds, "budget": seconds, "kill": kill}
-        return {"timed_out": False, "code": answer[0], "lines": answer[1], "seconds": 0.1, "budget": seconds, "kill": None}
-    return run, ran
-
-
-def test_accept():
-    """overlays/accept.py accepts a layer whose gates this suite cannot run, on
-    a fake one that needs no toolchain: the copies hold what git lists and not
-    what it ignores, executable where git's index says so, on `main`; the
-    scaffold and the layer enter the stack template's sources at once; the
-    layer's 'prepare' rows run in the instance, in order, before verify.py;
-    and verify.py records the verdict once and is then green twice. A command
-    line it cannot take says how to use it and creates nothing; a git that
-    cannot list is said as such; the folder never reaches a step's command
-    line; and a stop ends it with its RESULT line and 130. Only the template
-    has the tool."""
-    begin("test_accept")
-    tool = accept_tool()
-    if tool is None or shutil.which("git") is None:
-        check(tool is None or shutil.which("git") is None, "aceptacion: solo la plantilla la tiene, y sin git no se acepta nada")
-        end()
-        return
-    with scratch_tree() as product:
-        write(product, V.GATES_FILE, "uno | 10 | x\nboard: build | 1 | y\n")
-        layer = {"prepare": ["{python} -c \"print('uno')\"", "echo dos"]}
-        changed = (1, [V.changed_result_line(2, [])])
-        green = (0, [V.result_line(2, [])])
-        run, ran = scripted([(0, ["uno"]), (0, ["dos"]), changed, green, green])
-        quietly(tool.run_gates, product, layer, 2, run)
-        check([command for command, _, _ in ran[:2]] == [V.expand(layer["prepare"][0], sys.executable), "echo dos"]
-              and all("verify.py" in command for command, _, _ in ran[2:]) and len(ran) == 5 and {root for _, _, root in ran} == {product},
-              "aceptacion: las filas 'prepare' corren en la instancia, en su orden y con {python} sustituido, antes de verify.py (visto fallar)")
-        # Each gate's budget (never under 60 s) and the time to kill it, and board: build once more for a verdict that changes.
-        check(ran[2][1] == 3 * (60 + V.KILL_WAIT_SECONDS) and ran[0][1] == tool.PREPARE_SECONDS,
-              "aceptacion: verify.py tiene de tope lo que suman los topes de sus puertas, y la reconstruccion del veredicto (visto fallar)")
-        # A first run that recorded the verdict with a gate red is red, not the verdict's first record.
-        red = (1, [V.changed_result_line(2, ["uno"])])
-        for results, says, calls in (([(1, ["fallo"])], "'prepare {python}", 1), (["timeout"], "sin veredicto tras su tope", 1),
-                                     ([(0, []), (0, []), red], "la primera corrida", 3),
-                                     ([(0, []), (0, []), changed, green, red], "la corrida 2 de 2", 5)):
-            run, ran = scripted(list(results))
-            try:
-                quietly(tool.run_gates, product, layer, 2, run)
-                refused = ""
-            except tool.Refused as error:
-                refused = str(error)
-            stopped = says in refused and len(ran) == calls
-            check(stopped, "aceptacion: un paso que no sale en verde la para ahi y lo dice: '%s' (visto fallar) %s" % (says, "" if stopped else refused))
-        # Outside every repository, wherever the machine keeps its temporary folders.
-        with environment(GIT_CEILING_DIRECTORIES=os.path.dirname(product)):
-            for name, call, says in (("las fuentes", lambda: tool.sources(product), "git ls-files salio con"),
-                                     ("la carpeta de la plantilla de stack", lambda: tool.stack_folder(product, "stack/app"), "git rev-parse salio con")):
-                try:
-                    refused = "sin negarse: %r" % (call(),)
-                except tool.Refused as error:
-                    refused = str(error)
-                check(says in refused, "aceptacion: si git no puede decir %s, se dice que fallo git, no que la capa o su plantilla no tienen nada (visto fallar) %s"
-                      % (name, "" if says in refused else refused))
-    with scratch_tree() as repo, scratch_tree() as out:
-        scaffold, app = os.path.join(repo, "agentic-scaffold"), os.path.join(repo, "stack", "app")
-        for path in B.walk_files(V.ROOT, [])["files"]:
-            write(scaffold, path, read_bytes(V.ROOT, path))
-        # Without the suite's row: each verify.py of the instance would run this suite again.
-        gates = read_bytes(scaffold, V.GATES_FILE).decode("utf-8")
-        write(scaffold, V.GATES_FILE, "".join(line for line in gates.splitlines(True) if not line.startswith("board: tests")))
-        write(scaffold, "overlays/fuera/layer.txt", FAKE_EXTERNAL)
-        write(scaffold, "overlays/rota/layer.txt", FAKE_EXTERNAL + "external stack/otra | otra razon\n")
-        quietly(B.main_on, ["seal"], scaffold)
-        write(app, "README.md", "# App\n\nLa app de prueba.\n")
-        write(app, "entrada.txt", "x\n")
-        write(app, ".gitignore", "dist/\n")
-        write(app, "dist/viejo.js", "ignorado\n")
-        write(app, "borrado.txt", "commiteado y borrado\n")
-        write(app, "lanza.sh", "#!/bin/sh\necho lanza\n")
-        init_repository(repo)
-        git_run(repo, "add", "stack/app/borrado.txt")
-        git_run(repo, "commit", "-q", "--no-verify", "-m", "chore: start")
-        git_run(repo, "add", "--chmod=+x", "stack/app/lanza.sh")
-        os.remove(os.path.join(app, "borrado.txt"))
-        found = tool.sources(app)
-        check(sorted(found) == [".gitignore", "README.md", "entrada.txt", "lanza.sh"] and tool.sources(os.path.join(repo, "stack", "nada")) == {},
-              "aceptacion: las fuentes son lo que git lista, commiteado o no, sin lo que ignora ni lo que ya no esta en disco (visto fallar)")
-        check(found["lanza.sh"]["executable"] and not found["README.md"]["executable"],
-              "aceptacion: una fuente es ejecutable cuando el indice de git la tiene asi, aunque no este commiteada (visto fallar)")
-        write(out, "llena/viejo.txt", "de otra corrida\n")
-        for argv, case in ((["fuera", os.path.join(out, "llena")], "con una carpeta que no esta vacia"), ([], "sin argumentos"),
-                           (["fuera", os.path.join(out, "nueva"), "--rapido"], "con una opcion de mas"),
-                           (["--rapido", os.path.join(out, "nueva")], "con una opcion en lugar de la capa"),
-                           (["fuera", os.path.join(out, "nueva"), "--runs", "0"], "con --runs 0"),
-                           (["fuera", os.path.join(out, "nueva"), "--runs", "²"], "con --runs ², un digito que no es un numero")):
-            code, said = quietly(tool.main, argv, scaffold)
-            check(code == 2 and "uso:" in said and os.listdir(out) == ["llena"] and os.listdir(os.path.join(out, "llena")) == ["viejo.txt"],
-                  "aceptacion: %s dice el uso y sale con 2, sin crear ni tocar nada (visto fallar)" % case)
-        code, said = quietly(tool.main, ["python", os.path.join(out, "interna")], scaffold)
-        check(code == 1 and "no declara 'external'" in said and not os.path.exists(os.path.join(out, "interna")),
-              "aceptacion: una capa que la suite acepta entera no se acepta fuera, y no se copia nada (visto fallar)")
-        code, said = quietly(tool.main, ["rota", os.path.join(out, "rota")], scaffold)
-        check(code == 1 and "2 filas 'external'" in said and not os.path.exists(os.path.join(out, "rota")),
-              "aceptacion: una capa con problemas se para con ellos antes de copiar nada (visto fallar)")
-        # A '&' in a command line splits it in cmd.exe and in sh: the folder's name stays out of every step's.
-        accepted = os.path.join(out, "fuera&eco")
-        # The machine's git would name the copies' branch 'otra'.
-        with environment(GIT_CONFIG_COUNT="1", GIT_CONFIG_KEY_0="init.defaultBranch", GIT_CONFIG_VALUE_0="otra"):
-            code, said = quietly(tool.main, ["fuera", accepted], scaffold)
-        instance = os.path.join(accepted, "producto")
-        check(code == 0 and said.strip().splitlines()[-1].startswith("RESULT: capa fuera aceptada")
-              and os.path.isfile(os.path.join(instance, "preparado", "hecho.txt")) and not os.path.exists(os.path.join(instance, "dist"))
-              and b"\npreparado | - |" in read_bytes(instance, V.GATES_FILE),
-              "aceptacion: una capa externa de mentira entra en las fuentes de su plantilla de stack, su 'prepare' corre y verify.py sale en"
-              " verde tras escribir el veredicto (visto fallar) %s" % ("" if code == 0 else last_words(said)))
-        runs = [line.split(" (tope ")[0] for line in said.splitlines() if line.startswith("--- verify.py, ") and " (tope " in line]
-        twice = runs == ["--- verify.py, la corrida que escribe el veredicto", "--- verify.py, corrida 1 de 2", "--- verify.py, corrida 2 de 2"]
-        check(twice and "en verde 2 veces seguidas" in said.strip().splitlines()[-1],
-              "aceptacion: sin --runs, verify.py corre una vez para escribir el veredicto y dos mas en verde (visto fallar) %s" % ("" if twice else runs))
-        steps = [line for line in said.splitlines() if line.startswith("--- ") and " (tope " in line]
-        check(code == 0 and steps and not any(accepted in line for line in steps),
-              "aceptacion: la carpeta no llega a la linea de comandos de ningun paso, asi que un '&' en su nombre no la parte (visto fallar)")
-        check(code == 0 and git_run(instance, "ls-files", "-s", "--", "lanza.sh").stdout.decode().startswith(B.EXECUTABLE_MODE + " ")
-              and git_run(instance, "rev-parse", "--abbrev-ref", "HEAD").stdout.decode().strip() == "main",
-              "aceptacion: la copia commiteada tiene ejecutable lo que el indice de su fuente tiene asi, en la rama main, como un clon (visto fallar)")
-        handlers, before = [], signal.getsignal(signal.SIGTERM)
-
-        def stopped(command, seconds, root):
-            handlers.append(signal.getsignal(signal.SIGTERM))
-            raise V.GateInterrupted({"exited": False, "tree": True, "gone": True, "how": "x", "scope": "s", "pid": 1}, "SIGTERM")
-        try:
-            code, said = quietly(tool.main, ["fuera", os.path.join(out, "parada")], scaffold, stopped)
-        except KeyboardInterrupt:
-            code, said = "la interrupcion escapo de main", ""
-        last = said.strip().splitlines()[-1] if said.strip() else ""
-        check(code == V.INTERRUPTED_EXIT and last.startswith("RESULT: la capa fuera NO queda aceptada: interrumpida (SIGTERM: matada, y no queda vivo ningun proceso"),
-              "aceptacion: una parada mata el paso en curso y acaba con su linea RESULT y 130, como verify.py (visto fallar) %s" % ("" if code == V.INTERRUPTED_EXIT else code))
-        check(handlers == [V.stop_on] and signal.getsignal(signal.SIGTERM) == before,
-              "aceptacion: mientras corren los pasos, SIGTERM toma el camino del Ctrl+C, y despues vuelve lo que habia (visto fallar)")
-    end()
 
 
 ONE_UNITTEST = "import unittest\n\n\nclass One(unittest.TestCase):\n    def test_one(self):\n        self.assertEqual(1 + 1, 2)\n"
@@ -3617,23 +3388,20 @@ def test_released_engine():
 
 
 def test_layer_requires_its_engine():
-    """A layer's 'requires' is declared, and instantiate.py refuses the layer
-    on an instance whose engine is older; what makes that number true is held
-    here: every engine file a gate row of the layer runs is an `engine` row of
-    the template as that version was released. What the layer writes into the
-    contract cites files that the plan already checks against the instance,
-    and the grammar of its rows ('[harness]') is in no manifest: necessary,
-    not sufficient. Only the template has layers."""
+    """Portable check: every layer declares a valid `requires` X.Y.Z version not
+    newer than the current engine, and every engine file referenced by its gate
+    rows exists in the current MANIFEST.txt. Cross-checks against historical
+    release tags of the private catalog run in tests/test_repository_integration.py."""
     begin("test_layer_requires_its_engine")
     import instantiate as I
     folder = os.path.join(V.ROOT, I.LAYERS_DIR)
     names = sorted(n for n in os.listdir(folder) if os.path.isfile(os.path.join(folder, n, I.LAYER_FILE))) if os.path.isdir(folder) else []
-    if not names or shutil.which("git") is None:
-        check(not names or shutil.which("git") is None, "capas: solo la plantilla tiene capas, y sin git no se leen sus versiones publicadas")
+    if not names:
+        check(True, "capas: solo la plantilla tiene capas")
         end()
         return
     current = I.manifest_of(V.ROOT)
-    engine, released = {path for path, _ in current["engine"]}, {}
+    engine = {path for path, _ in current["engine"]}
     check([release_tag(version) for version in ("0.2.0", "0.3.0", "0.3.2")] == ["andamio-v0.2.0", "andamio-v0.3.0", "agentic-scaffold-v0.3.2"],
           "capas: 0.2.0 y 0.3.0 conservan la etiqueta andamio-v<version> con la que se publicaron, y las siguientes llevan agentic-scaffold-v<version>"
           " (visto fallar)")
@@ -3642,13 +3410,11 @@ def test_layer_requires_its_engine():
         with open(os.path.join(V.ROOT, *data.split("/")), encoding="utf-8") as handle:
             rows = B.parse_data(handle.read(), data, [])
         version = (B.values_of(rows, "requires") or [""])[0]
-        if version not in released:
-            released[version] = released_engine(version, current)
-        sealed, why = released[version]
+        compat = I.engine_problems(version, current["version"])
         runs = list(dict.fromkeys(path for row in B.values_of(rows, "gate") for path in B.named_files(V.parse_gate_row(row, 0, "python")["raw"], engine)))
-        missing = [path for path in runs if sealed is None or path not in sealed]
-        check(sealed is not None and not missing, "capas (%s): pide el motor %s, y cada fichero del motor que corren sus puertas es del motor de esa version"
-              " publicada (visto fallar) %s" % (name, version, why or ("%s no es del motor de %s" % (", ".join(missing), version) if missing else "")))
+        missing = [path for path in runs if path not in engine]
+        check(bool(version) and not compat and not missing, "capas (%s): declara requires %s compatible con %s y sus puertas referencian solo ficheros del motor actual (visto fallar) %s"
+              % (name, version, current["version"], compat or missing or ""))
     end()
 
 
@@ -3760,6 +3526,15 @@ def test_upgrade_plan():
     adopted = U.parse_args(["instancia", "--adopt", "stack:app", "--param", "name=Uno", "--param", "package=com.uno"])
     check(adopted["adopt"] == "stack:app" and adopted["params"] == {"name": "Uno", "package": "com.uno"} and not adopted["error"],
           "upgrade: --adopt lleva el componente y --param, una vez por nombre, sus parametros (visto fallar)")
+    from unittest.mock import patch
+    request = U.parse_args(["/target", "--to", "v2", "--adopt", "stack:app", "--param", "name=Uno"])
+    for host, root, destination, prefix in (
+            ("windows", r"C:\my catalog", r"..\my app", r"& 'C:\my catalog\templates.cmd' upgrade '..\my app'"),
+            ("posix", "/my catalog", "../my app", "sh '/my catalog/templates' upgrade '../my app'")):
+        with patch.dict(os.environ, TPL_HOST_OS=host, TPL_CATALOG_TARGET=destination, TPL_CATALOG_ROOT=root):
+            check(U.apply_command(request, "0123456789ab") ==
+                  prefix + " --adopt stack:app --param name=Uno --to v2 --apply 0123456789ab",
+                  "upgrade: el comando aplicable de %s conserva la ruta host, los espacios, los parametros y la revision" % host)
     check(U.parse_args(["instancia", "--done", "gates.txt"])["done"] == "gates.txt" and U.parse_args(["instancia", "--keep", "a.py"])["keep"] == "a.py",
           "upgrade: --done y --keep llevan una ruta (visto fallar)")
     wrong = ((["-x", "instancia"], "opcion desconocida: -x"), (["instancia", "--to"], "--to necesita"), (["instancia", "--to", "--apply"], "--to necesita"),
@@ -4021,6 +3796,18 @@ def test_components_model():
     check(not problems and not wrong and params == {"name": "Uno", "package": "com.demo.app"}
           and C.creation_params(stack, {"otro": "x"})[1] and C.creation_params(stack, {"name": "con blanco"})[1],
           "componentes: los parametros toman el valor dado o su defecto, y uno que no se declara o que no es un nombre se rechaza (visto fallar)")
+    with_rules = stack_text.replace("# param : p", "# param : p\n# syntax : s\n# reserved : x")
+    for rule, expected in (("syntax name | whole | [", "patron de"),
+                           ("syntax unknown | whole | .+", "necesita un parametro"),
+                           ("syntax name | pieces | .+", "whole"),
+                           ("syntax name | whole | .+\nsyntax name | whole | .+", "una sola vez"),
+                           ("reserved unknown | Demo", "parametros declarados"),
+                           ("syntax package | dotted | [0-9]+", "valor por defecto invalido"),
+                           ("reserved name | Demo", "valor por defecto invalido")):
+        broken = []
+        C.read_stack(with_rules + rule + "\n", "template.txt", broken)
+        check(any(expected in message for message in broken),
+              "componentes: la declaracion de nombres invalida se rechaza: %s; %s" % (rule, broken))
     pieces = C.stack_pieces(stack, ["tools/a.py", "README.md", "src/com/demo/app/DemoRules.java"], problems)
     rendered = C.rendered_pieces(stack, pieces, {"name": "Uno", "package": "org.Demo.uno"},
                                  {"tools/a.py": b"Demo\n", "src/com/demo/app/DemoRules.java": b"package com.demo.app; class DemoRules {}\n"}.get)
@@ -4436,7 +4223,8 @@ def test_component_rendered_paths():
     begin("test_component_rendered_paths")
     import components as C
     wrong = ("../outside", "/absolute", "C:/outside", "C:outside", "a\\b", "a/./b", "a//b", "a/../b",
-             "a/", "a ", "a.", "NUL.txt", "CON", "aux/x", "com1.txt", "lpt9/x", "a\0b", "a:b", "a b")
+             "a/", "a ", "a.", "NUL.txt", "CON", "aux/x", "com1.txt", "lpt9/x", "a\0b", "a:b", "a b",
+             "app/.Git/config", "src/" + "x" * 256)
     for path in wrong:
         raised = False
         try:
@@ -4687,22 +4475,6 @@ def test_scratch_tree_is_physical():
     end()
 
 
-def test_accept_posix_lifetime():
-    begin("test_accept_posix_lifetime")
-    tool = accept_tool()
-    if tool is None or os.name != "posix":
-        check(True, "aceptacion POSIX NO EJECUTADA: requiere plantilla y host POSIX; no acredita grupos de procesos")
-    else:
-        import shlex
-        script = os.path.join(V.ROOT, "overlays", "test_accept_processes.py")
-        result = V.run_gate(" ".join(shlex.quote(part) for part in [sys.executable, script, "-v"]), 90, V.ROOT)
-        lines = result["lines"]
-        check(result["code"] == 0 and not result["timed_out"] and lines and lines[-1] == "OK"
-              and any(re.fullmatch(r"Ran [1-9][0-9]* tests in .*", line) for line in lines),
-              "aceptacion POSIX: timeout y senales recogen los grupos de verify; el limite forzado informa incompleto")
-    end()
-
-
 def test_stack_rendered_destinations():
     begin("test_stack_rendered_destinations")
     if shutil.which("git") is None:
@@ -4823,87 +4595,364 @@ def test_component_adoption():
     end()
 
 
-def test_stack_templates():
-    """Every stack template of the repository that holds this template, end to
-    end on a committed snapshot of it: a product created with --stack has its
-    pieces and its layer recorded, with the parameters, and passes its board;
-    a piece and its layer's gate changed in the template come to the product
-    with one plan, the gate with the product's seconds; and a second run has
-    nothing to write. The products' own gates run outside this suite, as
-    their layers' are (overlays/accept.py)."""
-    begin("test_stack_templates")
+def test_f1_commit_message_and_pre_push_snapshots():
+    """F1 portable contract: commit_message.py supports '-' stdin with UTF-8,
+    BOM, CRLF and display path; pre_push.py judges host-captured Git snapshots
+    without calling git inside the container."""
+    begin("test_f1_commit_message_and_pre_push_snapshots")
+    import commit_message as CM
+    import pre_push as PP
+    with scratch_tree() as root:
+        write(root, "tools/board/commits.txt", read_bytes(V.ROOT, "tools/board/commits.txt"))
+        code, said = quietly(CM.main, ["-", ".git/COMMIT_EDITMSG"], root, io.BytesIO(b"\xef\xbb\xbfdocs(F1): gu\xc3\xada con tildes\r\n"))
+        check(code == 0, "commit-msg stdin: UTF-8 con BOM y CRLF pasa por '-' (visto fallar) %s" % said)
+        code, said = quietly(CM.main, ["-", ".git/COMMIT_EDITMSG"], root, io.BytesIO(b"Sin tipo\r\n"))
+        check(code == 1 and ".git/COMMIT_EDITMSG" in said and "forma" in said,
+              "commit-msg stdin: mensaje invalido falla y cita la ruta de visualizacion (visto fallar) %s" % said)
+        code, said = quietly(CM.main, ["-", "msg.txt"], root, io.BytesIO(b"feat(a): ok\r\n\r\nCo-Authored-By: Claude <x@y>\r\n"))
+        check(code == 1 and "firma" in said, "commit-msg stdin: rechaza firma de agente con CRLF (visto fallar)")
+        sha = "a" * 40
+        zero = "0" * 40
+        clean_snap = json.dumps({"refs_stdin": "refs/heads/main %s refs/heads/main %s\n" % (sha, zero),
+                                 "head": sha, "head_code": 0, "status_code": 0, "status_out": "", "status_err": "",
+                                 "commit_of": {sha: sha}})
+        code, _ = quietly(PP.main, ["--check-snapshot", "before"], root, io.StringIO(clean_snap))
+        check(code == 0, "pre-push snapshot: arbol limpio en HEAD pasa (visto fallar)")
+        del_snap = json.dumps({"refs_stdin": "(delete) %s refs/heads/old %s\n" % (zero, sha),
+                               "head": sha, "head_code": 0, "status_code": 0, "status_out": "", "status_err": "", "commit_of": {}})
+        code, _ = quietly(PP.main, ["--check-snapshot", "before"], root, io.StringIO(del_snap))
+        check(code == PP.SKIP_EXIT, "pre-push snapshot: solo borrados devuelve SKIP_EXIT (visto fallar)")
+        dirty_snap = json.dumps({"refs_stdin": "refs/heads/main %s refs/heads/main %s\n" % (sha, zero),
+                                 "head": sha, "head_code": 0, "status_code": 0, "status_out": "?? extra.txt\0", "status_err": "",
+                                 "commit_of": {sha: sha}})
+        code, said = quietly(PP.main, ["--check-snapshot", "after"], root, io.StringIO(dirty_snap))
+        check(code == 1 and "mientras corrian" in said and "extra.txt" in said,
+              "pre-push snapshot: mutacion durante puertas se rechaza en after (visto fallar) %s" % said)
+        mal_snap = json.dumps({"refs_stdin": "malformed line\n", "head": sha, "head_code": 0, "status_code": 0, "status_out": "", "status_err": "", "commit_of": {}})
+        code, said = quietly(PP.main, ["--check-snapshot", "before"], root, io.StringIO(mal_snap))
+        check(code == 1 and "cuatro campos" in said, "pre-push snapshot: stdin malformado rechazado (visto fallar)")
+    end()
+
+
+def test_f1_guards_and_coordinated_verify():
+    """F1 portable contract: junit.py and dart_test.py support --clean-only and
+    --check-only; verify.py plans @stack: actions, executes scaffold steps,
+    reads .meta/.out step records, refreshes derived board outputs, and writes
+    run-scoped verdict.json."""
+    begin("test_f1_guards_and_coordinated_verify")
+    sys.path.insert(0, os.path.join(V.ROOT, "tools", "guards"))
+    import dart_test as DT
+    import junit as J
+    with scratch_tree() as root:
+        cwd = os.getcwd()
+        os.chdir(root)
+        try:
+            write(root, "reports/TEST-old.xml", '<testsuite tests="1"><testcase name="old" assertions="1"/></testsuite>\n')
+            code, _ = quietly(J.main, ["--clean-only", "--report", "reports"])
+            check(code == 0 and not os.path.exists(os.path.join(root, "reports/TEST-old.xml")),
+                  "junit --clean-only: borra informes viejos de forma segura (visto fallar)")
+            code, said = quietly(J.main, ["--check-only", "--exit-code", "0", "--report", "reports"])
+            check(code == 1 and "no escribio ningun informe" in said,
+                  "junit --check-only: sin informes nuevos sale rojo (visto fallar)")
+            write(root, "reports/TEST-new.xml", '<testsuite tests="1"><testcase classname="T" name="ok" assertions="2"/></testsuite>\n')
+            code, said = quietly(J.main, ["--check-only", "--exit-code", "0", "--report", "reports"])
+            check(code == 0 and "[PASS] guard registered" in said and "[PASS] guard silent" in said,
+                  "junit --check-only: informe fresco valido imprime las tres guardas y sale verde (visto fallar)")
+            write(root, "reports/dart.json", '{"protocolVersion":"0.1.1","type":"start"}\n{"type":"suite","suite":{"id":0}}\n'
+                  '{"type":"group","group":{"id":1,"suiteID":0,"parentID":null,"testCount":1}}\n'
+                  '{"type":"testStart","test":{"id":2,"name":"ok"}}\n{"type":"testDone","testID":2,"result":"success","hidden":false,"skipped":false}\n'
+                  '{"type":"done","success":true}\n')
+            code, said = quietly(DT.main, ["--check-only", "--exit-code", "0", "--report", "reports/dart.json"])
+            check(code == 0 and "[PASS] guard registered" in said and "[PASS] guard finished" in said,
+                  "dart_test --check-only: informe JSON valido imprime las tres guardas (visto fallar)")
+            code, _ = quietly(DT.main, ["--clean-only", "--report", "reports/dart.json"])
+            check(code == 0 and not os.path.exists(os.path.join(root, "reports/dart.json")),
+                  "dart_test --clean-only: retira el informe previo (visto fallar)")
+        finally:
+            os.chdir(cwd)
+    with scratch_tree() as root:
+        minimal_tree(root)
+        write(root, "gates.txt", "guard finished\nguard registered\nguard silent\n"
+              "board: build | 1.0 | {python} -c \"print('BOARD_OK')\"\n"
+              "stack build  | 5.0 | @stack:build\n"
+              "stack tests [harness] | 5.0 | {python} tools/guards/junit.py --forbid-skipped --report reports -- @stack:test\n")
+        code, said = quietly(V.main, [], root)
+        check(code == 2 and "./dev verify" in said, "verify: rechaza ejecucion directa si hay puertas @stack: (visto fallar)")
+        run_id = "abcdef0123456789"
+        code, said = quietly(V.main, ["--emit-plan", run_id], root)
+        plan_json = json.loads(read_bytes(root, ".dev-runtime/runs/%s/plan.json" % run_id).decode("utf-8"))
+        plan_tsv = read_bytes(root, ".dev-runtime/runs/%s/plan.tsv" % run_id).decode("utf-8")
+        check(code == 0 and len(plan_json["steps"]) == 3 and plan_json["steps"][0]["executor"] == "scaffold"
+              and plan_json["steps"][1]["executor"] == "stack" and plan_json["steps"][1]["action"] == "build"
+              and plan_json["steps"][2]["guard"]["adapter"] == "tools/guards/junit.py"
+              and "--forbid-skipped" in plan_json["steps"][2]["guard"]["args"] and "\tstack\ttest\t" in plan_tsv,
+              "verify --emit-plan: clasifica pasos scaffold y stack con guardas y emite plan.tsv (visto fallar)")
+        code, _ = quietly(V.main, ["--run-step", run_id, "0"], root)
+        check(code == 0 and os.path.isfile(os.path.join(root, ".dev-runtime/runs/%s/steps/0.json" % run_id)),
+              "verify --run-step: ejecuta paso scaffold y escribe steps/0.json (visto fallar)")
+        write(root, ".dev-runtime/runs/%s/steps/1.meta" % run_id, "runId=%s\nindex=1\nlabel=stack build\ncode=0\ntimed_out=false\nseconds=1.2\n" % run_id)
+        write(root, ".dev-runtime/runs/%s/steps/1.out" % run_id, "BUILD OK\n")
+        write(root, ".dev-runtime/runs/%s/steps/2.meta" % run_id, "runId=%s\nindex=2\nlabel=stack tests\ncode=0\ntimed_out=false\nseconds=2.3\n" % run_id)
+        write(root, ".dev-runtime/runs/%s/steps/2.out" % run_id, "[PASS] guard registered\n[PASS] guard finished\n[PASS] guard silent\nRESULT: ok\n")
+        code, said = quietly(V.main, ["--finalize", run_id], root)
+        verdict = json.loads(read_bytes(root, ".dev-runtime/runs/%s/verdict.json" % run_id).decode("utf-8"))
+        check(code == 1 and verdict["changed"] is True and verdict["runId"] == run_id and "veredicto CAMBIO" in said,
+              "verify --finalize: primera corrida registra cambio de veredicto y regenera derivados (visto fallar) %s" % last_words(said))
+        run_id2 = "1122334455667788"
+        quietly(V.main, ["--emit-plan", run_id2], root)
+        quietly(V.main, ["--run-step", run_id2, "0"], root)
+        write(root, ".dev-runtime/runs/%s/steps/1.meta" % run_id2, "runId=%s\nindex=1\nlabel=stack build\ncode=0\ntimed_out=false\nseconds=1.0\n" % run_id2)
+        write(root, ".dev-runtime/runs/%s/steps/1.out" % run_id2, "BUILD OK\n")
+        write(root, ".dev-runtime/runs/%s/steps/2.meta" % run_id2, "runId=%s\nindex=2\nlabel=stack tests\ncode=0\ntimed_out=false\nseconds=1.5\n" % run_id2)
+        write(root, ".dev-runtime/runs/%s/steps/2.out" % run_id2, "[PASS] guard registered\n[PASS] guard finished\n[PASS] guard silent\nRESULT: ok\n")
+        code, said = quietly(V.main, ["--finalize", run_id2], root)
+        verdict2 = json.loads(read_bytes(root, ".dev-runtime/runs/%s/verdict.json" % run_id2).decode("utf-8"))
+        check(code == 0 and verdict2["status"] == "GREEN" and verdict2["runId"] == run_id2,
+              "verify --finalize: segunda corrida cierra GREEN con verdict.json ligado al runId (visto fallar) %s" % last_words(said))
+        # Missing step refused
+        run_id3 = "9988776655443322"
+        quietly(V.main, ["--emit-plan", run_id3], root)
+        code, said = quietly(V.main, ["--finalize", run_id3], root)
+        check(code == 2 and "falta el resultado" in said, "verify --finalize: paso ausente rechazado con exit 2 (visto fallar)")
+    end()
+
+
+def test_f1_stack_only_receipt_and_ownership_transfer():
+    """F1 portable contract: --stack-only creates a product with .template-receipt.txt
+    without scaffold, upgrades v1->v2 via upgrade.py (including launcher files,
+    --keep, --done, stale plan-id), adopts into untracked git repos, migrates
+    cleanly when scaffold enters later, and reconciles layer->stack file
+    ownership transfers atomically across all 7 cases."""
+    begin("test_f1_stack_only_receipt_and_ownership_transfer")
     U = upgrade_tool()
-    tool = accept_tool()
-    if U is None or tool is None or shutil.which("git") is None:
-        check(U is None or tool is None or shutil.which("git") is None, "plantillas de stack: solo la plantilla las tiene, y sin git no se crea nada")
+    if U is None or shutil.which("git") is None:
+        check(U is None or shutil.which("git") is None, "recibo y traspaso: requiere upgrade.py y git")
         end()
         return
     import components as C
     import instantiate as I
-    top = I.run_git(V.ROOT, "rev-parse", "--show-toplevel")["out"].strip()
-    listed = I.run_git(top, "ls-files", "-z", "--cached", "--others", "--exclude-standard")["out"].split("\0")
-    stacks = sorted(path[:-len(C.STACK_FILE) - 1] for path in listed if path.endswith("/" + C.STACK_FILE))
-    scaffold = os.path.relpath(V.ROOT, top).replace("\\", "/")
-    check(len(stacks) == 4, "plantillas de stack: el repositorio tiene las cuatro, cada una con su template.txt (visto fallar) %s" % stacks)
     with scratch_tree() as repo, scratch_tree() as scratch:
-        for folder in [scaffold] + stacks:
-            for path, source in tool.sources(os.path.join(top, *folder.split("/"))).items():
-                write(repo, folder + "/" + path, source["data"])
-        template = os.path.join(repo, *scaffold.split("/"))
-        quietly(B.main_on, ["seal"], template)
+        scaffold = os.path.join(repo, "agentic-scaffold")
+        for path in B.walk_files(V.ROOT, [])["files"]:
+            write(scaffold, path, read_bytes(V.ROOT, path))
+        # Keep only a synthetic stack + synthetic layer inside `repo`
+        stack_dir = "stacks/demo"
+        write(repo, "catalog.json", '{"id":"public-demo-catalog"}\n')
+        write(repo, stack_dir + "/template.txt",
+              "# --- KEYS ---\n# stack : id\n# param : p\n# piece : f\n# rendered : r\n"
+              "stack demo-stack\nparam app | Starter | nombre\npiece tools/helper.txt | ayuda\nrendered src/Starter.txt | fuente\n")
+        write(repo, stack_dir + "/tools/helper.txt", "helper v1\n")
+        write(repo, stack_dir + "/src/Starter.txt", "hello Starter\n")
+        write(repo, stack_dir + "/README.md", "# Demo\n")
+        # Include identical launcher files in stack
+        for rel in sorted(C.LAUNCHER_FILES):
+            write(repo, stack_dir + "/" + rel, read_bytes(scaffold, rel))
+        # Layer initially owns docs/ARCHITECTURE.md
+        layer_root = "agentic-scaffold/overlays/demo-layer"
+        write(repo, layer_root + "/layer.txt",
+              "# --- KEYS ---\n# requires : r\n# external : e\n# needs : n\n# gate : g\n# document : d\n# ignore : i\n# standard : s\n# authority : a\n"
+              "requires 0.1.0\nexternal stacks/demo | prueba\nneeds src/*.txt | fuente\n"
+              "gate demo | 1.0 | {python} -c \"print(1)\"\n"
+              "document live docs/ARCHITECTURE.md\n"
+              "standard demo | **Regla demo**.\n"
+              "authority | Arquitectura | `docs/ARCHITECTURE.md` | demo |\n")
+        write(repo, layer_root + "/files/docs/ARCHITECTURE.md", "# Architecture v1\n")
+        quietly(B.main_on, ["seal"], scaffold)
         commit_all(repo)
-        for folder in stacks:
-            text = read_bytes(repo, folder + "/" + C.STACK_FILE).decode("utf-8")
-            stack = C.read_stack(text, folder, [])
-            params = {param["name"]: param["default"].replace("Starter", "Solar").replace("Template", "Solar").replace("template", "solar")
-                      for param in stack["params"]}
-            product = os.path.join(scratch, stack["id"])
-            words = [word for name, value in sorted(params.items()) for word in ("--param", "%s=%s" % (name, value))]
-            code, said = quietly(I.main, [product, "--stack", stack["id"]] + words + ["--apply"], template, "2026-02-03")
-            record = C.read_record(read_bytes(product, C.RECORD_FILE).decode("utf-8"), []) if code == 0 else C.empty_record()
-            layer = next((cid for cid in record["components"] if cid.startswith("layer:")), "")
-            pieces = record["files"].get("stack:" + stack["id"], {})
-            check(code == 0 and layer and len(pieces) == len(C.stack_pieces(stack, [p[len(folder) + 1:] for p in listed if p.startswith(folder + "/")], []))
-                  and record["components"]["stack:" + stack["id"]]["params"] == params,
-                  "plantillas de stack (%s): --stack crea el producto con su capa y registra todas sus piezas con sus parametros (visto fallar) %s"
-                  % (stack["id"], "" if code == 0 else last_words(said)))
-            if code != 0:
-                continue
-            quietly(B.build, product)
-            commit_all(product)
-            check(findings_of(product) == [], "plantillas de stack (%s): el producto creado pasa el tablero" % stack["id"])
-            created = tree_bytes(product)
-            code, said = quietly(U.main, [product], template)
-            check(code == 0 and "no hay nada que escribir" in said and tree_bytes(product) == created,
-                  "plantillas de stack (%s): un producto recien creado no tiene nada que actualizar: las lineas que ya tenia antes de la capa siguen"
-                  " siendo suyas (visto fallar) %s" % (stack["id"], last_words(said)))
-            piece = sorted(pieces)[0]
-            source = next(rel for rel in C.stack_pieces(stack, [p[len(folder) + 1:] for p in listed if p.startswith(folder + "/")], [])
-                          if C.render_text(rel, C.substitutions(stack, params)) == piece)
-            label = sorted(key for kind, key in record["items"][layer] if kind == C.GATE)[0]
-            gates = read_bytes(product, "gates.txt").decode("utf-8").split("\n")
-            measured = [line for line in gates if line.split("|", 1)[0].strip().replace(" [harness]", "") == label][0]
-            write(product, "gates.txt", "\n".join(gates).replace(measured, measured.split("|", 2)[0].rstrip() + " | 9.9 |" + measured.split("|", 2)[2]))
-            commit_all(product)
-            append(repo, folder + "/" + source, "\n// la plantilla cambia\n" if source.endswith((".cs", ".java", ".ts", ".js", ".dart")) else "\n# la plantilla cambia\n")
-            data = I.LAYERS_DIR + "/" + layer.partition(":")[2] + "/" + I.LAYER_FILE
-            rows = read_bytes(template, data).decode("utf-8")
-            row = [line for line in rows.split("\n") if line.startswith("gate ") and line[5:].split("|", 1)[0].strip().replace(" [harness]", "") == label][0]
-            write(template, data, rows.replace(row, row + " --la-plantilla-cambia"))
-            quietly(B.main_on, ["seal"], template)
-            git_run(repo, "add", "-A")
-            git_run(repo, "commit", "-q", "--no-verify", "-m", "chore: %s moves" % stack["id"])
-            code, said, plan = planned_and_applied(U, product, template)
-            taken = [line for line in read_bytes(product, "gates.txt").decode("utf-8").split("\n")
-                     if "|" in line and line.split("|", 1)[0].strip().replace(" [harness]", "") == label]
-            check(code == 0 and "se toma %s:" % piece in said and taken and "| 9.9 |" in taken[0] and taken[0].endswith("--la-plantilla-cambia"),
-                  "plantillas de stack (%s): un cambio de su pieza %s y de la puerta '%s' de su capa llegan con un plan, la puerta con los segundos del"
-                  " producto (visto fallar) %s" % (stack["id"], piece, label, last_words(said)))
-            commit_all(product)
-            settled = tree_bytes(product)
-            code, said = quietly(U.main, [product], template)
-            check(code == 0 and "no hay nada que escribir" in said and tree_bytes(product) == settled,
-                  "plantillas de stack (%s): la segunda corrida no tiene nada que escribir (visto fallar) %s" % (stack["id"], last_words(said)))
+        v1 = git_run(repo, "rev-parse", "HEAD").stdout.decode("utf-8").strip()
+
+        # 1. Create stack-only product
+        solo = os.path.join(scratch, "solo")
+        code, said = quietly(I.main, [solo, "--stack", "demo-stack", "--stack-only", "--param", "app=Solar", "--apply"], scaffold, "2026-11-21")
+        check(code == 0 and os.path.isfile(os.path.join(solo, C.RECEIPT_FILE))
+              and not os.path.exists(os.path.join(solo, "AGENTS.md"))
+              and os.path.isfile(os.path.join(solo, "src/Solar.txt")),
+              "stack-only: crea el producto sin andamio, renderiza parametros y escribe .template-receipt.txt (visto fallar) %s" % last_words(said))
+        receipt_text = read_bytes(solo, C.RECEIPT_FILE).decode("utf-8")
+        check("source public-demo-catalog" in receipt_text and "dev.cmd" in receipt_text,
+              "stack-only: el recibo guarda procedencia publica y ficheros del lanzador (visto fallar)")
+        commit_all(solo)
+
+        # Create combined product at v1 (layer owns docs/ARCHITECTURE.md)
+        comb_same = os.path.join(scratch, "comb-same")
+        code, said = quietly(I.main, [comb_same, "--stack", "demo-stack", "--param", "app=Solar", "--apply"], scaffold, "2026-11-21")
+        check(code == 0 and os.path.isfile(os.path.join(comb_same, "docs/ARCHITECTURE.md")),
+              "combinado v1: crea producto con capa duena de docs/ARCHITECTURE.md sin conflicto de lanzador (visto fallar) %s" % last_words(said))
+        commit_all(comb_same)
+
+        # Clone combined v1 for ownership-transfer variants (local mod, kept, unknown base, single-hop conflict+done)
+        comb_new = os.path.join(scratch, "comb-new")
+        comb_mod = os.path.join(scratch, "comb-mod")
+        comb_kept = os.path.join(scratch, "comb-kept")
+        comb_nobase = os.path.join(scratch, "comb-nobase")
+        comb_hop = os.path.join(scratch, "comb-hop")
+        for dst in (comb_new, comb_mod, comb_kept, comb_nobase, comb_hop):
+            shutil.copytree(comb_same, dst)
+        write(comb_mod, "docs/ARCHITECTURE.md", "# Architecture local edit\n")
+        write(comb_hop, "docs/ARCHITECTURE.md", "# Architecture local edit\n")
+        commit_all(comb_hop)
+        commit_all(comb_mod)
+        quietly(U.main, [comb_kept, "--keep", "docs/ARCHITECTURE.md"], scaffold)
+        write(comb_kept, "docs/ARCHITECTURE.md", "# Architecture product owned\n")
+        commit_all(comb_kept)
+        # Simulate NO_BASE on comb_nobase
+        rec_nb = read_bytes(comb_nobase, C.RECORD_FILE).decode("utf-8")
+        old_sha = C.content_hash(b"# Architecture v1\n")
+        write(comb_nobase, C.RECORD_FILE, rec_nb.replace(old_sha, C.NO_BASE))
+        write(comb_nobase, "docs/ARCHITECTURE.md", "# Unknown base content\n")
+        commit_all(comb_nobase)
+
+        # 2. v2 commit in catalog: move docs/ARCHITECTURE.md from layer -> stack (SAME bytes first!) + update helper.txt
+        os.remove(os.path.join(repo, *(layer_root + "/files/docs/ARCHITECTURE.md").split("/")))
+        write(repo, stack_dir + "/docs/ARCHITECTURE.md", "# Architecture v1\n")
+        write(repo, stack_dir + "/template.txt",
+              "# --- KEYS ---\n# stack : id\n# param : p\n# piece : f\n# rendered : r\n"
+              "stack demo-stack\nparam app | Starter | nombre\npiece tools/helper.txt | ayuda\n"
+              "piece docs/ARCHITECTURE.md | arquitectura\nrendered src/Starter.txt | fuente\n")
+        write(repo, stack_dir + "/tools/helper.txt", "helper v2\n")
+        quietly(B.main_on, ["seal"], scaffold)
+        commit_all(repo)
+        v2 = git_run(repo, "rev-parse", "HEAD").stdout.decode("utf-8").strip()
+
+        # Upgrade stack-only product v1 -> v2
+        code, said, pid = planned_and_applied(U, solo, scaffold)
+        check(code == 0 and read_bytes(solo, "tools/helper.txt") == b"helper v2\n"
+              and read_bytes(solo, "docs/ARCHITECTURE.md") == b"# Architecture v1\n",
+              "stack-only upgrade v1->v2: actualiza piezas usando .template-receipt.txt (visto fallar) %s" % last_words(said))
+        commit_all(solo)
+        code, said = quietly(U.main, [solo], scaffold)
+        check(code == 0 and "no hay nada que escribir" in said, "stack-only upgrade: segunda pasada vacia (visto fallar)")
+
+        # A matching catalog name or an identical Git tree cannot prove ancestry.
+        other_root = git_run(repo, "commit-tree", v2 + "^{tree}", "-m", "another catalog with the same files",
+                             check=True).stdout.decode().strip()
+        unrelated = os.path.join(scratch, "unrelated")
+        shutil.copytree(solo, unrelated)
+        receipt = read_bytes(solo, C.RECEIPT_FILE).decode("utf-8")
+        for label, text, revision in (
+            ("commit ausente", receipt.replace(v2, head(solo)), v2),
+            ("historia desconectada", receipt.replace(v2, other_root), v2),
+            ("destino anterior", receipt, v1),
+            ("ultima revision aplicada desconectada", receipt.replace("applied " + v2, "applied " + other_root), v2),
+        ):
+            write(unrelated, C.RECEIPT_FILE, text)
+            commit_all(unrelated)
+            before = tree_bytes(unrelated)
+            code, said = quietly(U.main, [unrelated, "--to", revision], scaffold)
+            check(code == 1 and "historia" in said and not plan_id_of(said) and tree_bytes(unrelated) == before,
+                  "recibo sin andamio: %s rechaza el plan sin cambiar el producto" % label)
+        code, said = quietly(U.main, [unrelated, "--adopt", "stack:other"], scaffold)
+        check(code == 1 and "historia" in said and not plan_id_of(said),
+              "adopcion: comprueba primero la procedencia del recibo que ampliaria")
+        code, said = quietly(I.main, [unrelated, "--apply"], scaffold, "2026-11-21")
+        check(code == 1 and "historia" in said and tree_bytes(unrelated) == before,
+              "anadir el andamio respeta tambien la ultima revision del recibo que convertiria")
+        write(unrelated, C.RECEIPT_FILE, "")
+        commit_all(unrelated)
+        before = tree_bytes(unrelated)
+        code, said = quietly(U.main, [unrelated, "--adopt", "stack:demo-stack"], scaffold)
+        check(code == 1 and "catalogo de origen" in said and not plan_id_of(said) and tree_bytes(unrelated) == before,
+              "adopcion: un recibo presente pero vacio nunca se toma como un proyecto sin registrar")
+
+        # Add scaffold later onto stack-only product -> migrates receipt cleanly!
+        solo_plus = os.path.join(scratch, "solo-plus")
+        shutil.copytree(solo, solo_plus)
+        shared = os.path.join(solo_plus, "dev")
+        os.utime(shared, (987654321, 987654321))
+        code, said = quietly(I.main, [solo_plus, "--layer", "demo-layer", "--apply"], scaffold, "2026-11-21")
+        check(int(os.stat(shared).st_mtime) == 987654321,
+              "anadir andamio conserva el lanzador coincidente que ya tenia el receptor del ZIP")
+        check(code == 0 and not os.path.exists(os.path.join(solo_plus, C.RECEIPT_FILE))
+              and os.path.isfile(os.path.join(solo_plus, C.RECORD_FILE))
+              and "stack:demo-stack" in read_bytes(solo_plus, C.RECORD_FILE).decode("utf-8"),
+              "stack-only -> anadir andamio: migra recibo a components.txt y transfiere lanzador al motor sin conflictos (visto fallar) %s" % last_words(said))
+
+        # Modified launcher file in stack-only blocks scaffold add (never overwrites user edit!)
+        solo_dirty_launcher = os.path.join(scratch, "solo-dirty-launcher")
+        shutil.copytree(solo, solo_dirty_launcher)
+        append(solo_dirty_launcher, "dev.cmd", "rem local edit\n")
+        commit_all(solo_dirty_launcher)
+        code, said = quietly(I.main, [solo_dirty_launcher, "--layer", "demo-layer", "--apply"], scaffold, "2026-11-21")
+        check(code == 1 and "dev.cmd" in said and read_bytes(solo_dirty_launcher, "dev.cmd").endswith(b"rem local edit\n")
+              and git_run(solo_dirty_launcher, "status", "--porcelain").stdout == b"",
+              "stack-only -> anadir andamio: un lanzador editado localmente bloquea sin sobrescribir (visto fallar)")
+
+        # Ownership transfer case 1: same bytes -> NOT deleted, owner moves to stack, 2nd run empty!
+        code, said, _ = planned_and_applied(U, comb_same, scaffold)
+        check(code == 0 and os.path.isfile(os.path.join(comb_same, "docs/ARCHITECTURE.md"))
+              and "file stack:demo-stack | docs/ARCHITECTURE.md |" in read_bytes(comb_same, C.RECORD_FILE).decode("utf-8")
+              and "file layer:demo-layer | docs/ARCHITECTURE.md |" not in read_bytes(comb_same, C.RECORD_FILE).decode("utf-8"),
+              "traspaso (mismos bytes): conserva docs/ARCHITECTURE.md en disco y pasa su propiedad al stack (visto fallar) %s" % last_words(said))
+        commit_all(comb_same)
+        code, said = quietly(U.main, [comb_same], scaffold)
+        check(code == 0 and "no hay nada que escribir" in said, "traspaso (mismos bytes): segunda pasada vacia (visto fallar)")
+
+        # Ownership transfer case 3a: local mod, target unchanged -> local edit preserved under new owner!
+        code, said, _ = planned_and_applied(U, comb_mod, scaffold)
+        check(code == 0 and read_bytes(comb_mod, "docs/ARCHITECTURE.md") == b"# Architecture local edit\n"
+              and "file stack:demo-stack | docs/ARCHITECTURE.md |" in read_bytes(comb_mod, C.RECORD_FILE).decode("utf-8"),
+              "traspaso (parche local, destino igual): conserva el parche local bajo el nuevo dueno (visto fallar) %s" % last_words(said))
+        commit_all(comb_mod)
+        code, said = quietly(U.main, [comb_mod], scaffold)
+        check(code == 0 and "no hay nada que escribir" in said, "traspaso (parche local): segunda pasada vacia (visto fallar)")
+
+        # Ownership transfer case 4: kept -> untouched and remains kept under new owner!
+        code, said, _ = planned_and_applied(U, comb_kept, scaffold)
+        check(code == 0 and read_bytes(comb_kept, "docs/ARCHITECTURE.md") == b"# Architecture product owned\n"
+              and "file stack:demo-stack | docs/ARCHITECTURE.md | kept" in read_bytes(comb_kept, C.RECORD_FILE).decode("utf-8"),
+              "traspaso (kept): conserva el fichero del producto y el estado kept (visto fallar) %s" % last_words(said))
+
+        # Ownership transfer case 6: unknown base (NO_BASE) -> STOP before writing!
+        before_nb = tree_bytes(comb_nobase)
+        code, said = quietly(U.main, [comb_nobase], scaffold)
+        check(code == 1 and "base verificable" in said and tree_bytes(comb_nobase) == before_nb,
+              "traspaso (sin base): detiene antes de escribir nada (visto fallar) %s" % last_words(said))
+
+        # v3 commit: new owner ALSO updates docs/ARCHITECTURE.md to v3 -> case 2 (TAKE on clean) & case 3b (STOP on local mod)
+        write(repo, stack_dir + "/docs/ARCHITECTURE.md", "# Architecture v3\n")
+        commit_all(repo)
+        code, said, _ = planned_and_applied(U, comb_new, scaffold)
+        check(code == 0 and read_bytes(comb_new, "docs/ARCHITECTURE.md") == b"# Architecture v3\n",
+              "traspaso (nueva version): aplica v3 del nuevo dueno sin borrar ni detener (visto fallar) %s" % last_words(said))
+        code, said = quietly(U.main, [comb_mod], scaffold)
+        check(code == 1 and "docs/ARCHITECTURE.md" in said and "parche local" in said,
+              "traspaso (ambos cambian): conflicto real detectado tras traspaso (visto fallar) %s" % last_words(said))
+
+        # Single-hop v1 -> v3 with local edit: --done moves ownership to new owner without duplicate rows in components.txt!
+        code, said = quietly(U.main, [comb_hop], scaffold)
+        check(code == 1 and "docs/ARCHITECTURE.md" in said and "parche local" in said,
+              "traspaso directo v1->v3 (ambos cambian): detecta conflicto antes de escribir (visto fallar) %s" % last_words(said))
+        code, said = quietly(U.main, [comb_hop, "--done", "docs/ARCHITECTURE.md"], scaffold)
+        check(code == 0, "traspaso directo v1->v3: --done concilia sin duplicar dueno en components.txt (visto fallar) %s" % last_words(said))
+        commit_all(comb_hop)
+        code, said, _ = planned_and_applied(U, comb_hop, scaffold)
+        hop_record = C.read_record(read_bytes(comb_hop, C.RECORD_FILE).decode("utf-8"), [])
+        check(code == 0 and "docs/ARCHITECTURE.md" not in hop_record["files"].get("layer:demo-layer", {})
+              and "docs/ARCHITECTURE.md" in hop_record["files"].get("stack:demo-stack", {})
+              and read_bytes(comb_hop, "docs/ARCHITECTURE.md") == b"# Architecture local edit\n",
+              "traspaso directo v1->v3: tras --done, upgrade aplica limpio y mantiene un solo dueno y el parche local (visto fallar) %s" % last_words(said))
+
+        # Case 7: two simultaneous owners in target -> STOP before writing!
+        write(repo, layer_root + "/files/docs/ARCHITECTURE.md", "# Architecture v3\n")
+        commit_all(repo)
+        code, said = quietly(U.main, [comb_same], scaffold)
+        check(code == 1 and "un solo dueno" in said,
+              "traspaso (dos duenos simultaneos): rechazado antes de escribir (visto fallar) %s" % last_words(said))
+
+        # Untracked evaluation ZIP -> git init + --adopt stack:demo-stack writes .template-receipt.txt!
+        untracked = os.path.join(scratch, "untracked-zip")
+        write(untracked, "tools/helper.txt", "helper v2\n")
+        write(untracked, "docs/ARCHITECTURE.md", "# Architecture v1\n")
+        write(untracked, "src/Solar.txt", "hello Solar\n")
+        commit_all(untracked)
+        code, said = quietly(U.main, [untracked, "--adopt", "stack:demo-stack", "--param", "app=Solar", "--to", v2], scaffold)
+        plan_id = re.search(r"plan ([0-9a-f]{12})", said)
+        check(code == 0 and plan_id is not None and C.RECEIPT_FILE in said,
+              "adopcion sin andamio: planifica adopcion de stack en .template-receipt.txt (visto fallar) %s" % last_words(said))
+        if plan_id:
+            code, said = quietly(U.main, [untracked, "--adopt", "stack:demo-stack", "--param", "app=Solar", "--to", v2, "--apply", plan_id.group(1)], scaffold)
+            check(code == 0 and os.path.isfile(os.path.join(untracked, C.RECEIPT_FILE)),
+                  "adopcion sin andamio: escribe .template-receipt.txt con bases verificadas (visto fallar) %s" % last_words(said))
     end()
 
 
@@ -5071,7 +5120,7 @@ def main():
              test_settled_citations_and_verify, test_encoding, test_links_and_comments, test_derived_strict,
              test_gates_file, test_run_gate, test_gate_environment, test_kill_report, test_verify_main, test_verify_lock, test_atomic_writes, test_board_end_to_end,
              test_tree_listing_with_git, test_adapters, test_harness_rows, test_skills, test_commit_message, test_pre_push,
-             test_hooks_through_git, test_long_paths, test_python_discovery, test_hook_modes, test_guard_adapters, test_dart_test_adapter, test_runner_by_its_path, test_instantiate_merges, test_instantiate, test_instantiate_command_line, test_layer_readiness, test_template_layers, test_accept, test_accept_posix_lifetime, test_python_layer_needs, test_released_engine, test_layer_requires_its_engine, test_engine_manifest, test_upgrade_plan, test_upgrade, test_components_model, test_component_creation_and_update, test_component_safety, test_component_review_safety, test_component_rendered_paths, test_component_blob_failure, test_component_physical_paths, test_component_unreadable_gate_row, test_scratch_tree_is_physical, test_stack_rendered_destinations, test_component_adoption, test_stack_templates, test_record_rules, test_prose_is_data, test_order_line_and_parts, test_plan_position, test_live_debts, test_one_phase_in_progress, test_provisional_is_not_done, test_split_indexes,
+             test_hooks_through_git, test_long_paths, test_hook_modes, test_guard_adapters, test_dart_test_adapter, test_runner_by_its_path, test_instantiate_merges, test_instantiate, test_instantiate_command_line, test_layer_readiness, test_template_layers, test_python_layer_needs, test_released_engine, test_layer_requires_its_engine, test_engine_manifest, test_upgrade_plan, test_upgrade, test_components_model, test_component_creation_and_update, test_component_safety, test_component_review_safety, test_component_rendered_paths, test_component_blob_failure, test_component_physical_paths, test_component_unreadable_gate_row, test_scratch_tree_is_physical, test_stack_rendered_destinations, test_component_adoption, test_f1_commit_message_and_pre_push_snapshots, test_f1_guards_and_coordinated_verify, test_f1_stack_only_receipt_and_ownership_transfer, test_record_rules, test_prose_is_data, test_order_line_and_parts, test_plan_position, test_live_debts, test_one_phase_in_progress, test_provisional_is_not_done, test_split_indexes,
              test_registry_says_what_holds_today, test_adopt]
     for test in tests:
         try:

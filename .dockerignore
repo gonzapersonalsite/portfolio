@@ -1,0 +1,8 @@
+*
+!frontend/
+frontend/*
+!frontend/package.json
+!frontend/pnpm-lock.yaml
+!tools/
+tools/*
+!tools/install-pnpm.py

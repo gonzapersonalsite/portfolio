@@ -44,6 +44,9 @@ import xml.etree.ElementTree as ElementTree
 SEPARATOR = "--"
 REPORT_FLAG = "--report"
 FORBID_SKIPPED_FLAG = "--forbid-skipped"
+CLEAN_ONLY_FLAG = "--clean-only"
+CHECK_ONLY_FLAG = "--check-only"
+EXIT_CODE_FLAG = "--exit-code"
 USAGE = "uso: python tools/guards/junit.py [--forbid-skipped] --report <fichero o directorio> [--report ...] -- <comando ...>"
 WEAKER = "debil: el informe no cuenta aserciones, asi que vale mas de 0 ejecutados y 0 fallidos"
 # The root elements of a JUnit XML report, with any namespace dropped.
@@ -53,28 +56,58 @@ SHOWN = 5
 
 
 def refused_request(error):
-    return {"reports": [], "command": [], "forbid_skipped": False, "error": error}
+    return {"reports": [], "command": [], "forbid_skipped": False, "mode": "run", "exit_code": 0, "error": error}
 
 
 def parse_args(argv):
-    """The report paths, whether a skipped case is forbidden, and the command,
-    or an error in words."""
-    if SEPARATOR not in argv:
+    """The report paths, whether a skipped case is forbidden, mode ('run',
+    'clean', or 'check'), and the command, or an error in words."""
+    if SEPARATOR not in argv and CLEAN_ONLY_FLAG not in argv and CHECK_ONLY_FLAG not in argv:
         return refused_request("falta '%s' antes del comando" % SEPARATOR)
-    cut = argv.index(SEPARATOR)
-    options, command = argv[:cut], argv[cut + 1:]
-    reports, forbid_skipped = [], False
+    if SEPARATOR in argv:
+        cut = argv.index(SEPARATOR)
+        options, command = argv[:cut], argv[cut + 1:]
+    else:
+        options, command = list(argv), []
+    reports, forbid_skipped, mode, exit_code, has_exit = [], False, "run", 0, False
     while options:
         if options[0] == FORBID_SKIPPED_FLAG:
             forbid_skipped, options = True, options[1:]
+            continue
+        if options[0] == CLEAN_ONLY_FLAG:
+            if mode != "run":
+                return refused_request("no se pueden combinar %s y %s" % (CLEAN_ONLY_FLAG, CHECK_ONLY_FLAG))
+            mode, options = "clean", options[1:]
+            continue
+        if options[0] == CHECK_ONLY_FLAG:
+            if mode != "run":
+                return refused_request("no se pueden combinar %s y %s" % (CLEAN_ONLY_FLAG, CHECK_ONLY_FLAG))
+            mode, options = "check", options[1:]
+            continue
+        if options[0] == EXIT_CODE_FLAG:
+            if len(options) < 2 or not options[1].lstrip("-").isdigit():
+                return refused_request("%s necesita un codigo de salida entero" % EXIT_CODE_FLAG)
+            exit_code, has_exit, options = int(options[1]), True, options[2:]
             continue
         if options[0] != REPORT_FLAG or len(options) < 2:
             return refused_request("argumento no reconocido: %s" % options[0])
         reports.append(options[1])
         options = options[2:]
-    if not reports or not command:
-        return refused_request("hacen falta al menos un %s y un comando" % REPORT_FLAG)
-    return {"reports": reports, "command": command, "forbid_skipped": forbid_skipped, "error": ""}
+    if mode == "run":
+        if SEPARATOR not in argv:
+            return refused_request("falta '%s' antes del comando" % SEPARATOR)
+        if not reports or not command:
+            return refused_request("hacen falta al menos un %s y un comando" % REPORT_FLAG)
+        if has_exit:
+            return refused_request("%s solo se usa con %s" % (EXIT_CODE_FLAG, CHECK_ONLY_FLAG))
+    else:
+        if command:
+            return refused_request("%s no admite comando despues de '%s'" % (CLEAN_ONLY_FLAG if mode == "clean" else CHECK_ONLY_FLAG, SEPARATOR))
+        if not reports:
+            return refused_request("hace falta al menos un %s" % REPORT_FLAG)
+        if mode == "clean" and has_exit:
+            return refused_request("%s solo se usa con %s" % (EXIT_CODE_FLAG, CHECK_ONLY_FLAG))
+    return {"reports": reports, "command": command, "forbid_skipped": forbid_skipped, "mode": mode, "exit_code": exit_code, "error": ""}
 
 
 def root_tag(path):
@@ -217,18 +250,24 @@ def main(argv):
         print(USAGE)
         print("RESULT: %s" % request["error"])
         return 2
-    unsafe = [why for why in (unsafe_report_path(path, os.getcwd(), tracked_under) for path in request["reports"]) if why]
-    if unsafe:
-        for why in unsafe:
-            print(why)
-        print("RESULT: una ruta de informes no se puede vaciar; no se borro ni se corrio nada")
-        return 2
-    for path in request["reports"]:
-        for stale in report_files(path) if os.path.exists(path) else []:
-            if is_report(stale):
-                os.remove(stale)
+    if request["mode"] in ("run", "clean"):
+        unsafe = [why for why in (unsafe_report_path(path, os.getcwd(), tracked_under) for path in request["reports"]) if why]
+        if unsafe:
+            for why in unsafe:
+                print(why)
+            print("RESULT: una ruta de informes no se puede vaciar; no se borro ni se corrio nada")
+            return 2
+        for path in request["reports"]:
+            for stale in report_files(path) if os.path.exists(path) else []:
+                if is_report(stale):
+                    os.remove(stale)
+        if request["mode"] == "clean":
+            return 0
     sys.stdout.flush()
-    code = subprocess.run(shell_line(request["command"]), shell=True, stdin=subprocess.DEVNULL).returncode
+    if request["mode"] == "run":
+        code = subprocess.run(shell_line(request["command"]), shell=True, stdin=subprocess.DEVNULL).returncode
+    else:
+        code = request["exit_code"]
     texts = []
     for path in request["reports"]:
         for file in report_files(path) if os.path.exists(path) else []:

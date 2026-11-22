@@ -1,0 +1,23 @@
+schema 1
+stack react-fsd
+compose compose.yaml
+volume modules
+volume store
+verify dependencies | format | lint | typecheck | tests | build
+harness tests | tools/guards/junit.py
+extra dependencies
+extra format
+extra format-fix
+extra lint
+extra typecheck
+extra tests
+demo development | web | 5173 | 5173
+preview preview | preview | 4173 | 4173
+action prepare | compose_run | prepare | prepare | 900 | build | prepare
+action dependencies | compose_run | check | check | 180 | - | dependencies
+action format | compose_run | check | check | 90 | - | format
+action format-fix | compose_run | check | check | 90 | - | format-fix
+action lint | compose_run | check | check | 180 | - | lint
+action typecheck | compose_run | check | check | 180 | - | typecheck
+action tests | compose_run | check | check | 300 | - | tests
+action build | compose_run | check | check | 300 | - | build

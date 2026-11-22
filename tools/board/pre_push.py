@@ -20,6 +20,7 @@ the budgets of its gates; every git call here has its own.
 
 Requires Python 3.8+ and nothing else.
 """
+import json
 import os
 import re
 import subprocess
@@ -30,6 +31,7 @@ import board as B
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 GIT_SECONDS = 30
 SHOWN = 10
+SKIP_EXIT = 20
 # verify.py exits with this, without running a gate, while another
 # verification holds the tree.
 VERIFY_REFUSED_EXIT = B.V.REFUSED_EXIT
@@ -152,10 +154,77 @@ def refused_why(rewritten):
             " empujar; si no, arregla antes las puertas en rojo. Push rechazado" % shown(rewritten))
 
 
+def check_snapshot(mode, snapshot):
+    """Judge a host-captured Git snapshot (used when pre_push runs inside a
+    container without trusting container-side git over Windows EOL/worktrees).
+    Returns exit code: 0 (continue/pass), SKIP_EXIT (no refs / deletions only),
+    or 1 (refused)."""
+    try:
+        refs = pushed_refs(snapshot.get("refs_stdin", ""))
+    except ValueError as error:
+        print("pre-push: %s; push rechazado" % error, file=sys.stderr)
+        return 1
+    if not refs:
+        print("pre-push: no se empuja ninguna referencia; las puertas no corren")
+        return SKIP_EXIT
+    if all(is_deletion(ref) for ref in refs):
+        print("pre-push: solo se borran referencias remotas: no se publica nada que verificar, y las puertas no corren")
+        return SKIP_EXIT
+    if snapshot.get("head_code") != 0 or not snapshot.get("head"):
+        err = snapshot.get("head_err") or "el repositorio no tiene commits"
+        print("pre-push: no hay HEAD que verificar: %s" % err, file=sys.stderr)
+        print("pre-push: push rechazado", file=sys.stderr)
+        return 1
+    if snapshot.get("status_code") != 0:
+        print("pre-push: git status fallo: %s" % (snapshot.get("status_err") or "error"), file=sys.stderr)
+        print("pre-push: push rechazado", file=sys.stderr)
+        return 1
+    changes = tree_changes(snapshot.get("status_out", ""))
+    problems = push_problems(refs, snapshot["head"].strip(), snapshot.get("commit_of") or {})
+    if changes["tracked"]:
+        problems.append("el arbol tiene cambios sin commitear en ficheros versionados (%s): las puertas verificarian algo distinto de lo que"
+                        " empujas. Commitealos o apartalos y vuelve a empujar" % shown(changes["tracked"]))
+    if changes["untracked"]:
+        problems.append("hay ficheros sin versionar (%s): no se empujan, pero las puertas los leen; una puerta verde por uno de ellos"
+                        " no lo es en un clon. Commitealos, ignoralos o apartalos y vuelve a empujar" % shown(changes["untracked"]))
+    if problems:
+        prefix = "pre-push: el arbol cambio mientras corrian las puertas: " if mode == "after" else "pre-push: "
+        for problem in problems:
+            print(prefix + problem, file=sys.stderr)
+        print("pre-push: push rechazado", file=sys.stderr)
+        return 1
+    return 0
+
+
 def main(argv, root=ROOT, stdin=None):
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8", errors="replace")
+    if len(argv) == 2 and argv[0] == "--check-snapshot" and argv[1] in ("before", "after"):
+        try:
+            snapshot = json.loads((stdin or sys.stdin).read())
+        except ValueError as error:
+            print("pre-push: instantanea git invalida (%s); push rechazado" % error, file=sys.stderr)
+            return 1
+        if not isinstance(snapshot, dict):
+            print("pre-push: instantanea git invalida; push rechazado", file=sys.stderr)
+            return 1
+        return check_snapshot(argv[1], snapshot)
+    if len(argv) == 2 and argv[0] == "--refused-why":
+        try:
+            snapshot = json.loads((stdin or sys.stdin).read())
+            code = int(argv[1])
+        except ValueError:
+            print("pre-push: " + refused_why(None), file=sys.stderr)
+            return 1
+        if code == VERIFY_REFUSED_EXIT:
+            print("pre-push: " + BUSY_WHY, file=sys.stderr)
+            return code
+        rewritten = None
+        if isinstance(snapshot, dict) and snapshot.get("status_code") == 0:
+            rewritten = tree_changes(snapshot.get("status_out", ""))["tracked"]
+        print("pre-push: " + refused_why(rewritten), file=sys.stderr)
+        return code
     try:
         refs = pushed_refs((stdin or sys.stdin).read())
     except ValueError as error:

@@ -59,28 +59,27 @@ The project follows a modern **static frontend architecture**, prioritizing main
 ## 🚀 Running Locally
 
 ### Prerequisites
-- Node.js (see `frontend/package.json` for the managed version), pnpm, and Python 3.
+- Docker with Linux containers and Compose (plus Git to enable hooks); Node.js, pnpm and Python run inside the project containers.
 
 ### Start Application
 ```bash
 git config core.hooksPath .githooks
-pnpm --dir frontend install
-pnpm --dir frontend dev
+./dev prepare   # Windows: .\dev.cmd prepare
+./dev start     # Windows: .\dev.cmd start
 ```
 
 **Access the application:**
-- Frontend: [http://localhost:5173/](http://localhost:5173/)
+- Frontend: [http://127.0.0.1:5173/](http://127.0.0.1:5173/) (stop with `./dev stop` / `.\dev.cmd stop`)
 
 ### Quality Gates
 ```bash
-python verify.py                      # Canonical runner: runs all 9 repository and frontend gates; the full run is the pre-push hook's
-python verify.py -- <label>           # Before a commit, the gates the change can move
-pnpm --dir frontend run format:check  # Prettier formatting check
-pnpm --dir frontend run lint          # ESLint: architecture (FSD) rules + TS rules; any warning fails it
-pnpm --dir frontend run typecheck     # TypeScript strict solution check (tsc -b)
-pnpm --dir frontend test              # Vitest: unit, content-integrity and architecture-rule tests
-pnpm --dir frontend build             # TypeScript compilation + Vite production build
+./dev verify                      # Windows: .\dev.cmd verify — runs all 9 repository and frontend gates; the full run is the pre-push hook's
+./dev verify -- <label>           # Windows: .\dev.cmd verify -- <label> — before a commit, the gates the change can move
+./dev format-fix                  # Windows: .\dev.cmd format-fix — Prettier formatting fix
+./dev build                       # Windows: .\dev.cmd build — TypeScript compilation + Vite production build
 ```
+
+For updating the scaffold or template pieces from the catalog, see `docs/ACTUALIZAR.md`.
 
 ---
 

@@ -51,8 +51,8 @@ en todos los repositorios que nazcan de la plantilla. Los registros que llegaron
 ella dicen su `origin` y conservan la fecha que tenían allí: adoptarla los adopta.
 
 **Lo que se acepta a cambio.** Muchos ficheros pequeños en vez de dos grandes; se
-navega por la página de cada dominio y por `grep`. El andamio impone Python 3 sin
-dependencias, y solo al andamio.
+navega por la página de cada dominio y por `grep`. El andamio corre en su propio
+contenedor de Python 3 sin dependencias, sin exigir Python en el host.
 
 **Alternativa refutada.** Un registro monolítico con topes de bytes: el tope no acota
 el crecimiento, programa la siguiente cirugía manual
@@ -99,7 +99,7 @@ def adopt(root, day):
     data = B.load(root, reader)
     if B.is_template(data["manifest"]):
         return {"code": 1, "said": "esto es la plantilla (su MANIFEST.txt declara %s, que solo tiene ella): la adopcion es de una copia;"
-                                   " instancia con python tools/board/instantiate.py <destino>" % ", ".join(data["manifest"]["template"])}
+                                   " crea el proyecto desde el catálogo con templates new <destino>" % ", ".join(data["manifest"]["template"])}
     path = adoption_path(data["documents"])
     if not path:
         return {"code": 1, "said": "documents.txt no declara el directorio de 'decisions': no se sabe donde escribir la decision"}
@@ -115,8 +115,8 @@ def adopt(root, day):
     except OSError as error:
         return {"code": 1, "said": "no se pudo escribir %s: %s" % (path, error)}
     return {"code": 0, "said": "escrita %s (confirmed, %s); el veredicto de la plantilla queda vacio y sus %d derivados borrados, para que este"
-                               " repositorio no herede sus fechas. Sigue: python verify.py hasta verde (la primera corrida dice que el veredicto"
-                               " cambio), y la entrega de la parte H0.1 con lo que dijeron las puertas" % (path, day, len(removed))}
+                               " repositorio no herede sus fechas. Sigue: ./dev prepare y ./dev verify (en Windows .\\dev.cmd prepare y .\\dev.cmd verify) hasta verde"
+                               " (la primera corrida dice que el veredicto cambio), y la entrega de la parte H0.1 con lo que dijeron las puertas" % (path, day, len(removed))}
 
 
 def main(argv, root=B.ROOT, day=None):

@@ -47,14 +47,21 @@ mensajes del tablero.
 
 ## Ejecutar
 
+Desde el host (Docker Linux con Compose, sin Python instalado en el host):
+
 ```
-python tools/board/board.py check   verde: "0 hallazgos" + exit 0
-python tools/board/board.py build   verde: "BOARD_OK" + exit 0
-python tools/board/board.py seal    solo en la plantilla: sella el motor en MANIFEST.txt
-python tools/board/test_board.py    verde: "0 fallos" + exit 0
-python tools/board/adopt.py         una vez, al instanciar: escribe la decisión de adopción
-python tools/board/instantiate.py   desde la plantilla commiteada: crea una instancia, le añade una capa o crea un producto desde una plantilla de stack
+./dev prepare                       construye la imagen del andamio (Windows: .\dev.cmd prepare)
+./dev verify                        corre las puertas dentro del contenedor (Windows: .\dev.cmd verify)
+./dev verify -- <etiqueta>          solo esas puertas, para iterar
 ```
+
+Para comprobar solo el tablero, ejecuta `./dev verify -- "board: documents"`.
+Para regenerar sus salidas, usa `./dev verify -- "board: build"`, y para su
+suite, `./dev verify -- "board: tests"`. En Windows sustituye `./dev` por
+`.\dev.cmd`. Las etiquetas de estas tres puertas se declaran en `../../gates.txt`.
+Para instanciar el andamio, añadir una capa o actualizar, usa el lanzador del
+catálogo como se explica en `../../README.md`. El catálogo escribe el registro
+de adopción al crear la instancia.
 
 `build` sale ROJO (`BOARD_RED`) cuando restaura un derivado que tocó una mano o
 una herramienta: sin su huella, con su huella y otro texto, con una fecha
@@ -81,16 +88,17 @@ plantilla traía sellados con sus fechas, y dentro de la propia plantilla se
 niega. `instantiate.py` lo corre sobre la copia; sin `--apply` solo enseña su
 plan.
 
-Los hooks de `../../.githooks/` buscan un Python 3.8 o posterior de la misma
-forma (`python.sh`) y llaman a dos scripts de aquí: `commit_message.py` juzga
-el mensaje de un commit con los datos de `commits.txt`, y `pre_push.py` exige
-que lo que se empuja sea el commit del árbol (HEAD), sin cambios versionados
-sin commitear ni ficheros sin versionar, antes de correr las puertas y otra vez
-después; un push que solo borra ramas remotas no publica nada que verificar y
-pasa sin correrlas. Lo que `.gitignore` excluye no se compara, así que pasar
-aquí no hace del árbol un clon: una puerta que lea algo ignorado (una caché, lo
-restaurado, lo generado) lo prepara desde lo commiteado o lo rechaza cuando ya
-no casa con ello.
+Los hooks de `../../.githooks/` delegan en `../../tools/launcher/dev.sh` para
+ejecutar dos scripts de aquí dentro del contenedor del andamio sin exigir Python
+en el host: `commit_message.py` juzga el mensaje de un commit leído por stdin
+con los datos de `commits.txt`, y `pre_push.py` juzga las instantáneas de Git
+capturadas en el host (exigiendo que lo que se empuja sea el commit del árbol
+HEAD, sin cambios versionados sin commitear ni ficheros sin versionar, antes de
+correr `./dev verify` y otra vez después); un push que solo borra ramas remotas
+no publica nada que verificar y pasa sin correrlas. Lo que `.gitignore` excluye
+no se compara, así que pasar aquí no hace del árbol un clon: una puerta que lea
+algo ignorado (una caché, lo restaurado, lo generado) lo prepara desde lo
+commiteado o lo rechaza cuando ya no casa con ello.
 
 ## Qué lee
 
@@ -123,7 +131,7 @@ no casa con ello.
 - El **árbol**. Con `.git` en la raíz, lo que lista `git ls-files` (lo
   versionado y lo no versionado que `.gitignore` no excluye), con un tope de
   30 s; si git falla, es un hallazgo y el árbol se recorre igual. Sin `.git`,
-  un recorrido. En los dos casos se saltan `.git`, `node_modules`,
+  un recorrido. En los dos casos se saltan `.git`, `.dev-runtime`, `node_modules`,
   `__pycache__`, `.venv`, los árboles `generated`, las cachés que se declaran
   con `CACHEDIR.TAG` (pytest, ruff, mypy) y los entornos virtuales de Python
   (los que llevan un pyvenv.cfg). Con git, un submódulo o un repositorio anidado
@@ -184,8 +192,9 @@ no casa con ello.
    de índices que ya no genera ninguna fuente.
 10. **Todo runner de tests lleva las guardas que declara `gates.txt`.** Una fila
     marcada `[harness]` corre algún fichero del árbol que lleva el nombre
-    canónico de cada guarda, y una fila que corre un fichero con todas ellas
-    lleva la marca. Es la mitad estática; `verify.py` exige además verlas
+    canónico de cada guarda. Para una acción de stack, el tablero resuelve su
+    adaptador a través de la fila `harness` del descriptor del stack. Una fila
+    con todas las guardas lleva la marca. El runner exige además verlas
     impresas en la salida del runner, así que un docstring no basta. Cada
     guarda compara dos cuentas obtenidas por caminos distintos (declarado contra
     arrancado, arrancado contra terminado, terminado contra con-checks): una

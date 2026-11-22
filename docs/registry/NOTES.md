@@ -1,7 +1,7 @@
 # Notas de desarrollo (índice)
 
 GENERADO por tools/board desde `docs/registry/deliveries/` y `docs/registry/lessons/`. No editar a mano: se reescribe.
-board-fingerprint:06fc610f454054ee — su contenido cambió por última vez el 2026-11-19.
+board-fingerprint:b8a32e8b964234c0 — su contenido cambió por última vez el 2026-11-22.
 
 Cada entrega es un fichero `docs/registry/deliveries/<fecha>-<tema>.md` con lo que se hizo, cómo se
 verificó y qué costó; cada lección es un fichero `docs/registry/lessons/<identidad>.md` y se cita como
@@ -9,8 +9,9 @@ verificó y qué costó; cada lección es un fichero `docs/registry/lessons/<ide
 entregas dicen cómo llegó a estar así. Aquí van las más recientes de cada clase; todas,
 mes a mes, en su índice del mes.
 
-## Entregas (17; aquí las 17 más recientes)
+## Entregas (18; aquí las 18 más recientes)
 
+- 2026-11-22 `#2026-11-22-scaffold-upgrade-to-0-7-0` Actualización a agentic-scaffold 0.7.0 y lanzador containerizado sobre frontend/
 - 2026-11-19 `#2026-11-19-scaffold-upgrade-to-0-6-0` Actualización a agentic-scaffold 0.6.0, migración del registro y parches de React
 - 2026-11-11 `#2026-11-11-scaffold-upgrade-to-0-4-0` Actualización a agentic-scaffold 0.4.0, con el tablero como página
 - 2026-10-30 `#2026-10-30-dependency-refresh` Actualización de dependencias y alineación del toolchain de pnpm
@@ -41,6 +42,6 @@ mes a mes, en su índice del mes.
 
 ## Por mes (3 índices)
 
-- `docs/registry/index/notes-2026-11.md` — 2026-11: 2 entregas, 0 lecciones
+- `docs/registry/index/notes-2026-11.md` — 2026-11: 3 entregas, 0 lecciones
 - `docs/registry/index/notes-2026-10.md` — 2026-10: 15 entregas, 0 lecciones
 - `docs/registry/index/notes-2026-09.md` — 2026-09: 0 entregas, 7 lecciones

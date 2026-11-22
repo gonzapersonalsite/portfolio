@@ -45,19 +45,52 @@ import junit
 
 SEPARATOR = "--"
 REPORT_FLAG = "--report"
+CLEAN_ONLY_FLAG = "--clean-only"
+CHECK_ONLY_FLAG = "--check-only"
+EXIT_CODE_FLAG = "--exit-code"
 USAGE = "uso: python tools/guards/dart_test.py --report <fichero> -- <comando ...>"
 START, DONE = "start", "done"
 
 
 def parse_args(argv):
-    """The report path and the command, or an error in words."""
-    if SEPARATOR not in argv:
-        return {"report": "", "command": [], "error": "falta '%s' antes del comando" % SEPARATOR}
-    cut = argv.index(SEPARATOR)
-    options, command = argv[:cut], argv[cut + 1:]
-    if len(options) != 2 or options[0] != REPORT_FLAG or not command:
-        return {"report": "", "command": [], "error": "hacen falta un %s <fichero> y un comando" % REPORT_FLAG}
-    return {"report": options[1], "command": command, "error": ""}
+    """The report path, mode ('run', 'clean', or 'check'), and the command, or an error in words."""
+    if SEPARATOR not in argv and CLEAN_ONLY_FLAG not in argv and CHECK_ONLY_FLAG not in argv:
+        return {"report": "", "command": [], "mode": "run", "exit_code": 0, "error": "falta '%s' antes del comando" % SEPARATOR}
+    if SEPARATOR in argv:
+        cut = argv.index(SEPARATOR)
+        options, command = argv[:cut], argv[cut + 1:]
+    else:
+        options, command = list(argv), []
+    report, mode, exit_code, has_exit = "", "run", 0, False
+    while options:
+        if options[0] == CLEAN_ONLY_FLAG:
+            if mode != "run":
+                return {"report": "", "command": [], "mode": "run", "exit_code": 0, "error": "no se pueden combinar %s y %s" % (CLEAN_ONLY_FLAG, CHECK_ONLY_FLAG)}
+            mode, options = "clean", options[1:]
+            continue
+        if options[0] == CHECK_ONLY_FLAG:
+            if mode != "run":
+                return {"report": "", "command": [], "mode": "run", "exit_code": 0, "error": "no se pueden combinar %s y %s" % (CLEAN_ONLY_FLAG, CHECK_ONLY_FLAG)}
+            mode, options = "check", options[1:]
+            continue
+        if options[0] == EXIT_CODE_FLAG:
+            if len(options) < 2 or not options[1].lstrip("-").isdigit():
+                return {"report": "", "command": [], "mode": "run", "exit_code": 0, "error": "%s necesita un codigo de salida entero" % EXIT_CODE_FLAG}
+            exit_code, has_exit, options = int(options[1]), True, options[2:]
+            continue
+        if options[0] == REPORT_FLAG and len(options) >= 2 and not report:
+            report, options = options[1], options[2:]
+            continue
+        return {"report": "", "command": [], "mode": "run", "exit_code": 0, "error": "hacen falta un %s <fichero> y un comando" % REPORT_FLAG}
+    if mode == "run":
+        if SEPARATOR not in argv:
+            return {"report": "", "command": [], "mode": "run", "exit_code": 0, "error": "falta '%s' antes del comando" % SEPARATOR}
+        if not report or not command or has_exit:
+            return {"report": "", "command": [], "mode": "run", "exit_code": 0, "error": "hacen falta un %s <fichero> y un comando" % REPORT_FLAG}
+    else:
+        if not report or command or (mode == "clean" and has_exit):
+            return {"report": "", "command": [], "mode": "run", "exit_code": 0, "error": "hacen falta un %s <fichero> valido" % REPORT_FLAG}
+    return {"report": report, "command": command, "mode": mode, "exit_code": exit_code, "error": ""}
 
 
 def read_events(text):
@@ -138,17 +171,23 @@ def main(argv):
         print("RESULT: %s" % request["error"])
         return 2
     report = request["report"]
-    unsafe = junit.unsafe_report_path(report, os.getcwd(), junit.tracked_under)
-    if not unsafe and os.path.isdir(report):
-        unsafe = "'%s' es un directorio: el informe de este runner es un fichero" % report
-    if unsafe:
-        print(unsafe)
-        print("RESULT: la ruta del informe no se puede vaciar; no se borro ni se corrio nada")
-        return 2
-    if os.path.isfile(report) and is_report(report):
-        os.remove(report)
+    if request["mode"] in ("run", "clean"):
+        unsafe = junit.unsafe_report_path(report, os.getcwd(), junit.tracked_under)
+        if not unsafe and os.path.isdir(report):
+            unsafe = "'%s' es un directorio: el informe de este runner es un fichero" % report
+        if unsafe:
+            print(unsafe)
+            print("RESULT: la ruta del informe no se puede vaciar; no se borro ni se corrio nada")
+            return 2
+        if os.path.isfile(report) and is_report(report):
+            os.remove(report)
+        if request["mode"] == "clean":
+            return 0
     sys.stdout.flush()
-    code = subprocess.run(junit.shell_line(request["command"]), shell=True, stdin=subprocess.DEVNULL).returncode
+    if request["mode"] == "run":
+        code = subprocess.run(junit.shell_line(request["command"]), shell=True, stdin=subprocess.DEVNULL).returncode
+    else:
+        code = request["exit_code"]
     events, problems = [], []
     if not os.path.isfile(report):
         problems.append("el comando no escribio el informe %s" % report)

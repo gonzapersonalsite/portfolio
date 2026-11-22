@@ -18,9 +18,11 @@ import contextlib
 import errno
 import functools
 import hashlib
+import json
 import math
 import os
 import re
+import shlex
 import signal
 import subprocess
 import sys
@@ -103,6 +105,11 @@ GIT_LOCATION = ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR", 
                 "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_NAMESPACE")
 USAGE = ("uso: python verify.py                       todas las puertas; escribe el veredicto si cambia\n"
          "     python verify.py -- <etiqueta> [...]   solo esas, para iterar; no escribe el veredicto")
+RUNTIME_DIR = ".dev-runtime"
+RUN_ID_SHAPE = re.compile(r"^[0-9a-f]{8,64}$")
+STACK_ACTION_PREFIX = "@stack:"
+STACK_ACTION_SHAPE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,62}$")
+KNOWN_GUARD_ADAPTERS = frozenset({"tools/guards/junit.py", "tools/guards/dart_test.py"})
 
 
 class GatesFileError(Exception):
@@ -1010,16 +1017,272 @@ def store_verdict(rows, root=ROOT):
         return {"changed": True, "error": str(error)}
     return {"changed": True, "error": ""}
 
+# ----------------------------------------------------------------- coordinated execution
+
+def stack_dispatch(raw):
+    """Classify a gate command for host-coordinated container execution:
+    either a typed stack action ('@stack:<action>', optionally wrapped by a
+    known guard adapter before '--') or an in-scaffold command."""
+    try:
+        tokens = shlex.split(raw)
+    except ValueError:
+        return {"executor": "scaffold", "action": "", "guard": None}
+    if len(tokens) == 1 and tokens[0].startswith(STACK_ACTION_PREFIX):
+        action = tokens[0][len(STACK_ACTION_PREFIX):]
+        if STACK_ACTION_SHAPE.match(action):
+            return {"executor": "stack", "action": action, "guard": None}
+    if "--" in tokens:
+        cut = tokens.index("--")
+        tail = tokens[cut + 1:]
+        head = tokens[:cut]
+        if (len(tail) == 1 and tail[0].startswith(STACK_ACTION_PREFIX)
+                and len(head) >= 2 and head[0] == PYTHON_TOKEN
+                and head[1].replace("\\", "/") in KNOWN_GUARD_ADAPTERS):
+            action = tail[0][len(STACK_ACTION_PREFIX):]
+            if STACK_ACTION_SHAPE.match(action):
+                return {"executor": "stack", "action": action,
+                        "guard": {"adapter": head[1].replace("\\", "/"), "args": head[2:]}}
+    return {"executor": "scaffold", "action": "", "guard": None}
+
+
+def run_dir_of(root, run_id):
+    if not RUN_ID_SHAPE.match(run_id):
+        raise ValueError("run_id invalido: %s" % run_id)
+    return os.path.join(root, RUNTIME_DIR, "runs", run_id)
+
+
+def write_json_atomic(path, payload):
+    write_atomically(path, json.dumps(payload, indent=2, sort_keys=True) + "\n")
+
+
+def write_run_verdict(root, run_id, exit_code, rows, red, changed):
+    if not run_id:
+        return
+    path = os.path.join(run_dir_of(root, run_id), "verdict.json")
+    write_json_atomic(path, {
+        "schemaVersion": 1,
+        "runId": run_id,
+        "status": "GREEN" if exit_code == 0 else "RED",
+        "exitCode": exit_code,
+        "changed": bool(changed),
+        "red": list(red),
+        "gates": [{"label": label, "verdict": verdict} for label, verdict in rows],
+    })
+
+
+def emit_plan(gates, filter_labels, guards, root, run_id):
+    selected = [gate for gate in gates if not filter_labels or gate["label"] in filter_labels]
+    steps = []
+    for index, gate in enumerate(selected):
+        dispatch = stack_dispatch(gate["raw"])
+        steps.append({
+            "index": index,
+            "label": gate["label"],
+            "harness": gate["harness"],
+            "reference": gate["reference"],
+            "budget": gate["budget"],
+            "executor": dispatch["executor"],
+            "action": dispatch["action"],
+            "guard": dispatch["guard"],
+        })
+    payload = {
+        "schemaVersion": 1,
+        "runId": run_id,
+        "filtered": bool(filter_labels),
+        "filterLabels": list(filter_labels),
+        "guards": list(guards),
+        "steps": steps,
+    }
+    plan_path = os.path.join(run_dir_of(root, run_id), "plan.json")
+    write_json_atomic(plan_path, payload)
+    tsv_lines = []
+    for step in steps:
+        guard = step["guard"] or {}
+        adapter = guard.get("adapter", "")
+        gargs = " ".join(guard.get("args", []))
+        tsv_lines.append("\t".join([
+            str(step["index"]),
+            step["executor"],
+            step["action"] or "-",
+            str(int(math.ceil(step["budget"]))),
+            adapter or "-",
+            gargs or "-",
+            step["label"],
+        ]))
+    write_atomically(os.path.join(run_dir_of(root, run_id), "plan.tsv"), ("\n".join(tsv_lines) + "\n") if tsv_lines else "")
+    print(json.dumps(payload, sort_keys=True))
+    return 0
+
+
+def run_planned_step(gates, root, run_id, step_index):
+    plan_path = os.path.join(run_dir_of(root, run_id), "plan.json")
+    try:
+        plan_data = json.loads(read_text(plan_path)[0])
+    except (OSError, ValueError) as error:
+        print("RESULT: no se puede leer el plan de corrida %s: %s" % (run_id, error))
+        return 2
+    if plan_data.get("runId") != run_id:
+        print("RESULT: el plan no corresponde a la corrida %s" % run_id)
+        return 2
+    steps = plan_data.get("steps", [])
+    if step_index < 0 or step_index >= len(steps):
+        print("RESULT: indice de paso fuera de rango: %d" % step_index)
+        return 2
+    step = steps[step_index]
+    if step.get("executor") != "scaffold":
+        print("RESULT: el paso %d (%s) pertenece al stack, no al andamio" % (step_index, step.get("label")))
+        return 2
+    by_label = {gate["label"]: gate for gate in gates}
+    gate = by_label.get(step["label"])
+    if gate is None:
+        print("RESULT: puerta no encontrada en gates.txt: %s" % step["label"])
+        return 2
+    result = run_gate(gate["command"], gate["budget"], root)
+    step_path = os.path.join(run_dir_of(root, run_id), "steps", "%d.json" % step_index)
+    write_json_atomic(step_path, {
+        "schemaVersion": 1,
+        "runId": run_id,
+        "index": step_index,
+        "label": gate["label"],
+        "timed_out": bool(result["timed_out"]),
+        "code": result["code"],
+        "lines": result["lines"],
+        "seconds": result["seconds"],
+        "budget": result["budget"],
+        "kill": result["kill"],
+    })
+    return 0
+
+
+def load_step_result(run_dir, idx, step):
+    """Read a step result written either as steps/<idx>.json (by run_planned_step)
+    or as steps/<idx>.meta + steps/<idx>.out (by the host launcher)."""
+    json_path = os.path.join(run_dir, "steps", "%d.json" % idx)
+    if os.path.isfile(json_path):
+        return json.loads(read_text(json_path)[0]), ""
+    meta_path = os.path.join(run_dir, "steps", "%d.meta" % idx)
+    if not os.path.isfile(meta_path):
+        return None, "falta el resultado del paso %d (%s)" % (idx, step["label"])
+    meta = {}
+    for raw in read_text(meta_path)[0].splitlines():
+        if "=" in raw:
+            k, v = raw.split("=", 1)
+            meta[k.strip()] = v.strip()
+    out_path = os.path.join(run_dir, "steps", "%d.out" % idx)
+    lines = []
+    if os.path.isfile(out_path):
+        with open(out_path, "rb") as handle:
+            text = handle.read().decode("utf-8", "replace")
+        lines = [line.rstrip() for line in text.splitlines() if line.strip()]
+    return {
+        "schemaVersion": 1,
+        "runId": meta.get("runId", ""),
+        "index": int(meta.get("index", str(idx))) if meta.get("index", str(idx)).isdigit() else -1,
+        "label": meta.get("label", ""),
+        "timed_out": meta.get("timed_out", "false").lower() == "true",
+        "code": int(meta["code"]) if meta.get("code", "").lstrip("-").isdigit() else 1,
+        "seconds": float(meta["seconds"]) if meta.get("seconds") else 0.0,
+        "budget": step["budget"],
+        "lines": lines,
+        "kill": None,
+    }, ""
+
+
+def finalize_run(gates, root, run_id):
+    run_dir = run_dir_of(root, run_id)
+    plan_path = os.path.join(run_dir, "plan.json")
+    try:
+        plan_data = json.loads(read_text(plan_path)[0])
+    except (OSError, ValueError) as error:
+        print("RESULT: no se puede leer el plan de corrida %s: %s" % (run_id, error))
+        return 2
+    if plan_data.get("runId") != run_id:
+        print("RESULT: el plan no corresponde a la corrida %s" % run_id)
+        return 2
+    guards = plan_data.get("guards", [])
+    filtered = bool(plan_data.get("filtered"))
+    steps = plan_data.get("steps", [])
+    red, rows = [], []
+    for step in steps:
+        idx = step["index"]
+        try:
+            result, missing_why = load_step_result(run_dir, idx, step)
+        except (OSError, ValueError) as error:
+            print("RESULT: resultado ilegible en el paso %d (%s): %s" % (idx, step["label"], error))
+            write_run_verdict(root, run_id, 2, rows, red + [step["label"]], False)
+            return 2
+        if result is None:
+            print("RESULT: %s para la corrida %s" % (missing_why, run_id))
+            write_run_verdict(root, run_id, 2, rows, red + [step["label"]], False)
+            return 2
+        if result.get("runId") != run_id or result.get("label") != step["label"]:
+            print("RESULT: resultado obsoleto o incoherente en el paso %d (%s)" % (idx, step["label"]))
+            write_run_verdict(root, run_id, 2, rows, red + [step["label"]], False)
+            return 2
+        result.setdefault("lines", [])
+        result.setdefault("seconds", 0.0)
+        result.setdefault("budget", step["budget"])
+        result.setdefault("timed_out", False)
+        result.setdefault("kill", None)
+        verdict = TIMEOUT if result["timed_out"] else (GREEN if result["code"] == 0 else RED)
+        tail = "sin veredicto tras su tope de %gs" % result["budget"] if result["timed_out"] and not result["kill"] else last_line(result)
+        if verdict == GREEN and step["harness"]:
+            missing = missing_guards(result["lines"], guards)
+            if missing:
+                verdict, tail = RED, "salio 0 sin imprimir sus guardas: " + ", ".join(missing)
+        print(report_line(step["label"], verdict, result, step["reference"], tail))
+        rows.append((step["label"], verdict))
+        if verdict != GREEN:
+            red.append(step["label"])
+            for line in failure_transcript(result["lines"]):
+                print(line)
+    stored = {"changed": False, "error": ""}
+    if not filtered:
+        stored = store_verdict(rows, root)
+        if stored["error"]:
+            print("WARNING: el veredicto cambio y no se pudo escribir %s (%s): los derivados citan el anterior" % (VERDICT_FILE, stored["error"]))
+        elif stored["changed"]:
+            if not refresh_derived(gates, root) and DERIVED_GATE not in red:
+                red.append(DERIVED_GATE)
+    refreshed = stored["changed"] and not stored["error"] and DERIVED_GATE not in red
+    said = changed_result_line if refreshed else result_line
+    print(said(len(rows), red))
+    exit_code = 1 if red or stored["changed"] else 0
+    write_run_verdict(root, run_id, exit_code, rows, red, stored["changed"])
+    return exit_code
+
 # ----------------------------------------------------------------- command line
 
 def parse_args(argv):
     if argv in (["-h"], ["--help"]):
-        return {"help": True, "labels": [], "error": ""}
+        return {"help": True, "labels": [], "error": "", "mode": "run", "run_id": "", "step_index": -1}
     if not argv:
-        return {"help": False, "labels": [], "error": ""}
+        return {"help": False, "labels": [], "error": "", "mode": "run", "run_id": "", "step_index": -1}
+    if argv[0] == "--emit-plan":
+        if len(argv) < 2 or not RUN_ID_SHAPE.match(argv[1]):
+            return {"help": False, "labels": [], "error": "--emit-plan necesita un run_id hexadecimal valido", "mode": "emit-plan", "run_id": "", "step_index": -1}
+        rest = argv[2:]
+        if rest and (rest[0] != "--" or len(rest) == 1):
+            return {"help": False, "labels": [], "error": "argumentos no reconocidos: %s" % " ".join(rest), "mode": "emit-plan", "run_id": "", "step_index": -1}
+        return {"help": False, "labels": rest[1:] if rest else [], "error": "", "mode": "emit-plan", "run_id": argv[1], "step_index": -1}
+    if argv[0] == "--run-step":
+        if len(argv) != 3 or not RUN_ID_SHAPE.match(argv[1]) or not argv[2].isdigit():
+            return {"help": False, "labels": [], "error": "--run-step necesita <run_id> <indice>", "mode": "run-step", "run_id": "", "step_index": -1}
+        return {"help": False, "labels": [], "error": "", "mode": "run-step", "run_id": argv[1], "step_index": int(argv[2])}
+    if argv[0] == "--finalize":
+        if len(argv) != 2 or not RUN_ID_SHAPE.match(argv[1]):
+            return {"help": False, "labels": [], "error": "--finalize necesita un run_id hexadecimal valido", "mode": "finalize", "run_id": "", "step_index": -1}
+        return {"help": False, "labels": [], "error": "", "mode": "finalize", "run_id": argv[1], "step_index": -1}
+    if argv[0] == "--run-id":
+        if len(argv) < 2 or not RUN_ID_SHAPE.match(argv[1]):
+            return {"help": False, "labels": [], "error": "--run-id necesita un run_id hexadecimal valido", "mode": "run", "run_id": "", "step_index": -1}
+        rest = argv[2:]
+        if rest and (rest[0] != "--" or len(rest) == 1):
+            return {"help": False, "labels": [], "error": "argumentos no reconocidos: %s" % " ".join(rest), "mode": "run", "run_id": "", "step_index": -1}
+        return {"help": False, "labels": rest[1:] if rest else [], "error": "", "mode": "run", "run_id": argv[1], "step_index": -1}
     if argv[0] != "--" or len(argv) == 1:
-        return {"help": False, "labels": [], "error": "argumentos no reconocidos: %s" % " ".join(argv)}
-    return {"help": False, "labels": argv[1:], "error": ""}
+        return {"help": False, "labels": [], "error": "argumentos no reconocidos: %s" % " ".join(argv), "mode": "run", "run_id": "", "step_index": -1}
+    return {"help": False, "labels": argv[1:], "error": "", "mode": "run", "run_id": "", "step_index": -1}
 
 
 def utf8_console():
@@ -1099,7 +1362,7 @@ def interrupted_line(stop, stored):
     return "RESULT: interrumpido (%s); el veredicto no se escribe" % said
 
 
-def run_and_store(gates, filter_labels, guards, root):
+def run_and_store(gates, filter_labels, guards, root, run_id=""):
     stored = {"changed": False, "error": ""}
     try:
         outcome = run_all(gates, filter_labels, guards, root)
@@ -1117,7 +1380,9 @@ def run_and_store(gates, filter_labels, guards, root):
     refreshed = stored["changed"] and not stored["error"] and DERIVED_GATE not in red
     said = changed_result_line if refreshed else result_line
     print(said(len(outcome["rows"]), red))
-    return 1 if red or stored["changed"] else 0
+    code = 1 if red or stored["changed"] else 0
+    write_run_verdict(root, run_id, code, outcome["rows"], red, stored["changed"])
+    return code
 
 
 def result_line(count, red):
@@ -1156,16 +1421,34 @@ def main(argv, root=ROOT):
     if unknown:
         print("RESULT: etiquetas desconocidas -> %s (puertas: %s)" % (", ".join(unknown), ", ".join(labels)))
         return 1
-    try:
-        lock = take_lock(lock_path(root, git_dir_of(root)))
-    except TreeBusy as busy:
-        print("RESULT: no se verifica -> %s" % busy)
-        return REFUSED_EXIT
+    mode = request.get("mode", "run")
+    run_id = request.get("run_id", "")
+    if mode == "emit-plan":
+        return emit_plan(gates, filter_labels, listing["guards"], root, run_id)
+    if mode == "run-step":
+        with stop_signals():
+            return run_planned_step(gates, root, run_id, request["step_index"])
+    if mode == "finalize":
+        with stop_signals():
+            return finalize_run(gates, root, run_id)
+    stack_gates = [gate["label"] for gate in gates if (not filter_labels or gate["label"] in filter_labels) and stack_dispatch(gate["raw"])["executor"] == "stack"]
+    if stack_gates:
+        print("RESULT: estas puertas corren en el contenedor del stack (%s): lanza la verificacion mediante ./dev verify o .\\dev.cmd verify"
+              % ", ".join(stack_gates))
+        return 2
+    lock = None
+    if not (os.environ.get("DEV_HOST_LOCK") == "1" and run_id):
+        try:
+            lock = take_lock(lock_path(root, git_dir_of(root)))
+        except TreeBusy as busy:
+            print("RESULT: no se verifica -> %s" % busy)
+            return REFUSED_EXIT
     try:
         with stop_signals():
-            return run_and_store(gates, filter_labels, listing["guards"], root)
+            return run_and_store(gates, filter_labels, listing["guards"], root, run_id)
     finally:
-        release_lock(lock)
+        if lock is not None:
+            release_lock(lock)
 
 
 if __name__ == "__main__":

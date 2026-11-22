@@ -1,0 +1,8 @@
+FROM python:3.15.2-trixie@sha256:cc8e02af50fcaf0944fd02158cd77abce78eb4b41ac0217a8434bbc475225e09
+ARG TPL_UID=1000
+ARG TPL_GID=1000
+RUN (getent group "$TPL_GID" >/dev/null || groupadd --gid "$TPL_GID" dev) \
+    && (getent passwd "$TPL_UID" >/dev/null || useradd --uid "$TPL_UID" --gid "$TPL_GID" --create-home --shell /bin/bash dev) \
+    && git config --system --add safe.directory /workspace
+USER ${TPL_UID}:${TPL_GID}
+WORKDIR /workspace

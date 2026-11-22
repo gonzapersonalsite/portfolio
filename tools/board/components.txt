@@ -30,7 +30,7 @@
 # pending   : '<id> | <path> | <what>': what an applied upgrade left to do by
 #             hand, in every plan until `upgrade.py --done <path>`.
 
-component layer:react-vite | 16f19536e03771a0a45e746d289b9f8c1bd613b8 | -
+component layer:react-vite | d086d1ee0b82b606399ec931ee5c2c57996389f7 | -
 file layer:react-vite | .agents/skills/react-fsd-maintainer/SKILL.md | 40b101df588f8632c13073a5000de07be5c1e463ca7debdfe6244d41043287a8
 item layer:react-vite | tools/board/documents.txt | document | - | 05e1d7309f9c1a39ca140a0a9aeaa8ffdb57018014a252a7eb7651873d7477f4
 item layer:react-vite | tools/board/documents.txt | document | - | 07df23320c3b7c7f9b854594bfb1621e3fefa79238f9d8e7ebaaf45306849898
@@ -44,18 +44,21 @@ item layer:react-vite | tools/board/documents.txt | document | - | 6d84715c1aa77
 item layer:react-vite | tools/board/documents.txt | document | - | 8a2e0fab83d8690685c3e30fa39dfa07e7887a21585316417d5f042d0a59ae09
 item layer:react-vite | tools/board/documents.txt | document | - | 9d2e4cb7c56e4a69b05bd4c9a9a166400b383a2e91b9d0644ff7b8367a26155d
 item layer:react-vite | tools/board/documents.txt | document | - | e95cd302113a1f2ef8a8f4a6f3ecec98187f59f291bf968cc90bbe05b669ffb9
-item layer:react-vite | gates.txt | gate | build | 1f8438e39828d658b7f6a9f23e9fd1dbb12f93feb3fa755369b390588545b3b5
-item layer:react-vite | gates.txt | gate | dependencies | b6c86160dc171a173b67b32b42e79829c1a5cb98083b3146e349d50c929cf3a7
-item layer:react-vite | gates.txt | gate | format | 31da03c880b6a30b5d899d0acb35bbd2d07a0968376700abf81a9f9504c20a20
-item layer:react-vite | gates.txt | gate | lint | a29103deda44fc9c07f02a0290e545f9a2b2ba63918fa9093e34388476d86a7f
-item layer:react-vite | gates.txt | gate | tests | e4da82acbf33bcedf74bac9d895b7df561249ffd60cf5cd50103ea80e68e4c87
-item layer:react-vite | gates.txt | gate | typecheck | 645125e7c9201fb2f8022cc98bad151c7c4cdf87d320bc329a91ac8f20e67373
+item layer:react-vite | gates.txt | gate | build | 8651f5dc0dbf6d2f92b63ba2b053ea41a90aaa431bb843b1b12681a603805fbc
+item layer:react-vite | gates.txt | gate | dependencies | 52d70b4c51078b02f5547f5e2d13fa3b9135d3bd4ab036101833c0a4aa1946ea
+item layer:react-vite | gates.txt | gate | format | fcc15994936c28caf9bf700c778cb373b1cde4803e7b479289cefbafa812e16e
+item layer:react-vite | gates.txt | gate | lint | 572fc5abd97507907f777d56b0201a62b0bd1d6c0b75819ce0b193e017476d76
+item layer:react-vite | gates.txt | gate | tests | 16119ca36f6de3bb2c534200cde482de452a5446e3ee86bc7462f9d0a3ffe4c6
+item layer:react-vite | gates.txt | gate | typecheck | da6ff7336709098fd1e3f146cca589614ff8cdc5af71c683cc69524ac637ec0b
 item layer:react-vite | .gitignore | ignore | - | 760cbee9ff011897924015f51e8e84d071a5da3b0d0d1a5cf91a646a259a4908
 item layer:react-vite | .gitignore | ignore | - | 887f42eeae4276a8ba8ed3e14ec6567107ed2760d18ea7303cc715a38670fbea
 item layer:react-vite | .gitignore | ignore | - | f1a9a09b226cf8e98a4286200c5d9ebd5c28924707ac3317947f8ecf06ab167b
 item layer:react-vite | AGENTS.md | skill | - | bb28bd982e9aace3172c57e39bb4fe46a147a970f10b80aa9b82db0dcf4dfb98
 
-component stack:react-fsd | 27df3cfdb3a1dbbdaf19ea4425ca99c92528ad74 | project=portafolio
+component stack:react-fsd | d086d1ee0b82b606399ec931ee5c2c57996389f7 | project=portafolio
+file stack:react-fsd | .dockerignore | 3938ba708be745344d0092ca1dd4eb88d315837e19455601e121af8dea0c9864
+file stack:react-fsd | Dockerfile | 81440479b57ec57f79413507392c6afd0fedc4522b825736cb3f7fdc83f4195e
+file stack:react-fsd | compose.yaml | 3defdfa80e93b3c65ab7e7d74c97657db2dc46eb2a08f105f2b330d202b8d5e8
 file stack:react-fsd | docs/ARCHITECTURE.md | 654535db78a84c79ec1e1accaf2234d09f61f9e6c1ad0b075485300876c88c23
 file stack:react-fsd | eslint-fsd-gaps.js | kept
 file stack:react-fsd | eslint-tests.js | kept
@@ -72,6 +75,9 @@ file stack:react-fsd | tooling/agent-files/shell.ts | kept
 file stack:react-fsd | tooling/agent-files/sitemap.ts | kept
 file stack:react-fsd | tooling/agent-files/vitePlugin.test.ts | kept
 file stack:react-fsd | tooling/agent-files/vitePlugin.ts | kept
+file stack:react-fsd | tools/install-pnpm.py | a865a608f5d1aa30a02e837be2819a653e45fd11712433fb71950b5b864c69d7
+file stack:react-fsd | tools/react.sh | f08b0b8cb0835499d9ed92d311d52f0ea170eea19c4dd064098ee3c23d2ac7e6
+file stack:react-fsd | tools/stack.txt | 7d98b4ee10be01009a55bce0ebf35540a8beb662c93e65b68989f205809a8924
 file stack:react-fsd | vitest.setup.ts | kept
 
-applied 4948119a82832a79f2c66380f8f29ca8a0630811
+applied d086d1ee0b82b606399ec931ee5c2c57996389f7

@@ -108,7 +108,7 @@ DOMAIN_KEY = "domain"
 # what happened lately; every one of them is in the index of its month.
 RECENT_NOTES = 20
 UNDATED = "undated"
-SKIPPED_TREES = {".git", "__pycache__", ".venv", "node_modules"}
+SKIPPED_TREES = {".git", "__pycache__", ".venv", "node_modules", ".dev-runtime"}
 # A directory that says what it is is skipped too, whatever its name: a cache
 # tagged by the Cache Directory Tagging Specification (pytest, ruff and mypy
 # write one) or a Python virtual environment.
@@ -1414,6 +1414,26 @@ def named_files(command, files):
     return named
 
 
+def harness_sources(gates, files, reader):
+    """Resolve ordinary commands and the guard used by a typed stack action."""
+    stack_guards = {}
+    if "tools/stack.txt" in files:
+        for line in reader.unjudged("tools/stack.txt").splitlines():
+            if line.startswith("harness "):
+                action, separator, path = line[len("harness "):].partition("|")
+                if separator and path.strip() in files:
+                    stack_guards.setdefault(action.strip(), []).append(path.strip())
+    rows = []
+    for gate in gates:
+        paths = named_files(gate["raw"], files)
+        dispatch = V.stack_dispatch(gate["raw"])
+        if dispatch["executor"] == "stack":
+            paths.extend(stack_guards.get(dispatch["action"], []))
+        rows.append({"label": gate["label"], "harness": gate["harness"], "line": gate["line"],
+                     "named": {path: reader.unjudged(path) for path in paths}})
+    return rows
+
+
 def harnesses_carry_every_guard(rows, guards):
     """The static half: the files a [harness] row runs carry the name of every
     guard, and a row whose files carry them all is marked [harness]. The
@@ -2247,7 +2267,7 @@ def page_gates(model):
         return text + '<p class="note"><b>NO DERIVABLE:</b> no hay veredicto guardado. Lo escribe %s en su próxima corrida completa.</p>\n</div>\n</section>\n' % mono(RUNNER_FILE)
     text += ('<p class="note">Veredicto de la última corrida completa de %s. Solo se reescribe cuando el veredicto CAMBIA, así que su fecha dice'
              " desde cuándo es verdad: <b>%s</b>. El detalle de cada puerta no se guarda a propósito, porque una cifra envejece: para verlo se"
-             " corre %s.</p>\n</div>\n<div class=\"gates\">\n") % (mono(RUNNER_FILE), html.escape(model["gates"]["date"]), mono("python " + RUNNER_FILE))
+             " corre %s.</p>\n</div>\n<div class=\"gates\">\n") % (mono(RUNNER_FILE), html.escape(model["gates"]["date"]), mono("./dev verify (Windows: .\\dev.cmd verify)"))
     for row in rows:
         green = row["verdict"] == GREEN
         text += '<div class="gate"><span class="name">%s</span><span class="%s">%s</span><span class="last">%s</span></div>\n' % (
@@ -3130,8 +3150,7 @@ def inspect(root, day=None):
         ("declared authority", lambda: authority_rows_are_declared(authority_rows, declared, extensions, CONTRACT)),
         ("current derivatives", derived_current),
         ("harness guards", lambda: harnesses_carry_every_guard(
-            [{"label": g["label"], "harness": g["harness"], "line": g["line"], "named": {p: reader.unjudged(p) for p in named_files(g["raw"], set(listing["files"]))}}
-             for g in gates["rows"]], gates["guards"])),
+            harness_sources(gates["rows"], set(listing["files"]), reader), gates["guards"])),
         ("skills", skills_check),
         ("executable hooks", executable_hooks),
         ("engine", engine_unchanged),

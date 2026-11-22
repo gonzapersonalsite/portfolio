@@ -1,0 +1,32 @@
+services:
+  scaffold:
+    build:
+      context: .
+      dockerfile: Dockerfile.scaffold
+      args:
+        TPL_UID: "${TPL_UID:-1000}"
+        TPL_GID: "${TPL_GID:-1000}"
+    image: "${TPL_SCAFFOLD_IMAGE:?use the project launcher}"
+    user: "${TPL_USER:-1000:1000}"
+    init: true
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    network_mode: none
+    working_dir: /workspace
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUTF8: "1"
+      DEV_HOST_LOCK: "1"
+      DEV_IN_CONTAINER: "1"
+      TPL_RUN_ID: "${TPL_RUN_ID:-}"
+      TPL_CHECKOUT_ID: "${TPL_CHECKOUT_ID:-}"
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,exec,mode=1777
+    volumes:
+      - type: bind
+        source: "${TPL_ROOT:-../..}"
+        target: /workspace
+    entrypoint: ["python3"]

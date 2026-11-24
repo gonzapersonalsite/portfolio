@@ -674,6 +674,70 @@ describe('every test runs', () => {
   })
 })
 
+describe('a font size follows the text size the reader chose', () => {
+  it.each([
+    ['a number', 'src/shared/config/sizes.ts', 'export const badge = { fontSize: 12 }\n'],
+    ['a px value', 'src/shared/config/sizes.ts', "export const badge = { fontSize: '12px' }\n"],
+    ['a quoted key', 'src/shared/config/sizes.ts', "export const badge = { 'fontSize': 12 }\n"],
+    [
+      'a px value built from a template',
+      'src/shared/config/sizes.ts',
+      'export const badge = { fontSize: `${12}px` }\n',
+    ],
+    [
+      'a number for one breakpoint',
+      'src/shared/config/sizes.ts',
+      "export const badge = { fontSize: { xs: 14, sm: '1rem' } }\n",
+    ],
+    [
+      'a px value for one breakpoint',
+      'src/shared/config/sizes.ts',
+      "export const badge = { fontSize: { xs: '0.8rem', sm: '14px' } }\n",
+    ],
+    ['a number in sx', 'src/shared/ui/Badge.tsx', 'export const Badge = () => <span sx={{ fontSize: 12 }} />\n'],
+    ['a number as an attribute', 'src/shared/ui/Badge.tsx', 'export const Badge = () => <span fontSize={12} />\n'],
+    ['a px value as an attribute', 'src/shared/ui/Badge.tsx', 'export const Badge = () => <span fontSize="12px" />\n'],
+    ['a number in a logic segment', 'src/entities/project/model/sizes.ts', 'export const badge = { fontSize: 12 }\n'],
+    [
+      'a number in the styles of the file that holds the drawing',
+      'src/widgets/pixel-goblin/ui/PixelGoblin.tsx',
+      'export const Goblin = () => <span sx={{ fontSize: 12 }} />\n',
+    ],
+  ])('rejects %s', async (_case, path, code) => {
+    expect(await rulesBrokenBy(path, code)).toEqual(['no-restricted-syntax'])
+  })
+
+  it.each([
+    ['rem', 'src/shared/config/sizes.ts', "export const badge = { fontSize: '0.75rem' }\n"],
+    ['em', 'src/shared/config/sizes.ts', "export const badge = { fontSize: '1.2em' }\n"],
+    ['the size it inherits', 'src/shared/config/sizes.ts', "export const badge = { fontSize: 'inherit' }\n"],
+    [
+      'a clamp between rem values',
+      'src/shared/config/sizes.ts',
+      "export const badge = { fontSize: 'clamp(0.875rem, 4.2vw, 1rem)' }\n",
+    ],
+    [
+      'rem for each breakpoint',
+      'src/shared/config/sizes.ts',
+      "export const badge = { fontSize: { xs: '1rem', sm: '1.25rem' } }\n",
+    ],
+    ['a named size of an icon', 'src/shared/ui/Badge.tsx', 'export const Badge = () => <span fontSize="small" />\n'],
+    [
+      'a number in another property',
+      'src/shared/config/sizes.ts',
+      "export const badge = { fontWeight: 700, lineHeight: 1.2, padding: '10px 20px' }\n",
+    ],
+    [
+      'the glyphs of the drawing, sized in the units of its viewBox',
+      'src/widgets/pixel-goblin/ui/PixelGoblin.tsx',
+      'export const Goblin = () => (\n  <svg viewBox="0 0 96 96">\n    <text fontSize={9}>?</text>\n  </svg>\n)\n',
+    ],
+    ['a test', 'src/shared/ui/Badge.extra.test.ts', 'export const badge = { fontSize: 12 }\n'],
+  ])('accepts %s', async (_case, path, code) => {
+    expect(await reportsOn(path, code)).toEqual([])
+  })
+})
+
 describe('exceptions live in the configuration', () => {
   it('does not let a comment switch a rule off, and warns about the comment', async () => {
     const code = "/* eslint-disable */\nimport { createPortal } from 'react-dom'\nexport const portal = createPortal\n"

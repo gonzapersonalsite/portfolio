@@ -145,4 +145,15 @@ describe('ThemeSelector', () => {
     expect(window.localStorage.getItem('animationsPaused')).toBe('false')
     expect(screen.getByRole('menu', { name: 'Theme: Dark' })).toBeTruthy()
   })
+
+  it('keeps the disabled animations item at full opacity, so its focus indicator and its reason can be read', () => {
+    fakeReducedMotion(true)
+    renderSelector()
+    fireEvent.click(screen.getByRole('button', { name: 'Theme: Dark' }))
+
+    const animations = screen.getByRole('menuitemcheckbox', { name: 'Animations' })
+
+    expect(animations.getAttribute('aria-disabled')).toBe('true')
+    expect(getComputedStyle(animations).opacity).toBe('1')
+  })
 })

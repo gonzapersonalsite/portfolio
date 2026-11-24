@@ -39,6 +39,28 @@ const NO_OWN_REQUESTS =
   'src/ sends no request of its own: the only network call is the EmailJS SDK in features/contact-form/api, and a new one is an owner decision (the CSP connect-src allows only the site itself and https://api.emailjs.com).'
 const EVERY_TEST_RUNS =
   'a test that does not run checks nothing: make it pass or delete it; an exception is decided in eslint.config.js.'
+const FONT_SIZE_FOLLOWS_THE_READER =
+  'a font size is written in rem or em: a number or a px value stays fixed when the reader enlarges the text of the browser (DESIGN.md).'
+
+// A font size as a number or in px, where a style object states it: the value itself, or the
+// values of the object that gives one per breakpoint. A raw that opens with a digit is a number.
+const FIXED_SIZE = ':matches(Literal[raw=/^[0-9.]/], Literal[raw=/[0-9]px/], TemplateElement[value.raw=/[0-9]px/])'
+const FONT_SIZE_KEY = 'Property:matches([key.name="fontSize"], [key.value="fontSize"])'
+const NO_FIXED_FONT_SIZE_IN_STYLES = [
+  `${FONT_SIZE_KEY} > ${FIXED_SIZE}`,
+  `${FONT_SIZE_KEY} > TemplateLiteral > ${FIXED_SIZE}`,
+  `${FONT_SIZE_KEY} > ObjectExpression > Property > ${FIXED_SIZE}`,
+  `${FONT_SIZE_KEY} > ObjectExpression > Property > TemplateLiteral > ${FIXED_SIZE}`,
+].map((selector) => ({ selector, message: FONT_SIZE_FOLLOWS_THE_READER }))
+// The same in a fontSize attribute, which a MUI component reads as a style.
+const NO_FIXED_FONT_SIZE_IN_ATTRIBUTES = [
+  `JSXAttribute[name.name="fontSize"] > ${FIXED_SIZE}`,
+  `JSXAttribute[name.name="fontSize"] > JSXExpressionContainer > ${FIXED_SIZE}`,
+].map((selector) => ({ selector, message: FONT_SIZE_FOLLOWS_THE_READER }))
+const NO_FIXED_FONT_SIZE = [...NO_FIXED_FONT_SIZE_IN_STYLES, ...NO_FIXED_FONT_SIZE_IN_ATTRIBUTES]
+// The drawing of the goblin sizes its glyphs in the units of its viewBox: they are part of an
+// image that scales as a whole, not text beside the reader's.
+const SVG_DRAWINGS = ['src/widgets/pixel-goblin/ui/PixelGoblin.tsx']
 
 // What a logic segment may not import, statically or dynamically: a ui segment,
 // any entry of react-dom, the JSX runtimes, this site's UI kit and its styling
@@ -103,6 +125,16 @@ export default defineConfig([
     },
   },
   {
+    // The first object that gives this rule options: each later one that gives it others repeats these.
+    files: [SOURCES],
+    ignores: [TESTS],
+    rules: { 'no-restricted-syntax': ['error', ...NO_FIXED_FONT_SIZE] },
+  },
+  {
+    files: SVG_DRAWINGS,
+    rules: { 'no-restricted-syntax': ['error', ...NO_FIXED_FONT_SIZE_IN_STYLES] },
+  },
+  {
     files: [`${LOGIC_SEGMENTS}/*.{ts,tsx}`],
     ignores: [TESTS],
     rules: {
@@ -116,7 +148,7 @@ export default defineConfig([
           patterns: UI_MODULES.map((regex) => ({ regex, message: NO_UI_IN_LOGIC })),
         },
       ],
-      'no-restricted-syntax': ['error', NO_UI_DYNAMIC_IMPORT],
+      'no-restricted-syntax': ['error', NO_UI_DYNAMIC_IMPORT, ...NO_FIXED_FONT_SIZE],
     },
   },
   {
@@ -128,6 +160,7 @@ export default defineConfig([
         'error',
         { selector: 'Program', message: `A .tsx file is UI: ${NO_UI_IN_LOGIC}` },
         NO_UI_DYNAMIC_IMPORT,
+        ...NO_FIXED_FONT_SIZE,
       ],
     },
   },

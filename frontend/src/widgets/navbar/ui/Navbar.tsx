@@ -21,7 +21,14 @@ import { useTranslation } from 'react-i18next'
 import { LanguageSelector, useLanguage } from '@/features/language-switch'
 import { ThemeSelector, useColorMode } from '@/features/theme-switch'
 import { getProfile } from '@/entities/profile'
-import { APP_ROUTES, findAppRoute, glassColors, glassEffects, localizedPath } from '@/shared/config'
+import {
+  APP_ROUTES,
+  NARROW_FOR_ITS_TEXT,
+  findAppRoute,
+  glassColors,
+  glassEffects,
+  localizedPath,
+} from '@/shared/config'
 import { useContent } from '@/shared/lib'
 
 const MOBILE_NAV_ID = 'mobile-navigation'
@@ -148,6 +155,8 @@ const Navbar: React.FC = () => {
                     color: textColor,
                     textDecoration: 'none',
                     whiteSpace: 'nowrap',
+                    // One line no longer fits beside the menu and both selectors.
+                    [NARROW_FOR_ITS_TEXT]: { whiteSpace: 'normal', lineHeight: 1.15 },
                   }}
                 >
                   <Brand logoText={profile.logoText} />

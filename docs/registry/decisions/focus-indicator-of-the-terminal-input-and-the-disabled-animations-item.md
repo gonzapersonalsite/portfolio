@@ -1,28 +1,35 @@
 ---
-title: Está por decidir qué dibuja el foco del teclado en el campo de la terminal y en la opción de animaciones deshabilitada
-state: open
+title: La terminal del 404 conserva el contorno del navegador y la opción de animaciones es alcanzable con opacidad completa
+state: confirmed
 date: 2026-11-24
 domain: interface
 phase: none
 ---
-**Está por decidir qué dibuja el foco del teclado en dos controles donde hoy
-no se distingue.** En el resto del sitio cada parada del tabulador dibuja su
-foco, y `DESIGN.md` lo enuncia. Las dos salvedades, medidas en
-`#2026-11-24-design-guide-and-current-operations-docs`:
+**Tanto el campo de comandos de la página 404 como la opción deshabilitada «Animaciones»
+muestran su foco al navegar con teclado y explican su estado sin ocultarlo.**
 
-- **El campo de la terminal de la página 404**
-  (`frontend/src/pages/not-found/ui/NotFoundPage.tsx`) quita su contorno. Con
-  el foco solo se ve el cursor de texto, que parpadea.
-- **La opción «Animaciones» del selector de tema**
-  (`frontend/src/features/theme-switch/ui/ThemeSelector.tsx`), cuando el
-  sistema pide menos movimiento, está deshabilitada y sigue recibiendo el foco
-  para que se pueda leer por qué. Material UI no marca el foco de un elemento
-  deshabilitado, así que esa parada no dibuja nada.
+- **Terminal del 404 (`NotFoundPage.tsx`).** El campo de entrada conserva el contorno de
+  foco propio del navegador con separación (`outlineOffset`) en lugar de suprimirlo,
+  cubierto por `NotFoundPage.test.tsx` y medido en Chrome sobre los temas claro, oscuro y
+  Liquid Glass por encima del mínimo `3:1`.
+- **Opción de animaciones (`ThemeSelector.tsx`).** El menú declara `disabledItemsFocusable`
+  para permitir recorrer la opción con teclado aun cuando `reducedMotion` la deshabilita,
+  conserva opacidad `1` en el elemento deshabilitado para que su foco y motivo en
+  `aria-describedby` sigan legibles y atenúa solo la etiqueta principal
+  (`ThemeSelector.test.tsx`).
 
-Lo que hay que decidir es el aspecto de cada foco, porque cualquiera de las
-salidas cambia cómo se ve un estado: en el campo, un contorno propio o el del
-navegador; en la opción, dibujar el foco también deshabilitada, dejarla
-habilitada diciendo que manda el sistema, o sacarla del recorrido.
+Propuesto por el agente bajo la delegación del dueño («No quiero deuda de ningun tipo»,
+«Dejo a tu preferencia recomendados») y verificado en
+`#2026-11-24-interface-decisions-closed-before-redesign`.
 
-No abre fase: las tres del plan están hechas. Tropieza con ella la primera
-parte que toque la página 404 o el selector de tema.
+**Confirmada por delegación del dueño**, que en un turno posterior, con la refutación de
+abajo escrita, delegó su revisión: «todo entra confirmado no dejes nada provisional» y «Tu
+decides por el bien de cada proyecto».
+
+## Refutación
+
+En contra: dibujar un marco propio alrededor del campo de la terminal o saltar del teclado
+una opción deshabilitada oculta el cursor de teclado o impide leer por qué no se puede
+activar las animaciones. Se mantiene: delegar en el contorno del navegador en la terminal y
+conservar el foco y opacidad legible en el menú resuelve ambos casos sin inventar estética
+nueva, a la espera del rediseño visual (`#choices-of-look-wait-for-the-visual-redesign`).

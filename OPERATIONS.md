@@ -24,13 +24,13 @@ The project is **static-only** — a single deployment, zero servers.
   - Vercel dashboard: set Install Command to `pnpm install` and Build Command to `pnpm run build`.
 
 ### 🌐 Hosting configuration (`frontend/vercel.json`)
-- **No rewrites:** every route is an HTML file of its own. Any other address, a missing asset or image included, gets `404.html` with status 404 (the app on that page renders `NotFoundPage` with navigation back to the home page). There is no `/favicon.ico`: pages link the icons in `/icons/`.
+- **No rewrites:** every route is an HTML file of its own. Any other address, a missing asset or image included, gets 404.html with status 404 (the app on that page renders `NotFoundPage` with navigation back to the home page). There is no `/favicon.ico`: pages link the icons in /icons/.
 - **Security headers:** `Content-Security-Policy`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` and `Permissions-Policy` on every response. The CSP allows scripts from the site plus the theme script inlined in `index.html` (by its `sha256` hash), inline styles (Emotion), images and fonts from the site only, and network requests to the site itself and EmailJS only.
   - If you edit the inline script in `index.html`, the `tests` gate fails and prints its new `'sha256-…'` value: put it in the CSP.
   - A new third-party service (analytics, fonts, embeds) needs its host in the matching CSP directive, or the browser blocks it. Vercel's preview toolbar is blocked too, on preview deployments only.
 - **Cache:** `/assets/*`, `/images/*` and `/icons/*` are immutable for one year (see *Cache immutability* below); `index.html` is always revalidated.
 - **Markdown twins** (`*.md`) are served with `X-Robots-Tag: noindex`: agents read them, search engines index the HTML pages.
-- **After a deploy**, check with `curl -I`: `/about` and `/projects/` return 200 with their own `<title>`; `/nope` and `/assets/nope.js` return 404; `/about/index.md` carries `X-Robots-Tag: noindex`; `/icons/g-monogram.svg` carries the immutable `Cache-Control`; every response carries `Content-Security-Policy`.
+- **After a deploy**, check with `curl -I`: `/about` and /projects/ return 200 with their own `<title>`; `/nope` and /assets/nope.js return 404; /about/index.md carries `X-Robots-Tag: noindex`; `/icons/g-monogram.svg` carries the immutable `Cache-Control`; every response carries `Content-Security-Policy`.
 
 ---
 
@@ -51,8 +51,8 @@ Node.js, pnpm and Python run inside the project's containers: the host needs Doc
 
 - **One entry point.** `./dev` (`.\dev.cmd` on Windows) is the launcher (`tools/launcher/`): it runs every step in a container described by `compose.yaml`, `Dockerfile` and `tools/stack.txt`, and `./dev status` says whether a server of this checkout is running.
 - **Dependencies.** `./dev prepare` builds the images and installs exactly what `frontend/pnpm-lock.yaml` pins, with every install script disabled (`tools/react.sh`). `frontend/node_modules` is a Docker volume of the checkout, not a folder of the host.
-- **Development server.** `./dev start` serves the app with hot reload at `http://127.0.0.1:5173/` (`./dev start --port <n>` publishes it on another port) and `./dev stop` stops it. It is published on the loopback address only: nothing in the repository exposes it to the local network. It also serves `llms.txt`, `robots.txt`, `sitemap.xml` and the markdown twins; the per-route HTML shells (titles, canonical links, JSON-LD) and `404.html` only exist in the build output.
-- **Production preview.** `./dev build` writes `frontend/dist/`, and `./dev start --preview` serves that bundle at `http://127.0.0.1:4173/`; open a route's shell at its trailing-slash address (e.g. `/about/`). One server runs per checkout: stop the development server before starting the preview.
+- **Development server.** `./dev start` serves the app with hot reload at `http://127.0.0.1:5173/` (`./dev start --port <n>` publishes it on another port) and `./dev stop` stops it. It is published on the loopback address only: nothing in the repository exposes it to the local network. It also serves llms.txt, robots.txt, `sitemap.xml` and the markdown twins; the per-route HTML shells (titles, canonical links, JSON-LD) and 404.html only exist in the build output.
+- **Production preview.** `./dev build` writes `frontend/dist/`, and `./dev start --preview` serves that bundle at `http://127.0.0.1:4173/`; open a route's shell at its trailing-slash address (e.g. /about/). One server runs per checkout: stop the development server before starting the preview.
 - **Formatting.** `./dev format-fix` rewrites what the `format` gate rejects.
 - **Git hooks.** They live in `.githooks/` and are enabled once per clone with `git config core.hooksPath .githooks`. Both call the launcher: `commit-msg` checks the commit message (`tools/board/commit_message.py`) and `pre-push` runs the gates, as *CI/CD Pipeline* says above.
 
@@ -65,7 +65,7 @@ Verified on **2026-10-14**: `pnpm lint`, all 350 tests in 47 files, `pnpm build`
 - Disable cache and throttle the network, then open a gallery. Confirm a named loading indicator, stable image area, usable navigation/close, and disabled zoom until the selected image loads. Move between images before requests finish and reopen a cached image; an old result must not replace the current state.
 - Block a selected `-full.webp` request. Confirm the error text and Retry action; unblock it and retry once. Keep keyboard focus stable through retry/success, and confirm that closing returns focus to the opener. Repeat at narrow widths and with reduced motion.
 - Block the application entry bundle and reload a route. The initial HTML must show only the portfolio brand and a named indeterminate indicator, with no visible language-dependent copy. Its CSS rotation continues until React replaces it and is disabled with reduced motion. Also block the app stylesheet to verify the inline presentation. Restore requests and reload: React must replace it without an imposed wait.
-- Disable JavaScript on a generated route shell and `404.html`: the startup indicator must disappear and the no-JS text links must work. This fallback is generated by the build, so test with the production preview (`./dev start --preview`), not the dev server. Check all three themes and reduced motion with JavaScript enabled.
+- Disable JavaScript on a generated route shell and 404.html: the startup indicator must disappear and the no-JS text links must work. This fallback is generated by the build, so test with the production preview (`./dev start --preview`), not the dev server. Check all three themes and reduced motion with JavaScript enabled.
 
 Design references checked before implementation:
 
@@ -96,7 +96,7 @@ Content lives in `src/entities/<entity>/api/data.json`:
 **Add a project:** append an object to the projects array with `id` (slug), bilingual texts, `technologies`, `images`, `links`, `type`, `featured`, and the next `order` value. To place a project elsewhere, insert it at that position and renumber the `order` of the entries after it: the array must stay sorted by `order`.
 
 - `images` is the gallery in order; the first one is the card cover. Each entry is `{ "base": "/images/projects/<slug>/<NN>-<name>", "fullWidth": <width of the -full file in px>, "altEn": "…", "altEs": "…" }`, where `<NN>` is its gallery position (`00`, `01`, …) and the alt texts describe what the screenshot shows (at most 250 characters; the gallery also shows them as captions). The tests check that the three variants exist (see below) and that `fullWidth` matches the file.
-- `links` is the list of card buttons, in order: `{ "kind": "site" | "download" | "googlePlay" | "repository" | "documentation", "url": "https://…" }`. `site`, `download` and `googlePlay` are primary (filled buttons; `llms.txt` uses the first primary link); `repository` and `documentation` are secondary. Leave out a private repository rather than linking a page visitors cannot open, and say in the description that the source code is private.
+- `links` is the list of card buttons, in order: `{ "kind": "site" | "download" | "googlePlay" | "repository" | "documentation", "url": "https://…" }`. `site`, `download` and `googlePlay` are primary (filled buttons; llms.txt uses the first primary link); `repository` and `documentation` are secondary. Leave out a private repository rather than linking a page visitors cannot open, and say in the description that the source code is private.
 - **New kind of link** (e.g. an App Store button): add it to `PROJECT_LINK_KINDS` in `src/entities/project/model/projectLinks.ts` (label key and emphasis), its label under `projects.links` in `src/shared/config/i18n.ts` (EN and ES, sentence case in Spanish), its twin label in `tooling/agent-files/labels.ts` and its icon in `LINK_ICONS` (`src/entities/project/ui/ProjectCard.tsx`). TypeScript and `labels.test.ts` fail until all four exist; the card logic does not change.
 
 **Card description:** the card shows the first paragraph and a *Read more* button for the rest, so the first paragraph should say on its own what the project is and what it is built with.
@@ -107,7 +107,7 @@ Content lives in `src/entities/<entity>/api/data.json`:
 
 **Animations:** the theme menu can pause or resume the availability dot and the floating Home card together. The choice is saved for later visits; if site storage is blocked, it still works for the current session. The system's reduced-motion preference takes priority and is explained in the menu. Glass keeps a static ambient background; pausing affects only the small decorative animations.
 
-**Localized links:** Spanish pages live at the root URLs (`/`, `/about`, …) and English pages have dedicated `/en` URLs (`/en`, `/en/about`, …), each with their own localized HTML shells and Open Graph metadata, and switching the language updates the address bar automatically. Adding `?lang=es` (or `?lang=en`) to any page address is also supported as an explicit override: the visitor's language choice is saved as if they had picked it in the menu, and the URL is normalized to the matching localized route without the query parameter.
+**Localized links:** Spanish pages live at the root URLs (the root, `/about`, …) and English pages have dedicated `/en` URLs (`/en`, `/en/about`, …), each with their own localized HTML shells and Open Graph metadata, and switching the language updates the address bar automatically. Adding `?lang=es` (or `?lang=en`) to any page address is also supported as an explicit override: the visitor's language choice is saved as if they had picked it in the menu, and the URL is normalized to the matching localized route without the query parameter.
 
 ### 2. Add images
 

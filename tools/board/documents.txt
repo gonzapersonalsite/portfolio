@@ -74,12 +74,7 @@ code .py #
 # --- CLOSED archives: the bodies of what the plans closed ---
 closed docs/archive/ROADMAP.md
 closed docs/archive/TOOLING.md
-closed ARCHITECTURE.md
-closed OPERATIONS.md
 closed docs/MIGRATION_PLAN.md
-closed docs/es/README.md
-closed docs/es/ARCHITECTURE.md
-closed docs/es/OPERATIONS.md
 
 # --- GENERATED trees: they do not exist until someone builds ---
 generated .dev-runtime
@@ -109,3 +104,10 @@ timeless docs/ARCHITECTURE.md
 
 # --- The guides the product owns ---
 live DESIGN.md
+# The README links these as its guides, and docs/es holds their Spanish copies
+# and the README's: a path or a link broken in any of them is a defect.
+live ARCHITECTURE.md
+live OPERATIONS.md
+live docs/es/README.md
+live docs/es/ARCHITECTURE.md
+live docs/es/OPERATIONS.md

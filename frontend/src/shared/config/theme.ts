@@ -5,6 +5,15 @@ export const COLOR_MODES = ['light', 'dark', 'glass'] as const
 
 export type ColorMode = (typeof COLOR_MODES)[number]
 
+// Sizes are written in the pixels they measure at the browser's default text size and follow
+// the size the reader chose: MUI gives these in px, which would stay fixed beside text that grows.
+const rem = (px: number) => `${px / 16}rem`
+
+// The narrowest page the layout is made for is 320 px at the default text size: 20 times that
+// size. A window narrower than that counted in the reader's own size (320 px with text at
+// 150 %) gets the compact rules, which let every text wrap. No window at the default size is.
+export const NARROW_FOR_ITS_TEXT = '@media (max-width: 19.99em)'
+
 // The glass look for filled and outlined buttons. Text buttons (nav links, card links) stay
 // transparent so the three variants keep their hierarchy.
 const glassButtonVariant = (background: string, hoverBackground: string, border: string) => ({
@@ -20,12 +29,28 @@ const glassButtonVariant = (background: string, hoverBackground: string, border:
   },
 })
 
+// The icon beside the label of a button, in the sizes MUI gives it.
+const BUTTON_ICON_SIZES = (
+  [
+    ['small', 18],
+    ['medium', 20],
+    ['large', 22],
+  ] as const
+).map(([size, px]) => ({ props: { size }, style: { '& > *:nth-of-type(1)': { fontSize: rem(px) } } }))
+
 const getThemeOptions = (mode: ColorMode): ThemeOptions => {
   const isGlass = mode === 'glass'
   const muiMode = isGlass ? 'dark' : mode === 'light' ? 'light' : 'dark'
   const inputBorderColor = muiMode === 'light' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.45)'
 
   return {
+    // MUI's own breakpoints, counted in the reader's text size instead of px: larger text gets the
+    // narrower layout, as zoom does. step keeps the 0.05 px MUI leaves between two of them.
+    breakpoints: {
+      unit: 'rem',
+      step: 5 / 16,
+      values: { xs: 0, sm: 600 / 16, md: 900 / 16, lg: 1200 / 16, xl: 1536 / 16 },
+    },
     palette: {
       mode: muiMode,
       primary: {
@@ -111,6 +136,43 @@ const getThemeOptions = (mode: ColorMode): ThemeOptions => {
       },
     },
     components: {
+      MuiCssBaseline: {
+        styleOverrides: {
+          [NARROW_FOR_ITS_TEXT]: {
+            // A word wider than the page breaks instead of making the page scroll sideways.
+            body: { overflowWrap: 'anywhere' },
+            'h1, h2, h3, h4, h5, h6': { hyphens: 'auto' },
+          },
+        },
+      },
+      // MUI removes the outline of everything built on ButtonBase and marks the keyboard focus
+      // with a translucent ripple alone, below 3:1. The browser's own ring comes back.
+      MuiButtonBase: {
+        styleOverrides: {
+          root: { '&:focus-visible': { outline: 'revert', outlineOffset: 2 } },
+        },
+      },
+      // Inside a list that clips what it holds, the ring is drawn within the item.
+      MuiMenuItem: {
+        styleOverrides: {
+          root: { '&:focus-visible': { outlineOffset: -2 } },
+        },
+      },
+      MuiListItemButton: {
+        styleOverrides: {
+          root: { '&:focus-visible': { outlineOffset: -2 } },
+        },
+      },
+      // The bar and the space kept under it grow with the text they hold.
+      MuiToolbar: {
+        styleOverrides: {
+          regular: ({ theme }) => ({
+            minHeight: rem(56),
+            [theme.breakpoints.up('xs')]: { '@media (orientation: landscape)': { minHeight: rem(48) } },
+            [theme.breakpoints.up('sm')]: { minHeight: rem(64) },
+          }),
+        },
+      },
       MuiButton: {
         styleOverrides: {
           root: {
@@ -131,6 +193,8 @@ const getThemeOptions = (mode: ColorMode): ThemeOptions => {
               ),
             }),
           },
+          startIcon: { variants: BUTTON_ICON_SIZES },
+          endIcon: { variants: BUTTON_ICON_SIZES },
         },
       },
       // MUI's default outline (23% opacity) is below the 3:1 non-text contrast minimum.
@@ -226,21 +290,36 @@ const getThemeOptions = (mode: ColorMode): ThemeOptions => {
       MuiChip: {
         styleOverrides: {
           root: {
-            ...(isGlass && {
+            height: rem(32),
+            borderRadius: rem(16),
+            [NARROW_FOR_ITS_TEXT]: { height: 'auto', minHeight: rem(32) },
+            variants: [
+              {
+                props: { size: 'small' },
+                style: {
+                  height: rem(24),
+                  [NARROW_FOR_ITS_TEXT]: { minHeight: rem(24) },
+                  '& .MuiChip-icon': { fontSize: rem(18) },
+                },
+              },
               // Decorative labels use glass; semantic colours (success, error, etc.)
               // keep MUI's palette. Informational chips do not advertise a hover action.
-              variants: [
-                {
-                  props: { color: 'default' },
-                  style: {
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: glassEffects.border,
-                    color: glassColors.text.primary,
-                  },
-                },
-              ],
-            }),
+              ...(isGlass
+                ? [
+                    {
+                      props: { color: 'default' as const },
+                      style: {
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: glassEffects.border,
+                        color: glassColors.text.primary,
+                      },
+                    },
+                  ]
+                : []),
+            ],
           },
+          // A label too long for its line wraps instead of ending in an ellipsis.
+          label: { [NARROW_FOR_ITS_TEXT]: { whiteSpace: 'normal', paddingBlock: '0.25em' } },
         },
       },
     },

@@ -38,6 +38,17 @@ const LINK_ICONS: Record<ProjectLinkKind, React.ReactElement> = {
   documentation: <MenuBookIcon />,
 }
 
+// The overlay of the cover is positioned, so the browser paints it above the button's own
+// outline and dims that ring with it: the focused cover draws its ring on the overlay instead.
+// White at the edge and a dark band inside it, so one of the two stands out at more than 3:1
+// from whatever the screenshot shows, a white one included. Forced colours drop the band and
+// give the outline the system's colour.
+const FOCUS_RING_OF_THE_COVER = {
+  outline: '3px solid white',
+  outlineOffset: '-3px',
+  boxShadow: 'inset 0 0 0 5px rgba(0, 0, 0, 0.87)',
+}
+
 const LINK_EMPHASIS_PROPS: Record<ProjectLinkEmphasis, Pick<ButtonProps, 'variant' | 'sx'>> = {
   primary: { variant: 'contained', sx: { fontWeight: 600, px: 2 } },
   secondary: { variant: 'text', sx: { fontWeight: 600 } },
@@ -129,9 +140,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             appearance: 'none',
             backgroundColor: 'transparent',
             '&:focus-visible': {
-              outline: '3px solid white',
-              outlineOffset: '-3px',
-              '& .preview-overlay': { opacity: 1 },
+              outline: 'none',
+              '& .preview-overlay': { opacity: 1, ...FOCUS_RING_OF_THE_COVER },
             },
           }}
         >

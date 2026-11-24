@@ -106,7 +106,9 @@ const ThemeSelector: React.FC = () => {
           aria-describedby={animationsStatusId}
           aria-checked={animationsEnabled}
           disabled={reducedMotion}
-          sx={{ gap: 1 }}
+          // It still takes the keyboard focus (the menu keeps disabled items reachable), so it
+          // stays at full opacity for its focus indicator and its reason; only its label dims.
+          sx={{ gap: 1, '&.Mui-disabled': { opacity: 1 } }}
           onClick={() => {
             setAnimationsPaused(!animationsPaused)
             handleClose()
@@ -114,7 +116,7 @@ const ThemeSelector: React.FC = () => {
         >
           <CheckIcon fontSize="small" sx={{ visibility: animationsEnabled ? 'visible' : 'hidden' }} />
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-            <Typography component="span" variant="body2">
+            <Typography component="span" variant="body2" color={reducedMotion ? 'text.disabled' : undefined}>
               {t('common.animations.label')}
             </Typography>
             <Typography id={animationsStatusId} component="span" variant="caption" color="text.secondary">

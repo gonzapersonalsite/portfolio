@@ -55,6 +55,14 @@ describe('NotFoundPage', () => {
     expect(document.querySelector('meta[name="robots"]')?.getAttribute('content')).toBe('noindex')
   })
 
+  it('leaves the focus indicator of the terminal input to the browser instead of removing it', () => {
+    renderNotFound('/ruta-inexistente')
+
+    const input = screen.getByRole('textbox', { name: i18n.t('notFound.terminalInputLabel') })
+
+    expect(['none', '0', '0px']).not.toContain(getComputedStyle(input).outline)
+  })
+
   it('renders the English 404 copy and /en links when visiting an unknown /en/* path', () => {
     renderNotFound('/en/missing-page')
 

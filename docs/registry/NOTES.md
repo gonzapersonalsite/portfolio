@@ -1,7 +1,7 @@
 # Notas de desarrollo (índice)
 
 GENERADO por tools/board desde `docs/registry/deliveries/` y `docs/registry/lessons/`. No editar a mano: se reescribe.
-board-fingerprint:a5cd928b5bf08e71 — su contenido cambió por última vez el 2026-11-24.
+board-fingerprint:ba265cdb128e2276 — su contenido cambió por última vez el 2026-11-24.
 
 Cada entrega es un fichero `docs/registry/deliveries/<fecha>-<tema>.md` con lo que se hizo, cómo se
 verificó y qué costó; cada lección es un fichero `docs/registry/lessons/<identidad>.md` y se cita como
@@ -9,9 +9,10 @@ verificó y qué costó; cada lección es un fichero `docs/registry/lessons/<ide
 entregas dicen cómo llegó a estar así. Aquí van las más recientes de cada clase; todas,
 mes a mes, en su índice del mes.
 
-## Entregas (20; aquí las 20 más recientes)
+## Entregas (21; aquí las 20 más recientes)
 
 - 2026-11-24 `#2026-11-24-design-guide-and-current-operations-docs` Guía de diseño, documentos de operación al día y los iconos que no seguían el tamaño de letra
+- 2026-11-24 `#2026-11-24-interface-decisions-closed-before-redesign` Las abiertas de la interfaz cerradas antes del rediseño, con el foco visible en cada control y la letra del lector en toda la interfaz
 - 2026-11-24 `#2026-11-24-scaffold-upgrade-to-0-8-1` Actualización a agentic-scaffold 0.8.1 y auditoría sobre el árbol de trabajo
 - 2026-11-22 `#2026-11-22-scaffold-upgrade-to-0-7-0` Actualización a agentic-scaffold 0.7.0 y lanzador containerizado sobre frontend/
 - 2026-11-19 `#2026-11-19-scaffold-upgrade-to-0-6-0` Actualización a agentic-scaffold 0.6.0, migración del registro y parches de React
@@ -30,7 +31,6 @@ mes a mes, en su índice del mes.
 - 2026-10-19 `#2026-10-19-hero-card-pixel-goblin` Duende pixelado sobre la tarjeta del hero de Inicio
 - 2026-10-19 `#2026-10-19-pixel-goblin-portals-and-contact-panel` Portales pixel 2D de entrada y salida y reutilización en el panel de Contacto
 - 2026-10-19 `#2026-10-19-scaffold-upgrade-to-0-3-3` Actualización a agentic-scaffold 0.3.3, con lo que aplica a un producto de convenciones propias
-- 2026-10-18 `#2026-10-18-adopt-agentic-scaffold-and-react-fsd` Adopción de agentic-scaffold, la capa react-vite y el stack react-fsd
 
 ## Lecciones (7; aquí las 7 más recientes)
 
@@ -44,6 +44,6 @@ mes a mes, en su índice del mes.
 
 ## Por mes (3 índices)
 
-- `docs/registry/index/notes-2026-11.md` — 2026-11: 5 entregas, 0 lecciones
+- `docs/registry/index/notes-2026-11.md` — 2026-11: 6 entregas, 0 lecciones
 - `docs/registry/index/notes-2026-10.md` — 2026-10: 15 entregas, 0 lecciones
 - `docs/registry/index/notes-2026-09.md` — 2026-09: 0 entregas, 7 lecciones

@@ -15,10 +15,10 @@ ver quién es, qué ha construido y cómo escribirle. A veces la página acaba
 impresa o guardada como PDF para un proceso de selección. Las decisiones de
 abajo se juzgan contra esa frase.
 
-Este párrafo es la lectura que hace el agente de lo que el producto dice de sí
-mismo ([README](README.md), el contenido del perfil y el bloque de impresión de
-[index.css](frontend/src/app/styles/index.css)); el dueño no lo ha dictado, y
-por eso figura también en «Lo que sigue abierto».
+Sale de lo que el producto dice de sí mismo ([README](README.md), el
+contenido del perfil y el bloque de impresión de
+[index.css](frontend/src/app/styles/index.css)), y el dueño la confirmó por
+delegación (`#the-site-is-for-whoever-evaluates-its-owner-as-a-developer`).
 
 ## Decisiones tomadas
 
@@ -36,10 +36,16 @@ otra, con su porqué largo, y aquí queda la línea que la enuncia con su cita.
   [RichTextRenderer.tsx](frontend/src/shared/ui/RichTextRenderer.tsx),
   [ProjectCard.tsx](frontend/src/entities/project/ui/ProjectCard.tsx),
   [AboutPage.tsx](frontend/src/pages/about/ui/AboutPage.tsx),
-  [ErrorBoundary.tsx](frontend/src/shared/ui/ErrorBoundary.tsx)). Quien agranda
-  la letra del navegador tiene que verla agrandada aquí, sin que un icono se
-  quede atrás. Lo que todavía no la sigue está en
-  `#how-far-the-interface-follows-the-reader-font-size`.
+  [ErrorBoundary.tsx](frontend/src/shared/ui/ErrorBoundary.tsx)). El tema
+  lleva lo mismo a lo que dimensiona Material UI: los iconos de los botones y
+  de las etiquetas, el alto de las etiquetas y de la barra, y los puntos de
+  ruptura, que cuentan en `rem`; y una ventana estrecha para su letra deja
+  partir las etiquetas y la marca de la cabecera. Quien agranda la letra del
+  navegador tiene que verla agrandada aquí, sin que un icono se quede atrás.
+  Solo el texto dibujado dentro del duende escala con su dibujo, como imagen
+  (`#how-far-the-interface-follows-the-reader-font-size`), y el lint rechaza
+  un tamaño de letra fijo
+  (`#eslint-forbids-fixed-font-sizes-and-vite-ignores-pnpm-store`).
 - **Tres temas, y manda el sistema hasta que la persona elige.** Claro, oscuro
   y Liquid Glass salen de un solo tema
   ([theme.ts](frontend/src/shared/config/theme.ts)); sin elección guardada el
@@ -69,15 +75,23 @@ otra, con su porqué largo, y aquí queda la línea que la enuncia con su cita.
   con esa preferencia, además, ninguna transición dura lo bastante para verse
   ([index.css](frontend/src/app/styles/index.css)).
 - **El foco del teclado se ve, y la cabecera fija no lo tapa.** El contorno es
-  el del navegador o el de Material UI; el desplazamiento reserva el alto de la
-  cabecera ([index.css](frontend/src/app/styles/index.css)); el primer
-  tabulador ofrece saltar al contenido, y al cambiar de página el foco pasa a
-  la región principal, que no dibuja contorno porque es una región y no un
-  control ([PublicLayout.tsx](frontend/src/app/layouts/ui/PublicLayout.tsx),
+  el del navegador: el tema lo devuelve a todo lo que Material UI construye
+  sobre su botón base, que lo quitaba y marcaba el foco con una onda por
+  debajo de 3:1, y lo dibuja por dentro en las opciones de un menú
+  ([theme.ts](frontend/src/shared/config/theme.ts)). Lo conservan también el
+  campo de la terminal del 404 y la opción «Animaciones», que sigue alcanzable
+  y legible cuando el sistema pide menos movimiento
+  (`#focus-indicator-of-the-terminal-input-and-the-disabled-animations-item`),
+  y la portada de un proyecto lo dibuja sobre la capa que la oscurece, blanco
+  con una banda oscura dentro, para verse sobre cualquier captura
+  (`#a-focused-project-cover-draws-its-ring-on-its-overlay`). El
+  desplazamiento reserva el alto de la cabecera
+  ([index.css](frontend/src/app/styles/index.css)); el primer tabulador ofrece
+  saltar al contenido, y al cambiar de página el foco pasa a la región
+  principal, que no dibuja contorno porque es una región y no un control
+  ([PublicLayout.tsx](frontend/src/app/layouts/ui/PublicLayout.tsx),
   [useRouteChangeFocus.ts](frontend/src/app/layouts/lib/useRouteChangeFocus.ts)).
-  Sin esto, quien navega sin ratón pierde dónde está. Los dos controles donde
-  hoy no se ve están en
-  `#focus-indicator-of-the-terminal-input-and-the-disabled-animations-item`.
+  Sin esto, quien navega sin ratón pierde dónde está.
 - **Nada se dice solo con un color.** La página actual del menú lleva subrayado
   además de su estado ([Navbar.tsx](frontend/src/widgets/navbar/ui/Navbar.tsx)),
   el distintivo de disponibilidad es un texto
@@ -102,7 +116,9 @@ otra, con su porqué largo, y aquí queda la línea que la enuncia con su cita.
   espacios, como el correo o lo que se escribe en la terminal del 404, se parte
   dentro de su caja ([ContactPage.tsx](frontend/src/pages/contact/ui/ContactPage.tsx),
   [NotFoundPage.tsx](frontend/src/pages/not-found/ui/NotFoundPage.tsx)). Un
-  móvil estrecho o un zoom alto no obligan a desplazarse de lado.
+  móvil estrecho, un zoom alto o los dos con la letra a 24 píxeles no obligan
+  a desplazarse de lado: en una ventana estrecha para su letra, una palabra
+  más ancha que la página se parte ([theme.ts](frontend/src/shared/config/theme.ts)).
 - **Una imagen reserva su hueco antes de llegar.** Toda imagen de contenido
   declara su proporción y tiene un sustituto si falla
   ([ImageWithFallback.tsx](frontend/src/shared/ui/ImageWithFallback.tsx)), así
@@ -122,25 +138,16 @@ otra, con su porqué largo, y aquí queda la línea que la enuncia con su cita.
 
 ## Lo que sigue abierto
 
-Está por decidir, y lo decide el dueño con el producto delante:
+Solo el aspecto, aplazado hasta que el dueño abra el rediseño visual que
+anunció, estudiado con él:
 
-- **Hasta dónde sigue la interfaz el tamaño de letra.** Los iconos que
-  dimensiona Material UI dentro de un botón o de una etiqueta, el texto
-  dibujado dentro del duende y las separaciones en píxeles no crecen; y a 320
-  píxeles con la letra a 24 la página deja de caber. Las cifras y las opciones
-  están en `#how-far-the-interface-follows-the-reader-font-size`.
-- **El foco en dos controles.** El campo de la terminal del 404 solo muestra su
-  cursor, y la opción «Animaciones», cuando el sistema pide menos movimiento,
-  recibe el foco sin dibujar nada
-  (`#focus-indicator-of-the-terminal-input-and-the-disabled-animations-item`).
-- **El porqué del aspecto.** La paleta de cada tema, la fuente Inter, los
-  radios y el estilo Liquid Glass están hechos y a la vista, pero ningún
-  registro dice por qué son esos ni qué habría que conservar al cambiarlos.
-  Esta guía no lo inventa.
-- **Para quién.** El párrafo de arriba es una lectura, no una decisión
-  registrada.
+- **El porqué del aspecto (`#choices-of-look-wait-for-the-visual-redesign`).**
+  La paleta de cada tema, la fuente Inter, los radios y el estilo Liquid Glass
+  están hechos y a la vista, pero ningún registro dice por qué son esos ni qué
+  habría que conservar al cambiarlos. Esta guía no lo inventa.
 
-Cuando una de ellas se decida, pasa a la lista de arriba con su porqué.
+Cuando se abra el rediseño o se añada una regla visual, se registra en
+[docs/registry/decisions/](docs/registry/decisions/) y pasa arriba con su cita.
 
 ## Dónde está hecho
 
@@ -153,51 +160,62 @@ Cuando una de ellas se decida, pasa a la lista de arriba con su porqué.
 | El estilo de cada componente | Su `sx`, a su lado; la regla está en «Estilos» de [la arquitectura](docs/ARCHITECTURE.md) |
 | La estructura de toda página: salto, cabecera, región principal y pie | [frontend/src/app/layouts/ui/PublicLayout.tsx](frontend/src/app/layouts/ui/PublicLayout.tsx) |
 | Lo que se ve mientras carga la aplicación, y el primer pintado del tema | [frontend/index.html](frontend/index.html) |
+| La regla que rechaza un tamaño de letra fijo | [frontend/eslint.config.js](frontend/eslint.config.js) |
 
 Una medida que acompaña a un texto va en `rem` o en `em`, no como número: es
 la primera decisión de arriba, y un número en el `fontSize` de un `sx` son
-píxeles fijos.
+píxeles fijos, que el lint rechaza.
 
 ## Cómo comprobarlo
 
 `./dev verify` (en Windows, `.\dev.cmd verify`) corre los tests que hay al lado
 de cada componente: comprueban nombres, papeles, el foco al cambiar de página,
-el tema que rige y que cada icono corregido crece con una letra de 24 píxeles
-en la raíz; no el aspecto. Lo demás se mira en un navegador, sobre el build
-servido con `./dev build` y `./dev start --preview` y la dirección que imprime:
+el tema que rige, que cada icono corregido y lo que dimensiona el tema crecen
+con una letra de 24 píxeles en la raíz, qué contorno de foco queda en cada
+control corregido y que el lint rechaza un tamaño de letra fijo; no el
+aspecto. Lo demás se mira en un navegador, sobre el build servido con
+`./dev build` y `./dev start --preview` y la dirección que imprime:
 
 - **Páginas.** Inicio, Sobre mí, Habilidades, Experiencia, Proyectos, Contacto
   y una dirección que no existe, en español y bajo `/en`, en los tres temas.
   La consola queda limpia y ninguna petición falla.
-- **Tamaños.** A 320 píxeles CSS de ancho no aparece desplazamiento
-  horizontal. Con la letra del navegador a 24 píxeles, el texto crece. Con el
-  zoom al 200 %, nada se corta.
+- **Tamaños.** A 320 píxeles CSS de ancho, con la letra del navegador a 24
+  píxeles y con el zoom al 200 %, no aparece desplazamiento horizontal y nada
+  se corta; con la letra a 24, el texto y sus iconos crecen.
 - **Teclado.** Sin ratón: el tabulador recorre cada página, el cajón del
   móvil, los menús de idioma y de tema y la galería de un proyecto, y el foco
-  se ve en cada parada.
+  se ve en cada parada, también sobre la portada de un proyecto.
 - **Esquemas.** En claro y en oscuro, cambiando el del sistema o emulándolo,
-  todo texto se lee.
+  todo texto se lee; con el contraste forzado del sistema, el foco se sigue
+  viendo.
 
-El 2026-11-24 se hizo este recorrido en Chrome 157 sobre el build, emulando
-ancho, esquema, tamaño de letra y preferencia de movimiento:
+El 2026-11-24, tras cerrar las abiertas, se hizo este recorrido en Chrome 157
+sobre el build, emulando ancho, esquema, tamaño de letra, preferencia de
+movimiento, contraste forzado, impresión y un teléfono táctil:
 
-- 42 visitas (14 páginas por 3 temas) sin un solo evento de consola ni petición
-  fallida.
-- A 1280 píxeles con la letra a 24, de 1316 textos, iconos y controles crecen
-  1202 una vez y media; los 114 que no son los iconos que dimensiona Material
-  UI y el texto dibujado del duende, los dos de la primera abierta.
-- A 320 píxeles, y a 640 por 400 con escala 2 como zoom al 200 %, ninguna de
-  las 14 páginas se desplaza de lado ni corta un texto, en claro y en oscuro.
+- 84 visitas (14 páginas por 3 temas, a 1280 y a 390 píxeles) sin un evento de
+  consola ni una petición fallida, salvo el 404 a propósito de la dirección
+  que no existe. A la letra por defecto, la caja y el estilo calculado de cada
+  elemento son los de antes en 72 visitas, y en las otras 12 la página mide lo
+  mismo.
+- A 320 píxeles con la letra a 24, y a 640 por 400 con escala 2 como zoom al
+  200 %, ninguna de las 14 páginas se desplaza de lado ni corta un texto, en
+  los tres temas.
 - El contraste mínimo medido del texto sobre fondo liso es 4,64 en claro, 5,31
   en oscuro y 6,75 en Liquid Glass; en este último, el texto que cae sobre el
   degradado no lo juzga la sonda y se miró a ojo.
-- El tabulador da 29 paradas en Inicio, 15 en Sobre mí, 14 en Habilidades y en
-  Experiencia, 40 en Proyectos, 21 en Contacto y 22 en el 404; 6 en el cajón
-  del móvil, 2 en el menú de idioma, 4 en el de tema y 13 en la galería. Todas
-  dibujan su foco y ninguna queda tapada o fuera de la pantalla, con las dos
-  salvedades de la segunda abierta.
+- El foco del campo de la terminal, de la opción «Animaciones» deshabilitada y
+  de las siete portadas de proyecto cambia a 3:1 o más al menos el perímetro
+  del control, en los tres temas y en los dos idiomas; las portadas también
+  con el contraste forzado. El enlace de salto aparece arriba al recibir el
+  foco.
+- El cajón del móvil se abre por toque a 390 por 844; el árbol de
+  accesibilidad de Inicio da 262 nodos con nombre y papel; impresa, la página
+  es negro sobre blanco y sin cabecera; con el contraste forzado no hay
+  errores.
+- En Firefox 160, las 14 páginas en los tres temas cargan sin errores de
+  JavaScript, sin desplazarse de lado y con su título en su idioma.
 
-No se comprobó: Firefox, Safari y Edge; un lector de pantalla; un dispositivo
-táctil real; el modo de contraste forzado del sistema; la página impresa; ni el
-envío del formulario de contacto, que escribe a un servicio externo. Hazlo
-antes de dar por buena una pantalla nueva.
+No se comprobó: Safari ni Edge; un lector de pantalla; un dispositivo táctil
+real; ni el envío del formulario de contacto, que escribe a un servicio
+externo. Hazlo antes de dar por buena una pantalla nueva.

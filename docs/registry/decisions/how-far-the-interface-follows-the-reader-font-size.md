@@ -1,31 +1,40 @@
 ---
-title: Está por decidir hasta dónde sigue la interfaz el tamaño de letra que cada persona eligió
-state: open
+title: Toda la interfaz sigue el tamaño de letra del lector en rem y em, con regla en ESLint
+state: confirmed
 date: 2026-11-24
 domain: interface
 phase: none
 ---
-**Está por decidir hasta dónde sigue la interfaz el tamaño de letra que cada
-persona eligió en su navegador.** El texto y los iconos que el producto
-dimensiona junto a un texto ya lo siguen, y `DESIGN.md` lo enuncia. Lo que no
-lo sigue, medido en `#2026-11-24-design-guide-and-current-operations-docs`:
+**La raíz no fija tamaño de letra en píxeles y los estilos del tema y componentes usan
+unidades relativas (`rem`, `em` y puntos de ruptura en `rem`), de modo que la interfaz
+escala cuando el lector cambia la letra del navegador.** El único código exento es el texto
+dibujado dentro del `viewBox` SVG de `PixelGoblin`, que escala como imagen junto al resto
+del dibujo.
 
-- **Los iconos que dimensiona Material UI en píxeles:** el de un botón con
-  icono, el de una etiqueta pequeña y los de los selectores de idioma y de
-  tema. Llevarlos a medidas relativas es una regla más en
-  `frontend/src/shared/config/theme.ts`, que no cambia nada al tamaño por
-  defecto y sí la composición de cada botón con la letra agrandada.
-- **El texto dibujado dentro del duende,** que crece con el dibujo y no con la
-  letra, y las separaciones y los anchos escritos en píxeles.
-- **La combinación de pantalla estrecha y letra grande.** A 320 píxeles CSS con
-  la letra a vez y media, cuatro páginas se desplazan de lado por una palabra
-  larga de su título, y algunas etiquetas se cortan con puntos suspensivos. Con
-  el zoom del navegador al 200 %, que escala todo, eso no ocurre.
+- **Tema y componentes (`theme.ts`, `Navbar.tsx`, `index.css`).** `createAppTheme` define
+  `breakpoints` en `rem`, escala tamaños de botones e iconos y usa `NARROW_FOR_ITS_TEXT`
+  (`19.99em`) para envolver etiquetas de `MuiChip` y la marca de la barra cuando coinciden
+  ventana estrecha (`320 px`) y texto grande (`24 px`), manteniendo `scroll-padding-top` en
+  `rem` bajo la cabecera fija (`theme.test.tsx`).
+- **Guarda automática (`eslint.config.js`).** La regla `no-restricted-syntax`
+  (`FONT_SIZE_FOLLOWS_THE_READER`) rechaza cualquier `fontSize` numérico o en `px` en
+  estilos y atributos JSX de `src`, salvo en `PixelGoblin` (`eslint.config.test.ts`).
 
-Lo que hay que decidir es cuál de las dos cosas garantiza el producto: solo el
-zoom, que hoy pasa, o también la letra agrandada en cualquier ancho; y, si es
-lo segundo, si los títulos pueden partir una palabra o encoger en una pantalla
-estrecha, que es un cambio de aspecto.
+Propuesto por el agente bajo la delegación del dueño («No quiero deuda de ningun tipo»,
+«Dejo a tu preferencia recomendados») y verificado en
+`#2026-11-24-interface-decisions-closed-before-redesign` en Chrome (`320 px` a `24 px` y
+zoom al `200 %` sin desbordamiento horizontal ni textos cortados en las `14` rutas y `3`
+temas).
 
-No abre fase: las tres del plan están hechas. Tropieza con ella la primera
-parte que toque el tema o la composición de una página.
+**Confirmada por delegación del dueño**, que en un turno posterior, con la refutación de
+abajo escrita, delegó su revisión: «todo entra confirmado no dejes nada provisional» y «Tu
+decides por el bien de cada proyecto».
+
+## Refutación
+
+En contra: mantener el `MuiToolbar` o `MuiChip` y los puntos de ruptura en píxeles de
+Material UI conserva alturas idénticas aunque el texto crezca, pero desborda etiquetas y
+desacopla iconos del texto a `24 px`. Se mantiene: escalar en `rem` con la guarda en ESLint
+conserva intacta la vista a `16 px` mientras protege la lectura ampliada; la escala base de
+la tipografía y el espaciado visual esperan al rediseño
+(`#choices-of-look-wait-for-the-visual-redesign`).

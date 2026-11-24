@@ -1,19 +1,18 @@
 ESTADO DEL PROYECTO
 GENERADO por tools/board desde el repositorio. No editar a mano: se reescribe.
-board-fingerprint:2ba15eff753be17d — su contenido cambió por última vez el 2026-11-24.
+board-fingerprint:55ca8008fb0fe90a — su contenido cambió por última vez el 2026-11-24.
 Esto es un resumen derivado. Manda el documento o el registro, no este fichero.
 ------------------------------------------------------------------------------
 PUERTAS      9 de 9 en verde (sin cambios desde 2026-11-24)
 ORDEN F      F0 ✔ > F1 ✔ > F2 ✔
 ORDEN H      H0 ✔ > H1 ✔
 
-FRENTES ABIERTOS  2 vivos (2 registros salieron por docs/registry/retired.txt)
+FRENTES ABIERTOS  1 vivos (2 registros salieron por docs/registry/retired.txt)
   Cada frente es una decision abierta; la fase es la que su registro declara. La
   lista entera, en el indice de decisiones (seccion ABIERTAS).
   POR FASE (0):
-  SIN FASE PENDIENTE (2) — su registro dice `none`, o solo nombra fases ya hechas:
-    · Está por decidir qué dibuja el foco del teclado en el campo de la terminal y en la opción de animaciones deshabilitada
-    · Está por decidir hasta dónde sigue la interfaz el tamaño de letra que cada persona eligió
+  SIN FASE PENDIENTE (1) — su registro dice `none`, o solo nombra fases ya hechas:
+    · Las elecciones de aspecto visual esperan al rediseño
 
 DEUDAS       0 vivas, 0 pagadas
 ------------------------------------------------------------------------------

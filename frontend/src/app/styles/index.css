@@ -9,10 +9,11 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* The fixed header (56px on phones, 64px from 600px) would cover whatever the browser scrolls
-   into view when it takes the focus; keep that space clear (WCAG 2.4.11). */
+/* The fixed header (3.5rem on phones, 4rem from 37.5rem, growing with the reader's text) would
+   cover whatever the browser scrolls into view when it takes the focus; keep that space clear
+   (WCAG 2.4.11). */
 html {
-  scroll-padding-top: 72px;
+  scroll-padding-top: 4.5rem;
 }
 
 body {

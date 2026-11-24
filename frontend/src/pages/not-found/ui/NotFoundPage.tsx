@@ -359,7 +359,6 @@ const NotFoundPage: React.FC = () => {
                     flex: 1,
                     minWidth: 0,
                     border: 'none',
-                    outline: 'none',
                     background: 'transparent',
                     color: 'text.primary',
                     fontFamily: 'inherit',
@@ -367,6 +366,8 @@ const NotFoundPage: React.FC = () => {
                     lineHeight: 'inherit',
                     p: 0,
                     caretColor: theme.palette.primary.main,
+                    // The browser's own ring, clear of the text it surrounds.
+                    '&:focus-visible': { outlineOffset: 4 },
                     '&::placeholder': {
                       color: theme.palette.text.secondary,
                       opacity: 0.65,

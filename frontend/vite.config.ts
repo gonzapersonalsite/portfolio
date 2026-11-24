@@ -26,6 +26,10 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
+    // pnpm leaves its store inside the project when the project is on another filesystem than
+    // its home. Watching those tens of thousands of files over the container's bind mount keeps
+    // every read of the server waiting: the first page took over 30 s instead of under 1 s.
+    watch: { ignored: ['**/.pnpm-store/**'] },
   },
   build: {
     outDir: 'dist',

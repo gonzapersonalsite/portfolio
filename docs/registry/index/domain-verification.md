@@ -1,13 +1,14 @@
 # Puertas, pruebas, herramientas y su medición (índice)
 
 GENERADO por tools/board desde `docs/registry/decisions/` y `docs/registry/lessons/`. No editar a mano: se reescribe.
-board-fingerprint:ed7da559e43280cf — su contenido cambió por última vez el 2026-11-19.
+board-fingerprint:bfd17bc7ab0e8509 — su contenido cambió por última vez el 2026-11-24.
 
 Cada decisión y cada lección del dominio `verification`, por identidad; todas rigen hoy. Antes de tocar este
 sistema se consulta esta página. El índice principal es `docs/registry/DECISIONS.md`.
 
-## CONFIRMADAS (1)
+## CONFIRMADAS (2)
 
+- `#eslint-forbids-fixed-font-sizes-and-vite-ignores-pnpm-store` — La regla de tamaño relativo y el filtro del servidor de desarrollo guardan las puertas de verificación (CONFIRMED 2026-11-24) · none
 - `#hook-activation-is-a-per-clone-step` — Activar el hook de pre-push es un paso por clon, no una puerta (CONFIRMED 2026-09-21)
 
 ## Lecciones (4)

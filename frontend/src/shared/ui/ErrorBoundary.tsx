@@ -37,7 +37,7 @@ class ErrorBoundary extends React.Component<Props, State> {
               textAlign: 'center',
             }}
           >
-            <ErrorOutlinedIcon aria-hidden="true" sx={{ fontSize: 80, color: 'error.main' }} />
+            <ErrorOutlinedIcon aria-hidden="true" sx={{ fontSize: '5rem', color: 'error.main' }} />
             <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
               {i18n.t('common.errorBoundaryTitle')}
             </Typography>

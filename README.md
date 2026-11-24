@@ -52,6 +52,7 @@ The project follows a modern **static frontend architecture**, prioritizing main
 
 📖 **[Feature-Sliced Design Architecture Contract](docs/ARCHITECTURE.md)** — Canonical FSD layer, slice and import rules.
 📖 **[Architecture Guide](ARCHITECTURE.md)** — Patterns and design decisions.
+🎨 **[Design Guide](DESIGN.md)** — Who the interface is for, the visual decisions taken, where they are made and how to check them (in Spanish).
 🛠️ **[Operations Guide](OPERATIONS.md)** — Deployment, CI/CD, environment variables, content management and local setup.
 
 ---

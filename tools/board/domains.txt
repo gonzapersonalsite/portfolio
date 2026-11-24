@@ -17,3 +17,4 @@ domain localization Idiomas, rutas localizadas y shells HTML
 domain contribution Contrato de contribución, idioma, commits y agentes
 domain verification Puertas, pruebas, herramientas y su medición
 domain board-and-registry Tablero, registro y documentos
+domain interface Interfaz: temas, tamaño de letra, foco y accesibilidad

@@ -106,3 +106,6 @@ extension .html
 extension .css
 live docs/ARCHITECTURE.md
 timeless docs/ARCHITECTURE.md
+
+# --- The guides the product owns ---
+live DESIGN.md

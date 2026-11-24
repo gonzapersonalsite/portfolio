@@ -185,7 +185,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             fontWeight: 600,
           }}
         >
-          <PhotoLibraryIcon sx={{ fontSize: 16 }} />
+          <PhotoLibraryIcon sx={{ fontSize: '1rem' }} />
           {project.images.length}
         </Box>
 

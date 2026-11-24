@@ -19,14 +19,14 @@ El proyecto es **solo estático**: un único despliegue, cero servidores.
 - **Frontend (Vercel):**
   - Vercel despliega automáticamente en cada push a `main` desde el directorio `frontend/`.
   - Vercel detecta pnpm por `pnpm-lock.yaml`; después pnpm cambia a la versión fijada en el campo `packageManager` de `frontend/package.json` (el log del build muestra qué versión se ejecutó).
-  - La verificación se ejecuta en local antes de subir mediante `.githooks/pre-push` (`tools/board/pre_push.py`): rechaza empujar algo que no sea HEAD, o con cambios sin commitear o ficheros sin versionar, y ejecuta `python -I verify.py` con las 9 puertas del repositorio y del frontend (`gates.txt`); no hay workflows de GitHub Actions.
-  - El script de instalación de esbuild se aprueba en el repo con `allowBuilds: { esbuild: true }` en `frontend/pnpm-workspace.yaml`, el ajuste de aprobación de builds de pnpm 11 y posteriores; el script de instalación de cualquier otra dependencia sigue bloqueado. Vercel no necesita configuración extra.
+  - La verificación se ejecuta en local antes de subir mediante `.githooks/pre-push`, que llama al lanzador del proyecto (`tools/launcher/dev.sh`): rechaza empujar algo que no sea HEAD, o con cambios sin commitear o ficheros sin versionar (`tools/board/pre_push.py`, que corre dentro del contenedor del andamio), y ejecuta las mismas puertas que `./dev verify`, las filas de `gates.txt`; no hay workflows de GitHub Actions.
+  - El script de instalación de esbuild se aprueba en el repo con `allowBuilds: { esbuild: true }` en `frontend/pnpm-workspace.yaml`, el ajuste de aprobación de builds de pnpm 11 y posteriores; el script de instalación de cualquier otra dependencia sigue bloqueado. Esa aprobación cuenta donde se ejecutan los scripts de instalación, que es la instalación de Vercel: la instalación local de `./dev prepare` no ejecuta ninguno (ver *Desarrollo local*). Vercel no necesita configuración extra.
   - Panel de Vercel: Install Command `pnpm install` y Build Command `pnpm run build`.
 
 ### 🌐 Configuración del hosting (`frontend/vercel.json`)
 - **Sin rewrites:** cada ruta es un fichero HTML propio. Cualquier otra dirección, incluido un asset o una imagen que no existen, recibe `404.html` con estado 404 (la app de esa página muestra `NotFoundPage` con retorno al inicio). No hay `/favicon.ico`: las páginas enlazan los iconos de `/icons/`.
 - **Cabeceras de seguridad:** `Content-Security-Policy`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` y `Permissions-Policy` en cada respuesta. La CSP permite scripts del propio sitio más el script de tema incrustado en `index.html` (por su hash `sha256`), estilos en línea (Emotion), imágenes y fuentes solo del propio sitio y peticiones de red solo al propio sitio y a EmailJS.
-  - Si editas el script incrustado en `index.html`, `pnpm test` falla e imprime su nuevo valor `'sha256-…'`: ponlo en la CSP.
+  - Si editas el script incrustado en `index.html`, la puerta `tests` falla e imprime su nuevo valor `'sha256-…'`: ponlo en la CSP.
   - Un servicio de terceros nuevo (analítica, fuentes, embeds) necesita su host en la directiva de la CSP que corresponda o el navegador lo bloquea. La barra de herramientas de Vercel también queda bloqueada, solo en los despliegues de preview.
 - **Caché:** `/assets/*`, `/images/*` y `/icons/*` son inmutables durante un año (ver *Inmutabilidad de caché* más abajo); `index.html` siempre se revalida.
 - **Copias markdown** (`*.md`): se sirven con `X-Robots-Tag: noindex`; los agentes las leen y los buscadores indexan las páginas HTML.
@@ -47,28 +47,16 @@ Desarrollo local: coloca las tres variables `VITE_EMAILJS_*` en `frontend/.env.l
 
 ## 🛠️ Desarrollo local
 
-### Inicio rápido
-```bash
-git config core.hooksPath .githooks
-pnpm --dir frontend install
-pnpm --dir frontend dev
-```
+Node.js, pnpm y Python corren dentro de los contenedores del proyecto: el host necesita Docker con contenedores Linux y Compose, además de Git. Los comandos que preparan un clon, arrancan el sitio y pasan las puertas están en el [README](README.md#-ejecución-local), y las reglas a las que responden (cuándo se pasan las puertas y qué cuenta como verde) son el §1 de `AGENTS.md`; qué puertas hay lo dice `gates.txt`. Esta sección añade lo que hace falta saber de ellos para operar el sitio.
 
-El servidor de desarrollo solo escucha en `localhost`; ejecuta `pnpm --dir frontend dev --host` para abrirlo desde un móvil en la misma red. También sirve `llms.txt`, `robots.txt`, `sitemap.xml` y las copias markdown; los shells HTML por ruta (títulos, canonical, JSON-LD) y `404.html` solo existen en la salida del build.
+- **Una sola entrada.** `./dev` (`.\dev.cmd` en Windows) es el lanzador (`tools/launcher/`): ejecuta cada paso en un contenedor descrito por `compose.yaml`, `Dockerfile` y `tools/stack.txt`, y `./dev status` dice si hay un servidor de este clon en marcha.
+- **Dependencias.** `./dev prepare` construye las imágenes e instala exactamente lo que fija `frontend/pnpm-lock.yaml`, con todos los scripts de instalación desactivados (`tools/react.sh`). `frontend/node_modules` es un volumen de Docker del clon, no una carpeta del host.
+- **Servidor de desarrollo.** `./dev start` sirve la aplicación con recarga en caliente en `http://127.0.0.1:5173/` (`./dev start --port <n>` la publica en otro puerto) y `./dev stop` lo para. Se publica solo en la dirección de loopback: nada en el repositorio lo expone a la red local. También sirve `llms.txt`, `robots.txt`, `sitemap.xml` y las copias markdown; los shells HTML por ruta (títulos, canonical, JSON-LD) y `404.html` solo existen en la salida del build.
+- **Preview de producción.** `./dev build` escribe `frontend/dist/`, y `./dev start --preview` sirve ese bundle en `http://127.0.0.1:4173/`; abre el shell de una ruta en su dirección con barra final (p. ej. `/about/`). Corre un servidor por clon: para el de desarrollo antes de arrancar la preview.
+- **Formato.** `./dev format-fix` reescribe lo que rechaza la puerta `format`.
+- **Hooks de Git.** Viven en `.githooks/` y se activan una vez por clon con `git config core.hooksPath .githooks`. Los dos llaman al lanzador: `commit-msg` comprueba el mensaje de commit (`tools/board/commit_message.py`) y `pre-push` pasa las puertas, como dice *Pipeline CI/CD* más arriba.
 
-`pnpm --dir frontend install` ejecuta solo los scripts de instalación de dependencias aprobados en `frontend/pnpm-workspace.yaml` (esbuild); con `--ignore-scripts` no se ejecuta nada. Los hooks de Git viven en `.githooks/` y se activan una vez por clon con `git config core.hooksPath .githooks`.
-
-### Puertas de calidad
-```bash
-python verify.py                      # Runner canónico: ejecuta las 9 puertas del repositorio y del frontend
-pnpm --dir frontend run format:check  # Comprobación de formato con Prettier
-pnpm --dir frontend run lint          # ESLint: reglas de arquitectura (FSD) + TS; cualquier aviso lo hace fallar
-pnpm --dir frontend run typecheck     # Comprobación estricta de TypeScript (tsc -b)
-pnpm --dir frontend test              # Vitest: unit, integridad del contenido y tests de las reglas de arquitectura
-pnpm --dir frontend build             # Compilación TypeScript + build de producción con Vite
-```
-
-`pnpm --dir frontend build` también alimenta `pnpm --dir frontend preview`, que sirve el bundle de producción en local; abre el shell de una ruta en su dirección con barra final (p. ej. `/about/`). Los hooks de Git en `.githooks/` comprueban el mensaje de commit en `.githooks/commit-msg` (`tools/board/commit_message.py`) y ejecutan `python -I verify.py` en `.githooks/pre-push` (`tools/board/pre_push.py`). Las reglas de arquitectura y qué hace cumplir cada una están en `docs/ARCHITECTURE.md` y en la [Guía de arquitectura](ARCHITECTURE.md#-reglas-de-feature-sliced-design).
+Las reglas de arquitectura y qué hace cumplir cada una están en `docs/ARCHITECTURE.md` y en la [Guía de arquitectura](ARCHITECTURE.md#-reglas-de-feature-sliced-design).
 
 ### Verificación de estados de carga
 
@@ -77,7 +65,7 @@ Verificado el **14 de octubre de 2026**: `pnpm lint`, los 350 tests en 47 ficher
 - Desactiva la caché y limita la velocidad de red; después abre una galería. Comprueba el indicador de carga con nombre accesible, el área estable de la imagen, la navegación y el cierre disponibles, y el zoom desactivado hasta que cargue la imagen seleccionada. Cambia de imagen antes de que terminen las peticiones y vuelve a abrir una imagen en caché; un resultado antiguo no debe sustituir el estado actual.
 - Bloquea la petición de una imagen `-full.webp`. Comprueba el texto de error y Reintentar; desbloquéala y reintenta una vez. Mantén estable el foco de teclado durante el reintento y tras el éxito, y comprueba que cerrar devuelve el foco al control de apertura. Repite en anchuras estrechas y con movimiento reducido.
 - Bloquea el bundle de entrada de la aplicación y recarga una ruta. El HTML inicial debe mostrar solo la marca del portfolio y un indicador indeterminado con nombre accesible, sin textos visibles dependientes del idioma. Su giro CSS continúa hasta que React lo sustituye y se desactiva con movimiento reducido. Bloquea también la hoja de estilos de la app para verificar la presentación incrustada. Restaura las peticiones y recarga: React debe sustituirlo sin una espera impuesta.
-- Desactiva JavaScript en un shell generado y en `404.html`: el indicador inicial debe desaparecer y los enlaces de texto sin JS deben funcionar. El build genera este fallback, así que compruébalo con `pnpm preview`, no con el servidor de desarrollo. Comprueba los tres temas y el movimiento reducido con JavaScript activado.
+- Desactiva JavaScript en un shell generado y en `404.html`: el indicador inicial debe desaparecer y los enlaces de texto sin JS deben funcionar. El build genera este fallback, así que compruébalo con la preview de producción (`./dev start --preview`), no con el servidor de desarrollo. Comprueba los tres temas y el movimiento reducido con JavaScript activado.
 
 Referencias de diseño contrastadas antes de implementar:
 
@@ -144,23 +132,24 @@ Nunca se amplía: `min(…, iw)` mantiene un origen más estrecho en su propio a
 - **Portadas y contenido de la galería:** la tarjeta muestra la portada en 16:9 (`PROJECT_COVER_RATIO`) y los tests exigen exactamente esa proporción en las tres variantes. Recorta una captura real a su contenido, o amplíala con filas de su propio fondo liso cuando se quede corta; nunca incluyas la interfaz del navegador en una captura. Las diapositivas de la galería muestran el producto o sus funciones; no añadas diapositivas que contengan solo un logotipo, tampoco como portada.
 - **Sin restos:** los tests fallan con cualquier fichero de `public/images/projects/` que ningún proyecto muestre, así que borra las variantes antiguas al sustituir o quitar una imagen.
 - **Otras imágenes:** solo WebP (calidad 82 para las capturas, 85 para la foto de perfil), sin hosts de imágenes externos. La foto de perfil vive en `public/images/profile/` y su fallback es `public/profile-fallback.webp`.
-- **Vista previa social:** `public/og-cover-gonzalo-martinez-full-stack.jpg` (JPEG de 1200×630, calidad 85; los crawlers sociales rechazan WebP): el nombre, el puesto y el stack principal en Inter sobre el degradado oscuro del hero, sin foto ni logotipo, renderizada en Edge headless desde `tooling/og-cover/og-cover.html`, que dice cómo. `index.html` la enlaza desde `og:image` y `twitter:image` con una ruta relativa a la raíz (el build la hace absoluta) y la describe en `og:image:alt` y `twitter:image:alt`. Las redes sociales guardan en caché las vistas previas por URL, así que una imagen cambiada lleva un nombre de fichero nuevo; tras el despliegue, refresca las vistas previas con LinkedIn Post Inspector y Facebook Sharing Debugger, y sube la imagen nueva como vista previa social del repositorio en GitHub (*Settings → General → Social preview*), que guarda su propia copia y no tiene API.
-- **Iconos:** el monograma «G» en `public/icons/`: `g-monogram.svg` (el que prefieren los navegadores), `g-monogram.ico` (16, 32 y 48 px) y `g-monogram-180.png` (icono apple-touch). Un icono cambiado lleva nombres de fichero nuevos y enlaces nuevos en `index.html`; `pnpm test` comprueba que existe cada icono e imagen social que enlaza `index.html`.
+- **Vista previa social:** `public/og-cover-gonzalo-martinez-full-stack.jpg` (JPEG de 1200×630, calidad 85; los crawlers sociales rechazan WebP): el nombre, el puesto y el stack principal en Inter sobre el degradado oscuro del hero, sin foto ni logotipo, renderizada en Chrome o Edge headless desde `tooling/og-cover/og-cover.html`, que dice cómo. `index.html` la enlaza desde `og:image` y `twitter:image` con una ruta relativa a la raíz (el build la hace absoluta) y la describe en `og:image:alt` y `twitter:image:alt`. Las redes sociales guardan en caché las vistas previas por URL, así que una imagen cambiada lleva un nombre de fichero nuevo; tras el despliegue, refresca las vistas previas con LinkedIn Post Inspector y Facebook Sharing Debugger, y sube la imagen nueva como vista previa social del repositorio en GitHub (*Settings → General → Social preview*), que guarda su propia copia y no tiene API.
+- **Iconos:** el monograma «G» en `public/icons/`: `g-monogram.svg` (el que prefieren los navegadores), `g-monogram.ico` (16, 32 y 48 px) y `g-monogram-180.png` (icono apple-touch). Un icono cambiado lleva nombres de fichero nuevos y enlaces nuevos en `index.html`; la puerta `tests` comprueba que existe cada icono e imagen social que enlaza `index.html`.
 
 **Inmutabilidad de caché:** Vercel sirve `/assets/*`, `/images/*` y `/icons/*` con `Cache-Control` immutable de 1 año. Vite pone hash en los nombres de JS/CSS, así que se refrescan en cada build; los nombres de imágenes e iconos no. Si reemplazas el contenido de una imagen, **renombra el fichero** (conserva su prefijo numérico, que es la posición en la galería, y cambia la parte descriptiva, p. ej. `02-gonzaloapps-site_quotidia` → `02-gonzaloapps-site_quotidia-gallery`; renombra juntas las variantes `-thumb`, `-800` y `-full` para que compartan nombre base) y actualiza `base` en `data.json`; de lo contrario los visitantes recurrentes verán la imagen antigua hasta un año. `index.html` siempre se revalida, así que cada despliegue se ve al instante.
 
 ### 3. Verificar
 
+Desde la raíz del repositorio:
+
 ```bash
-cd frontend
-pnpm test    # los tests de integridad de datos FALLAN si falta una variante de imagen, su ancho no cuadra o no se usa, una portada no es 16:9, hay un texto alternativo o un enlace no válido, o se rompe el contrato/orden
-pnpm lint
-pnpm build
+./dev verify -- tests lint build    # Windows: .\dev.cmd verify -- tests lint build
 ```
+
+La puerta `tests` lleva los tests de integridad de datos: FALLAN si falta una variante de imagen, su ancho no cuadra o no se usa, una portada no es 16:9, hay un texto alternativo o un enlace no válido, o se rompe el contrato/orden.
 
 ### 4. Publicar
 
-Antes de publicar un cambio visual, previsualiza el build de producción y comprueba el menú de tema, la navegación por teclado, la galería de imágenes y el distintivo de disponibilidad en Inicio y Experiencia, en escritorio y anchuras estrechas. Comprueba tanto la pausa de animaciones guardada como el movimiento reducido del sistema. No hace falta enviar mensajes de prueba a EmailJS; su plazo y sus fallos se prueban con un SDK simulado.
+Antes de publicar un cambio visual, previsualiza el build de producción (`./dev build` y después `./dev start --preview`) y comprueba el menú de tema, la navegación por teclado, la galería de imágenes y el distintivo de disponibilidad en Inicio y Experiencia, en escritorio y anchuras estrechas. Comprueba tanto la pausa de animaciones guardada como el movimiento reducido del sistema. No hace falta enviar mensajes de prueba a EmailJS; su plazo y sus fallos se prueban con un SDK simulado.
 
 La revisión local de interacción del **14 de octubre de 2026** comparó el commit desplegado `11e861c` con el build de producción corregido, en el mismo equipo con Brave a 2550×1215, DPR 1 y la pestaña en primer plano. Se midió la cadencia de renderizado estable con muestras de cuatro segundos de `requestAnimationFrame`; el build final mantenía activos el punto y la tarjeta. Event Timing midió la apertura y el cierre del menú de tema.
 

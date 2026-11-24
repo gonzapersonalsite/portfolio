@@ -19,14 +19,14 @@ The project is **static-only** — a single deployment, zero servers.
 - **Frontend (Vercel):**
   - Vercel auto-deploys on every push to `main` from the `frontend/` directory.
   - Vercel detects pnpm from `pnpm-lock.yaml`; pnpm then switches to the version pinned in the `packageManager` field of `frontend/package.json` (the build log shows which version ran).
-  - Verification runs locally before pushing through `.githooks/pre-push` (`tools/board/pre_push.py`): it refuses to push anything but HEAD, or with uncommitted or untracked files, and runs `python -I verify.py` across all 9 repository and frontend gates (`gates.txt`); there are no GitHub Actions workflows.
-  - esbuild's install script is approved in-repo by `allowBuilds: { esbuild: true }` in `frontend/pnpm-workspace.yaml`, the build-approval setting of pnpm 11 and later; every other dependency's install script stays blocked. Vercel needs no extra configuration.
+  - Verification runs locally before pushing through `.githooks/pre-push`, which calls the project launcher (`tools/launcher/dev.sh`): it refuses to push anything but HEAD, or with uncommitted or untracked files (`tools/board/pre_push.py`, run inside the scaffold container), and runs the same gates as `./dev verify`, the rows of `gates.txt`; there are no GitHub Actions workflows.
+  - esbuild's install script is approved in-repo by `allowBuilds: { esbuild: true }` in `frontend/pnpm-workspace.yaml`, the build-approval setting of pnpm 11 and later; every other dependency's install script stays blocked. That approval counts where install scripts run, which is Vercel's install: the local install of `./dev prepare` runs none (see *Local Development*). Vercel needs no extra configuration.
   - Vercel dashboard: set Install Command to `pnpm install` and Build Command to `pnpm run build`.
 
 ### 🌐 Hosting configuration (`frontend/vercel.json`)
 - **No rewrites:** every route is an HTML file of its own. Any other address, a missing asset or image included, gets `404.html` with status 404 (the app on that page renders `NotFoundPage` with navigation back to the home page). There is no `/favicon.ico`: pages link the icons in `/icons/`.
 - **Security headers:** `Content-Security-Policy`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` and `Permissions-Policy` on every response. The CSP allows scripts from the site plus the theme script inlined in `index.html` (by its `sha256` hash), inline styles (Emotion), images and fonts from the site only, and network requests to the site itself and EmailJS only.
-  - If you edit the inline script in `index.html`, `pnpm test` fails and prints its new `'sha256-…'` value: put it in the CSP.
+  - If you edit the inline script in `index.html`, the `tests` gate fails and prints its new `'sha256-…'` value: put it in the CSP.
   - A new third-party service (analytics, fonts, embeds) needs its host in the matching CSP directive, or the browser blocks it. Vercel's preview toolbar is blocked too, on preview deployments only.
 - **Cache:** `/assets/*`, `/images/*` and `/icons/*` are immutable for one year (see *Cache immutability* below); `index.html` is always revalidated.
 - **Markdown twins** (`*.md`) are served with `X-Robots-Tag: noindex`: agents read them, search engines index the HTML pages.
@@ -47,28 +47,16 @@ Local development: place the three `VITE_EMAILJS_*` variables in `frontend/.env.
 
 ## 🛠️ Local Development
 
-### Quick Start
-```bash
-git config core.hooksPath .githooks
-pnpm --dir frontend install
-pnpm --dir frontend dev
-```
+Node.js, pnpm and Python run inside the project's containers: the host needs Docker with Linux containers and Compose, plus Git. The commands that set up a clone, start the site and run the gates are in the [README](README.md#-running-locally), and the rules they answer to (when the gates run and what counts as green) are `AGENTS.md` §1; which gates exist is `gates.txt`. This section adds what operating the site needs to know about them.
 
-The dev server listens on `localhost` only; run `pnpm --dir frontend dev --host` to open it from a phone on the same network. It also serves `llms.txt`, `robots.txt`, `sitemap.xml` and the markdown twins; the per-route HTML shells (titles, canonical links, JSON-LD) and `404.html` only exist in the build output.
+- **One entry point.** `./dev` (`.\dev.cmd` on Windows) is the launcher (`tools/launcher/`): it runs every step in a container described by `compose.yaml`, `Dockerfile` and `tools/stack.txt`, and `./dev status` says whether a server of this checkout is running.
+- **Dependencies.** `./dev prepare` builds the images and installs exactly what `frontend/pnpm-lock.yaml` pins, with every install script disabled (`tools/react.sh`). `frontend/node_modules` is a Docker volume of the checkout, not a folder of the host.
+- **Development server.** `./dev start` serves the app with hot reload at `http://127.0.0.1:5173/` (`./dev start --port <n>` publishes it on another port) and `./dev stop` stops it. It is published on the loopback address only: nothing in the repository exposes it to the local network. It also serves `llms.txt`, `robots.txt`, `sitemap.xml` and the markdown twins; the per-route HTML shells (titles, canonical links, JSON-LD) and `404.html` only exist in the build output.
+- **Production preview.** `./dev build` writes `frontend/dist/`, and `./dev start --preview` serves that bundle at `http://127.0.0.1:4173/`; open a route's shell at its trailing-slash address (e.g. `/about/`). One server runs per checkout: stop the development server before starting the preview.
+- **Formatting.** `./dev format-fix` rewrites what the `format` gate rejects.
+- **Git hooks.** They live in `.githooks/` and are enabled once per clone with `git config core.hooksPath .githooks`. Both call the launcher: `commit-msg` checks the commit message (`tools/board/commit_message.py`) and `pre-push` runs the gates, as *CI/CD Pipeline* says above.
 
-`pnpm --dir frontend install` runs only the dependency install scripts approved in `frontend/pnpm-workspace.yaml` (esbuild); with `--ignore-scripts` nothing runs. Git hooks live in `.githooks/` and are enabled once per clone with `git config core.hooksPath .githooks`.
-
-### Quality Gates
-```bash
-python verify.py                      # Canonical runner: runs all 9 repository and frontend gates
-pnpm --dir frontend run format:check  # Prettier formatting check
-pnpm --dir frontend run lint          # ESLint: architecture (FSD) rules + TS rules; any warning fails it
-pnpm --dir frontend run typecheck     # TypeScript strict solution check (tsc -b)
-pnpm --dir frontend test              # Vitest: unit, content-integrity and architecture-rule tests
-pnpm --dir frontend build             # TypeScript compilation + Vite production build
-```
-
-`pnpm --dir frontend build` also powers `pnpm --dir frontend preview`, which serves the production bundle locally; open a route's shell at its trailing-slash address (e.g. `/about/`). Git hooks in `.githooks/` check commit messages on `.githooks/commit-msg` (`tools/board/commit_message.py`) and run `python -I verify.py` on `.githooks/pre-push` (`tools/board/pre_push.py`). The architecture rules and what enforces each one are in `docs/ARCHITECTURE.md` and the [Architecture Guide](ARCHITECTURE.md#-feature-sliced-design-rules).
+The architecture rules and what enforces each one are in `docs/ARCHITECTURE.md` and the [Architecture Guide](ARCHITECTURE.md#-feature-sliced-design-rules).
 
 ### Loading-state verification
 
@@ -77,7 +65,7 @@ Verified on **2026-10-14**: `pnpm lint`, all 350 tests in 47 files, `pnpm build`
 - Disable cache and throttle the network, then open a gallery. Confirm a named loading indicator, stable image area, usable navigation/close, and disabled zoom until the selected image loads. Move between images before requests finish and reopen a cached image; an old result must not replace the current state.
 - Block a selected `-full.webp` request. Confirm the error text and Retry action; unblock it and retry once. Keep keyboard focus stable through retry/success, and confirm that closing returns focus to the opener. Repeat at narrow widths and with reduced motion.
 - Block the application entry bundle and reload a route. The initial HTML must show only the portfolio brand and a named indeterminate indicator, with no visible language-dependent copy. Its CSS rotation continues until React replaces it and is disabled with reduced motion. Also block the app stylesheet to verify the inline presentation. Restore requests and reload: React must replace it without an imposed wait.
-- Disable JavaScript on a generated route shell and `404.html`: the startup indicator must disappear and the no-JS text links must work. This fallback is generated by the build, so test with `pnpm preview`, not the dev server. Check all three themes and reduced motion with JavaScript enabled.
+- Disable JavaScript on a generated route shell and `404.html`: the startup indicator must disappear and the no-JS text links must work. This fallback is generated by the build, so test with the production preview (`./dev start --preview`), not the dev server. Check all three themes and reduced motion with JavaScript enabled.
 
 Design references checked before implementation:
 
@@ -144,23 +132,24 @@ Never upscale: `min(…, iw)` keeps a narrower source at its own width, so a sou
 - **Covers and gallery content:** the card shows the cover at 16:9 (`PROJECT_COVER_RATIO`) and the tests require exactly that ratio in all three variants. Crop a real screenshot to its content, or extend it with rows of its own plain background when it is too short; never put browser chrome in a screenshot. Gallery slides show the product or its functionality; do not add slides containing only a logo, including as the cover.
 - **No leftovers:** the tests fail on any file under `public/images/projects/` that no project shows, so delete the old variants when you replace or remove an image.
 - **Other images:** WebP only (quality 82 for screenshots, 85 for the profile photo), no external image hosts. The profile photo lives in `public/images/profile/` and its fallback is `public/profile-fallback.webp`.
-- **Social preview:** `public/og-cover-gonzalo-martinez-full-stack.jpg` (1200×630 JPEG, quality 85; social crawlers reject WebP): name, role and main stack in Inter on the dark hero gradient, no photo and no wordmark, rendered in headless Edge from `tooling/og-cover/og-cover.html`, which says how. `index.html` links it from `og:image` and `twitter:image` by a root-relative path (the build makes it absolute) and describes it in `og:image:alt` and `twitter:image:alt`. Social platforms cache previews by URL, so a changed image gets a new file name; after the deploy, refresh the previews with LinkedIn Post Inspector and the Facebook Sharing Debugger, and upload the new image as the repository's social preview on GitHub (*Settings → General → Social preview*), which holds its own copy and has no API.
-- **Icons:** the "G" monogram in `public/icons/`: `g-monogram.svg` (preferred by browsers), `g-monogram.ico` (16, 32 and 48 px) and `g-monogram-180.png` (apple-touch icon). A changed icon gets new file names and new links in `index.html`; `pnpm test` checks that every icon and social image `index.html` links exists.
+- **Social preview:** `public/og-cover-gonzalo-martinez-full-stack.jpg` (1200×630 JPEG, quality 85; social crawlers reject WebP): name, role and main stack in Inter on the dark hero gradient, no photo and no wordmark, rendered in headless Chrome or Edge from `tooling/og-cover/og-cover.html`, which says how. `index.html` links it from `og:image` and `twitter:image` by a root-relative path (the build makes it absolute) and describes it in `og:image:alt` and `twitter:image:alt`. Social platforms cache previews by URL, so a changed image gets a new file name; after the deploy, refresh the previews with LinkedIn Post Inspector and the Facebook Sharing Debugger, and upload the new image as the repository's social preview on GitHub (*Settings → General → Social preview*), which holds its own copy and has no API.
+- **Icons:** the "G" monogram in `public/icons/`: `g-monogram.svg` (preferred by browsers), `g-monogram.ico` (16, 32 and 48 px) and `g-monogram-180.png` (apple-touch icon). A changed icon gets new file names and new links in `index.html`; the `tests` gate checks that every icon and social image `index.html` links exists.
 
 **Cache immutability:** Vercel serves `/assets/*`, `/images/*` and `/icons/*` with a 1-year immutable `Cache-Control`. Vite hashes JS/CSS filenames, so they refresh on every build; image and icon filenames do not. If you replace an image's content, **rename the file** (keep its numeric prefix, which is the gallery position, and change the descriptive part, e.g. `02-gonzaloapps-site_quotidia` → `02-gonzaloapps-site_quotidia-gallery`; rename the `-thumb`, `-800` and `-full` variants together so they keep one base name) and update `base` in `data.json`, or returning visitors will keep the old image for up to one year. `index.html` is always revalidated, so new deployments are picked up immediately.
 
 ### 3. Verify
 
+From the root of the repository:
+
 ```bash
-cd frontend
-pnpm test    # data-integrity tests FAIL if an image variant is missing, has the wrong width or is unused, a cover is not 16:9, an alt text or link is invalid, or fields/orderings break
-pnpm lint
-pnpm build
+./dev verify -- tests lint build    # Windows: .\dev.cmd verify -- tests lint build
 ```
+
+The `tests` gate holds the data-integrity tests: they FAIL if an image variant is missing, has the wrong width or is unused, a cover is not 16:9, an alt text or link is invalid, or fields/orderings break.
 
 ### 4. Ship
 
-Before shipping a visual change, preview the production build and check the theme menu, keyboard navigation, image gallery, and the availability badge on Home and Experience at desktop and narrow widths. Check both the saved animation pause and the system's reduced-motion setting. No test message needs to be sent to EmailJS; its deadline and failure paths are covered with a mocked SDK.
+Before shipping a visual change, preview the production build (`./dev build`, then `./dev start --preview`) and check the theme menu, keyboard navigation, image gallery, and the availability badge on Home and Experience at desktop and narrow widths. Check both the saved animation pause and the system's reduced-motion setting. No test message needs to be sent to EmailJS; its deadline and failure paths are covered with a mocked SDK.
 
 The local interaction review on **2026-10-14** compared deployed commit `11e861c` with the corrective production build, on the same machine in Brave at 2550×1215, DPR 1, with the tab in the foreground. Four-second `requestAnimationFrame` samples measured steady rendering cadence; the final build kept both the dot and card animations running. Event Timing measured opening and closing the theme menu.
 

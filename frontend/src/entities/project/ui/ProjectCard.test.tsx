@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import { ProjectCard, getAllProjects } from '@/entities/project'
 import { i18n } from '@/shared/config'
@@ -8,6 +8,10 @@ const kanban = getAllProjects().find((project) => project.links.length > 1)
 describe('ProjectCard', () => {
   beforeEach(async () => {
     await i18n.changeLanguage('en')
+  })
+
+  afterEach(() => {
+    document.documentElement.style.removeProperty('font-size')
   })
 
   it('names the card with its title at the requested heading level', () => {
@@ -34,5 +38,15 @@ describe('ProjectCard', () => {
     expect(links.map((link) => link.getAttribute('href'))).toEqual(kanban.links.map((link) => link.url))
     const titleId = screen.getByRole('heading', { level: 3 }).id
     expect(links.every((link) => link.getAttribute('aria-describedby') === titleId)).toBe(true)
+  })
+
+  it("grows the gallery mark of the cover with the reader's font size, like its count", () => {
+    if (!kanban) throw new Error('expected a project with several links')
+    document.documentElement.style.fontSize = '24px'
+    const { container } = render(<ProjectCard project={kanban} />)
+
+    const mark = container.querySelector('svg[data-testid="PhotoLibraryIcon"]')!
+    expect(mark.parentElement?.textContent).toBe(String(kanban.images.length))
+    expect(getComputedStyle(mark).fontSize).toBe('24px')
   })
 })

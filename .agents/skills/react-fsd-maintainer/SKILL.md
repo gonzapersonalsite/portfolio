@@ -22,7 +22,7 @@ cambio.
    slices van a usar, y nada más.
 4. **Las reglas de negocio**, como funciones puras en `model`, con su test al
    lado (`<fichero>.test.ts`) en el mismo cambio; los componentes en `ui`, con
-   su CSS Module y su test al lado (`<Componente>.test.tsx`).
+   su estilo en `sx` y su test al lado (`<Componente>.test.tsx`).
 5. **Las puertas.** `./dev verify -- lint typecheck tests` (en Windows
    `.\dev.cmd verify -- lint typecheck tests`) para iterar; `./dev verify` /
    `.\dev.cmd verify` antes de dar la parte por lista.

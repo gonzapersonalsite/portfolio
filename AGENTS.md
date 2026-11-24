@@ -253,6 +253,7 @@ escribe aquí cite algo que no existe. Lo que no sostiene una puerta no entra.
 | Qué toca del andamio y en qué orden | `docs/TOOLING.md` | **Única autoridad de numeración de tramos** de herramienta |
 | Qué comprueba el tablero y qué significa cada hallazgo | `tools/board/README.md` | Cómo se deriva el estado del proyecto; `STATUS.txt`, la página `board.html` y los índices del registro son DERIVADOS suyos |
 | Cómo se organiza el código del producto | `docs/ARCHITECTURE.md` | **Arquitectura del producto**: capas, slices, imports, estilos y acceso a la red |
+| Para quién es la interfaz y qué decisiones visuales rigen | `DESIGN.md` | **Diseño de la interfaz**: sus decisiones visuales, dónde están hechas y cómo se comprueban |
 
 Ningún documento repite el contenido de otro. Si dos se contradicen, gana el de
 la columna "manda sobre" y el otro se corrige en el mismo cambio.

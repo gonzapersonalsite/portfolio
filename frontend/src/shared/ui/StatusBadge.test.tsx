@@ -4,7 +4,10 @@ import { ThemeProvider } from '@mui/material/styles'
 import { createAppTheme } from '@/shared/config'
 import StatusBadge from './StatusBadge'
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  document.documentElement.style.removeProperty('font-size')
+})
 
 describe('StatusBadge', () => {
   it.each([
@@ -25,5 +28,17 @@ describe('StatusBadge', () => {
     expect(getComputedStyle(badge.querySelector('svg')!).color).toBe(color)
     expect(badge.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true')
     expect(screen.queryByRole('button')).toBeNull()
+  })
+
+  it("grows its dot with the reader's font size, like the label", () => {
+    document.documentElement.style.fontSize = '24px'
+    render(
+      <ThemeProvider theme={createAppTheme('dark')}>
+        <StatusBadge label="Open to work" />
+      </ThemeProvider>,
+    )
+
+    const dot = screen.getByText('Open to work').closest('.MuiChip-root')!.querySelector('svg')!
+    expect(getComputedStyle(dot).fontSize).toBe('18px')
   })
 })

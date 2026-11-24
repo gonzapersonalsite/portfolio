@@ -18,7 +18,7 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({ text, variant = 'bo
   const elements: React.ReactNode[] = []
   let currentList: string[] = []
   const isSmallText = variant === 'body2' || variant === 'caption' || variant === 'subtitle2'
-  const bulletMt = isSmallText ? '7px' : '10px'
+  const bulletMt = isSmallText ? '0.4375rem' : '0.625rem'
 
   const flushList = (keyIndex: number) => {
     if (currentList.length > 0) {
@@ -27,7 +27,7 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({ text, variant = 'bo
           {currentList.map((item, i) => (
             <ListItem key={i} alignItems="flex-start" sx={{ py: 0, pl: 0 }}>
               <ListItemIcon sx={{ minWidth: 24, mt: bulletMt }}>
-                <CircleIcon sx={{ fontSize: 6, color: 'text.secondary' }} />
+                <CircleIcon sx={{ fontSize: '0.375rem', color: 'text.secondary' }} />
               </ListItemIcon>
               <ListItemText
                 primary={item}

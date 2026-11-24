@@ -112,7 +112,7 @@ const AboutPage: React.FC = () => {
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Stack spacing={2}>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <CodeIcon color="primary" sx={{ mr: 2, fontSize: 32 }} />
+                    <CodeIcon color="primary" sx={{ mr: 2, fontSize: '2rem' }} />
                     <Box>
                       <Typography variant="h6" component="h3" sx={{ fontWeight: 'bold' }}>
                         {t('skills.categories.Frontend')}
@@ -127,7 +127,7 @@ const AboutPage: React.FC = () => {
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Stack spacing={2}>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <WorkIcon color="secondary" sx={{ mr: 2, fontSize: 32 }} />
+                    <WorkIcon color="secondary" sx={{ mr: 2, fontSize: '2rem' }} />
                     <Box>
                       <Typography variant="h6" component="h3" sx={{ fontWeight: 'bold' }}>
                         {t('skills.categories.Backend')}

@@ -21,7 +21,8 @@ export default defineConfig({
   plugins: [react(), fontPreloadPlugin(), agentFilesPlugin()],
   // The '@/' alias lives in tsconfig.app.json only: Vite reads it from there.
   resolve: { tsconfigPaths: true },
-  // Local only; `pnpm dev --host` exposes it on the LAN to test on a phone.
+  // The launcher runs it with --host inside its container (tools/react.sh), and compose.yaml
+  // publishes the port on 127.0.0.1 only.
   server: {
     port: 5173,
     strictPort: true,

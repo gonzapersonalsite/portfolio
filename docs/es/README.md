@@ -52,6 +52,7 @@ El proyecto sigue una **arquitectura de frontend estático** moderna, priorizand
 
 📖 **[Contrato de Arquitectura Feature-Sliced Design](../ARCHITECTURE.md)** — Reglas canónicas de capas, slices e imports FSD.
 📖 **[Guía de arquitectura](ARCHITECTURE.md)** — Patrones y decisiones de diseño.
+🎨 **[Guía de diseño](../../DESIGN.md)** — Para quién es la interfaz, las decisiones visuales tomadas, dónde están hechas y cómo se comprueban.
 🛠️ **[Guía de operaciones](OPERATIONS.md)** — Despliegue, CI/CD, variables de entorno, gestión de contenido y setup local.
 
 ---
@@ -59,27 +60,27 @@ El proyecto sigue una **arquitectura de frontend estático** moderna, priorizand
 ## 🚀 Ejecución local
 
 ### Requisitos
-- Node.js (ver `frontend/package.json` para la versión gestionada), pnpm y Python 3.
+- Docker con contenedores Linux y Compose (además de Git para activar los hooks); Node.js, pnpm y Python corren dentro de los contenedores del proyecto.
 
 ### Iniciar la aplicación
 ```bash
 git config core.hooksPath .githooks
-pnpm --dir frontend install
-pnpm --dir frontend dev
+./dev prepare   # Windows: .\dev.cmd prepare
+./dev start     # Windows: .\dev.cmd start
 ```
 
 **Acceso:**
-- Frontend: [http://localhost:5173/](http://localhost:5173/)
+- Frontend: [http://127.0.0.1:5173/](http://127.0.0.1:5173/) (se para con `./dev stop` / `.\dev.cmd stop`)
 
 ### Puertas de calidad
 ```bash
-python verify.py                      # Runner canónico: ejecuta las 9 puertas del repositorio y del frontend
-pnpm --dir frontend run format:check  # Comprobación de formato con Prettier
-pnpm --dir frontend run lint          # ESLint: reglas de arquitectura (FSD) + TS; cualquier aviso lo hace fallar
-pnpm --dir frontend run typecheck     # Comprobación estricta de TypeScript (tsc -b)
-pnpm --dir frontend test              # Vitest: unit, integridad del contenido y tests de las reglas de arquitectura
-pnpm --dir frontend build             # Compilación TypeScript + build de producción con Vite
+./dev verify                      # Windows: .\dev.cmd verify — ejecuta las 9 puertas del repositorio y del frontend; la corrida completa es la del hook pre-push
+./dev verify -- <etiqueta>        # Windows: .\dev.cmd verify -- <etiqueta> — antes de un commit, las puertas que el cambio puede mover
+./dev format-fix                  # Windows: .\dev.cmd format-fix — corrige el formato con Prettier
+./dev build                       # Windows: .\dev.cmd build — compilación TypeScript + build de producción con Vite
 ```
+
+Para actualizar el andamio o las piezas de la plantilla desde el catálogo, consulta `docs/ACTUALIZAR.md`.
 
 ---
 

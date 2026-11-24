@@ -21,7 +21,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ label }) => (
       <FiberManualRecordIcon
         aria-hidden="true"
         sx={{
-          fontSize: 12,
+          fontSize: '0.75rem',
           // Only the dot moves; the appearance control can pause it without JavaScript timers.
           '@media (prefers-reduced-motion: no-preference)': {
             animation: `${statusPulse} 2.4s ease-in-out infinite`,

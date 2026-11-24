@@ -1,10 +1,12 @@
 <!doctype html>
 <!--
-  Source of public/og-cover-gonzalo-martinez-full-stack.jpg. Render it at 1200x630 from frontend/,
-  after pnpm install (the font comes from node_modules):
-    msedge --headless=new --hide-scrollbars --force-device-scale-factor=1 --allow-file-access-from-files
-      --window-size=1200,630 --screenshot=<absolute path>/card.png file:///<absolute path to this file>
-  then save card.png as a quality 85 JPEG under a new file name, because social platforms cache by URL.
+  Source of public/og-cover-gonzalo-martinez-full-stack.jpg. The font comes from node_modules, which
+  the launcher keeps in the project's container, so render it at 1200x630 through the development
+  server (./dev start, or .\dev.cmd start on Windows):
+    chrome --headless=new --hide-scrollbars --force-device-scale-factor=1 --window-size=1200,630
+      --screenshot=<absolute path>/card.png http://127.0.0.1:5173/tooling/og-cover/og-cover.html
+  (Edge takes the same flags as msedge), then save card.png as a quality 85 JPEG under a new file
+  name, because social platforms cache by URL.
 -->
 <html lang="en">
   <head>

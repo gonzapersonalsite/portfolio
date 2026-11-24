@@ -10,6 +10,7 @@ const Broken = () => {
 describe('ErrorBoundary', () => {
   afterEach(() => {
     vi.restoreAllMocks()
+    document.documentElement.style.removeProperty('font-size')
   })
 
   it('replaces a crashed tree with a page of its own: main region, heading and a way home', async () => {
@@ -39,5 +40,19 @@ describe('ErrorBoundary', () => {
     )
 
     expect(screen.getByRole('link', { name: 'Ir a la página de inicio' }).getAttribute('href')).toBe('/')
+  })
+
+  it("grows its icon with the reader's font size, like the message", () => {
+    document.documentElement.style.fontSize = '24px'
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    render(
+      <ErrorBoundary>
+        <Broken />
+      </ErrorBoundary>,
+    )
+
+    const icon = screen.getByRole('main').querySelector('svg')!
+    expect(getComputedStyle(icon).fontSize).toBe('120px')
   })
 })

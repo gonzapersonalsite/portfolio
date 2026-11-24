@@ -23,7 +23,7 @@
 #            instantiate.py writes a copy's manifest without them, adopt.py
 #            refuses where they are and seal where they are not.
 #
-version 0.8.1
+version 0.8.2
 
 # The runner, the board, their tests and the tools around them.
 engine verify.py ccdbaa2852c6b7a069f0d7f5660a24271dc69532415464f53ea2224a8c9828c4
@@ -43,8 +43,8 @@ engine tools/board/git-view.sh d59f988e9452466d3d14868b54e04bb4167086dc1d39406d9
 engine tools/board/git-view.ps1 3b9f2fdd7ff8f2f261387b207cef77aec782ae29530af506aeba97244bb6728d
 engine dev.cmd c996688d612ddc3789ec09484dea11e3e3be8783e1ca3b98cda77c07f403203d
 engine dev 313419ccb2fc508ff650c47960502d939dd19d153472ffc729a8299325db802b
-engine tools/launcher/dev.ps1 a011ca51caa310a70c76c4edeb93c1e38e8fdbf4e24434a5067881aba3b6d94e
-engine tools/launcher/dev.sh e121ea3207efc1383fd88a7ef8cfd9d6e46264df0ab9d50c9a26227bdb89b2a6
+engine tools/launcher/dev.ps1 d32cf5b3ea5c7c5955f7d66f13e398217487d84c318e561516ac5d1c1898dd5e
+engine tools/launcher/dev.sh 91d3df4715cae4b5a3d75779d02f8a7ed2ba305cb5c357dddf15246b26558fdd
 engine tools/launcher/run-step.sh 0249a010d69f5e4b9ed6c52993693474d543c296dcddaf690c2135e681169094
 engine tools/board/Dockerfile.scaffold 98e0868dba3032f816cad488072cfbfb389f7ce7811c8605618c9e6c33257b0d
 engine tools/board/Dockerfile.scaffold.dockerignore cdbcae15105d6b781e620813c79c7e868740d4e9cc53ce6f5fcbbc12387adf4b

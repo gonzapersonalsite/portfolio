@@ -715,7 +715,9 @@ if [ "$CMD" = "prepare" ]; then
 elif [ "$CMD" = "verify" ] && [ "$HAS_SCAFFOLD" = "true" ] && [ "$HAS_STACK" != "true" ]; then
   run_scaffold verify.py --run-id "$RUN_ID" "$@" || RC=$?
 elif [ "$CMD" = "verify" ] && [ "$HAS_SCAFFOLD" = "true" ] && [ "$HAS_STACK" = "true" ]; then
-  run_scaffold verify.py --emit-plan "$RUN_ID" "$@" >/dev/null || RC=$?
+  # A plan that is written prints itself, for no one; one that is refused prints why, for the person.
+  run_scaffold verify.py --emit-plan "$RUN_ID" "$@" > "$RUN_DIR/plan.out" || RC=$?
+  [ "$RC" -eq 0 ] || cat "$RUN_DIR/plan.out"
   if [ "$RC" -eq 0 ]; then
     TAB="$(printf '\t')"
     while IFS="$TAB" read -r s_idx s_exec s_act s_bud s_gadapt s_gargs s_label; do

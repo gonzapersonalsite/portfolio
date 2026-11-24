@@ -962,7 +962,8 @@ function Invoke-CoordinatedVerify {
     if ($planRes.TimedOut -or $planRes.ExitCode -ne 0) {
         if ($planRes.StdOut) { [Console]::Out.WriteLine($planRes.StdOut) }
         if ($planRes.StdErr) { [Console]::Error.WriteLine($planRes.StdErr) }
-        return if ($planRes.ExitCode -gt 0) { $planRes.ExitCode } else { $EXIT_RED }
+        if ($planRes.ExitCode -gt 0) { return $planRes.ExitCode }
+        return $EXIT_RED
     }
 
     $plan = Read-JsonFile (Join-Path $runDir 'plan.json')

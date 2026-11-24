@@ -50,6 +50,17 @@ the scaffold is instantiated over it as over an existing product, with the
 layer whose `external` row names that folder. A product that already exists
 incorporates a stack template's pieces with upgrade.py --adopt.
 
+A guide (a `guide` row of the stack template: a document of the starter that
+has authority in the product, as its design guide) is the product's from its
+first day: it is written once, as a starter file, and no update reads it.
+Created with the scaffold, the product declares it `live` in documents.txt
+and gives it its row of the authority table, both the instance's from then
+on. Created without it (--stack-only), its receipt keeps that the starter
+delivered it, and the day the scaffold enters, a guide still at its path is
+declared the same way whatever it says by then; one that is no longer there
+is neither recreated nor declared, and the plan says so. A file at a guide's
+path that no receipt vouches for may be any document, and is left alone.
+
 Whatever a run brings in beyond the engine is recorded in
 tools/board/components.txt (components.py): the layer, with the files it
 copied and the lines it wrote, and the stack template, with its parameters
@@ -62,6 +73,7 @@ import fnmatch
 import json
 import ntpath
 import os
+import posixpath
 import re
 import shlex
 import shutil
@@ -166,6 +178,14 @@ def editorconfig_parts(text):
     return preamble, sections
 
 
+def says_root(line):
+    """Whether a line of an .editorconfig's preamble says 'root = true'. Its
+    key and its value are read without their case and without the spaces
+    around them, and a file checked out with CRLF keeps a carriage return at
+    the end of each line."""
+    return "".join(line.split()).lower() == "root=true"
+
+
 def merge_editorconfig(existing, ours):
     """.editorconfig: the template's sections the target lacks go before the
     target's, so a later section of the target still wins; 'root = true' is
@@ -174,9 +194,10 @@ def merge_editorconfig(existing, ours):
     _, template_sections = editorconfig_parts(ours)
     have = {header for header, _ in sections}
     missing = [lines for header, lines in template_sections if header not in have]
-    if not missing and any(line.replace(" ", "") == "root=true" for line in preamble):
+    rooted = any(says_root(line) for line in preamble)
+    if not missing and rooted:
         return existing
-    if not any(line.replace(" ", "") == "root=true" for line in preamble):
+    if not rooted:
         preamble = ["root = true"] + preamble
     body = [line for lines in missing for line in lines]
     while body and not body[-1].strip():
@@ -496,6 +517,62 @@ def is_skill(path):
 def read_layer_file(layer, path):
     return layer.get("file_texts", {}).get(path, "")
 
+# ----------------------------------------------------------------- guides
+#
+# A guide is a starter document with authority that the product owns. The
+# board asks every markdown file for a home and every document of the
+# authority table for a declaration, so the creation writes both, once; what
+# the guide says, and those two rows, are the instance's from then on.
+
+GUIDES_NOTE = "# --- The guides the product owns ---"
+
+
+def no_guides():
+    return {"register": {}, "gone": [], "unproven": [], "links": []}
+
+
+def guide_texts(guides, read, prose):
+    """documents.txt and the contract with each guide declared `live` and with
+    its row of the authority table, or the conflict that stops it. A guide
+    the instance already declares, or whose row the table already has, keeps
+    what it has. `read` gives an instance file's text."""
+    documents, contract, conflicts = read(DOCUMENTS_FILE), read(CONTRACT), []
+    rows = B.parse_data(documents, DOCUMENTS_FILE, [])
+    declared = set(B.values_of(rows, "live") + B.values_of(rows, "closed"))
+    added = ["live " + path for path in sorted(guides) if path not in declared]
+    if added:
+        documents = documents.rstrip("\n") + "\n\n" + GUIDES_NOTE + "\n" + "".join(row + "\n" for row in added)
+    heading = prose.get(AUTHORITY_KEY, "")
+    cited = {span["value"] for row in B.table_rows(B.section(contract, heading)) if len(row["cells"]) > 1
+             for span in B.inline_code(row["cells"][1])} if heading else set()
+    missing = [C.authority_row(path, guides[path]) for path in sorted(guides) if path not in cited]
+    if missing:
+        changed = insert_in_section(contract, heading, missing, last_table_row) if heading else None
+        if changed is None:
+            conflicts.append("%s no tiene la seccion '%s' que declara %s ('%s'): no se sabe donde escribir la fila de %s"
+                             % (CONTRACT, heading, PROSE_FILE, AUTHORITY_KEY, ", ".join(sorted(guides))))
+        else:
+            contract = changed
+    return {"texts": {DOCUMENTS_FILE: documents, CONTRACT: contract}, "conflicts": conflicts}
+
+
+def links_to(target, gone, documents):
+    """'<document>:<line>' of every link to a path of `gone` among the
+    `documents` the product has, each link resolved as the board resolves it:
+    from the folder of the document that writes it."""
+    found = []
+    for doc in documents:
+        if not gone or not os.path.isfile(os.path.join(target, *doc.split("/"))):
+            continue
+        for link in B.markdown_links(B.TreeReader(target).text(doc)):
+            path = B.link_path(link["value"])
+            if not path:
+                continue
+            aimed = posixpath.normpath(path.lstrip("/") if path.startswith("/") else posixpath.join(posixpath.dirname(doc), path))
+            if aimed in gone:
+                found.append("%s:%d" % (doc, link["line"]))
+    return found
+
 # ----------------------------------------------------------------- planning
 
 
@@ -751,7 +828,7 @@ def plan(source, target, layer_name, stack_request=None, stack_only=False):
     template (`stack_request`: its id and the parameters given; `stack_only`:
     without installing the scaffold) would do, without doing it."""
     found = {"mode": "", "copy": [], "reuse": [], "merge": [], "conflicts": [], "git": [], "layer": None, "problems": [], "version": "", "pending": "",
-             "stack": None, "incoming": {}, "receipt": None}
+             "stack": None, "incoming": {}, "receipt": None, "guides": no_guides()}
     source, target = os.path.abspath(source), os.path.abspath(target)
     found["problems"] += destination_problems(target, [MANIFEST_FILE, C.RECORD_FILE, C.RECEIPT_FILE, ".git"] + list(SCAFFOLD_MARKS))
     if found["problems"]:
@@ -800,6 +877,7 @@ def plan(source, target, layer_name, stack_request=None, stack_only=False):
             found["git"] = creation_git(target, executable, with_hooks=False)
             return found
         layer_name = found["stack"]["layer"]
+        found["guides"]["register"] = dict(found["stack"]["guides"])
     if layer_name:
         found["layer"] = read_layer(source, layer_name, listing["files"])
         found["problems"] += found["layer"]["problems"]
@@ -829,6 +907,9 @@ def plan(source, target, layer_name, stack_request=None, stack_only=False):
         if not r_problems:
             r_problems += record_history_problems(source, found["receipt"], "HEAD")
         found["problems"] += ["%s no se puede leer (%s): arreglalo antes" % (C.RECEIPT_FILE, p) for p in r_problems]
+        if not r_problems:
+            found["guides"], unsafe = receipt_guides(source, target, found["receipt"])
+            found["problems"] += unsafe
     merging = merges(found["pending"])
     for path in files:
         if path not in found["incoming"] and not os.path.lexists(os.path.join(target, *path.split("/"))):
@@ -864,6 +945,79 @@ def plan(source, target, layer_name, stack_request=None, stack_only=False):
     return found
 
 
+def stack_templates(root, paths):
+    """(its template.txt, the stack it declares, what is wrong with it) of
+    every stack template among the `paths` a repository versions: a
+    template.txt whose legend declares 'stack'."""
+    found = []
+    for path in sorted(paths):
+        if path.rsplit("/", 1)[-1] != C.STACK_FILE:
+            continue
+        text = read_bytes(os.path.join(root, *path.split("/"))).decode("utf-8", "replace")
+        if C.STACK_KEY not in B.legend_keys(text):
+            continue
+        problems = []
+        found.append((path, C.read_stack(text, path, problems), problems))
+    return found
+
+
+def catalog_guides(source, record):
+    """The guides the catalog's stack templates declare today for the stacks
+    of a record, at the paths a product with its parameters has them, and
+    what keeps the catalog from being read. What the catalog declares today
+    says nothing of what an older product was created with: these only tell
+    which paths to look at."""
+    top = run_git(source, "rev-parse", "--show-toplevel")
+    listed = run_git(os.path.normpath(top["out"].strip()), "ls-files", "-z") if top["code"] == 0 else top
+    if listed["code"] != 0:
+        return {}, ["git no lista el catalogo (%s): no se sabe que guias declara hoy cada plantilla de stack" % listed["err"]]
+    declared = {}
+    for _, stack, problems in stack_templates(os.path.normpath(top["out"].strip()), [path for path in listed["out"].split("\0") if path]):
+        component = record["components"].get("%s:%s" % (C.STACK, stack["id"]))
+        if component is None or problems:
+            continue
+        pairs = C.substitutions(stack, component["params"])
+        declared.update({C.render_text(path, pairs): guide for path, guide in stack["guides"].items()})
+    return declared, []
+
+
+def receipt_guides(source, target, receipt):
+    """What the scaffold does with the guides of a product that has a receipt,
+    and the problems of looking at them. It registers those the receipt says
+    the starter delivered and that are still at their path, whatever they say
+    now. One that is gone is neither recreated nor registered: the product
+    deleted or moved it, and nothing here knows which. And a file at a path
+    where the catalog declares a guide today, without the receipt saying the
+    starter delivered it, may be any document of the product's: it is named,
+    and left alone."""
+    delivered = {path: guide for guides in receipt["delivered"].values() for path, guide in guides.items()}
+    declared, problems = catalog_guides(source, receipt)
+    problems += destination_problems(target, set(delivered) | set(declared))
+    if problems:
+        return no_guides(), problems
+    here = {path for path in set(delivered) | set(declared) if os.path.isfile(os.path.join(target, *path.split("/")))}
+    guides = no_guides()
+    guides["register"] = {path: guide for path, guide in delivered.items() if path in here}
+    guides["gone"] = sorted(path for path in delivered if path not in here)
+    guides["unproven"] = sorted(path for path in declared if path not in delivered and path in here)
+    return guides, []
+
+
+def guide_plan(source, target, found, layered):
+    """The texts that declare the product's guides, over the instance as the
+    instantiation and its layer will leave it, and where the documents the
+    board will read still link to a guide that is gone."""
+    projected = projected_texts(source, target, found)
+    projected.update(layered["texts"] if layered else {})
+
+    def read(rel):
+        return projected[rel] if rel in projected else instance_text(target, rel)
+    planned = guide_texts(found["guides"]["register"], read, prose_of(read(PROSE_FILE)))
+    live = B.values_of(B.parse_data(planned["texts"][DOCUMENTS_FILE], DOCUMENTS_FILE, []), "live")
+    planned["links"] = links_to(target, found["guides"]["gone"], live)
+    return planned
+
+
 def stack_plan(source, request, listing, standalone=False):
     """A stack template of the template's repository as a new product gets
     it: the template is the folder whose template.txt declares the id asked
@@ -872,7 +1026,7 @@ def stack_plan(source, request, listing, standalone=False):
     copied byte for byte, and a file that is not UTF-8. It also names the
     layer whose 'external' row is that folder, and the pieces the record
     keeps, with the sha256 of what is written."""
-    found = {"id": request["id"], "folder": "", "params": {}, "files": {}, "pieces": {}, "launcher_pieces": {}, "layer": "", "problems": []}
+    found = {"id": request["id"], "folder": "", "params": {}, "files": {}, "pieces": {}, "launcher_pieces": {}, "guides": {}, "layer": "", "problems": []}
     top = run_git(source, "rev-parse", "--show-toplevel")
     if top["code"] != 0:
         found["problems"].append("git no dice cual es el repositorio de la plantilla (%s): las plantillas de stack se leen de el" % top["err"])
@@ -887,18 +1041,9 @@ def stack_plan(source, request, listing, standalone=False):
         if "\t" in entry:
             meta, path = entry.split("\t", 1)
             modes[path] = meta.split()[0]
-    declared, matched = [], []
-    for path in sorted(modes):
-        if path.rsplit("/", 1)[-1] != C.STACK_FILE:
-            continue
-        text = read_bytes(os.path.join(root, *path.split("/"))).decode("utf-8", "replace")
-        if C.STACK_KEY not in B.legend_keys(text):
-            continue
-        problems = []
-        stack = C.read_stack(text, path, problems)
-        declared.append(stack["id"] or path)
-        if stack["id"] == request["id"]:
-            matched.append((path, stack, problems))
+    templates = stack_templates(root, modes)
+    declared = [stack["id"] or path for path, stack, _ in templates]
+    matched = [template for template in templates if template[1]["id"] == request["id"]]
     if len(matched) != 1:
         found["problems"].append("%s la plantilla de stack '%s' (las hay: %s)" % ("ninguna carpeta del repositorio declara" if not matched else
                                  "%d carpetas declaran" % len(matched), request["id"], ", ".join(sorted(declared)) or "ninguna"))
@@ -931,6 +1076,7 @@ def stack_plan(source, request, listing, standalone=False):
     found["params"], wrong = C.creation_params(stack, request["params"])
     found["problems"] += wrong
     pieces = C.stack_pieces(stack, files, found["problems"])
+    guides = C.stack_guides(stack, files, pieces, found["problems"])
     if found["problems"]:
         return found
     pairs = C.substitutions(stack, found["params"])
@@ -939,6 +1085,7 @@ def stack_plan(source, request, listing, standalone=False):
     except ValueError as error:
         found["problems"].append(str(error))
         return found
+    found["guides"] = {destinations[rel]: guide for rel, guide in guides.items()}
     for rel in files:
         raw = read_bytes(os.path.join(root, *(prefix + rel).split("/")))
         data = raw
@@ -1070,6 +1217,11 @@ def theirs_text(target, rel):
     return read_bytes(contained_path(target, rel)).decode("utf-8-sig")
 
 
+def instance_text(target, rel):
+    """The text of a file the instance has, or '' when it does not have it."""
+    return B.TreeReader(target).text(rel) if os.path.isfile(contained_path(target, rel)) else ""
+
+
 def write_text(path, text):
     B.write_atomically(path, text)
 
@@ -1147,6 +1299,8 @@ def stack_only_receipt(found, commit, source):
     tracked = dict(found["stack"]["pieces"])
     tracked.update(found["stack"].get("launcher_pieces", {}))
     record["files"][cid], record["items"][cid] = tracked, {}
+    if found["stack"]["guides"]:
+        record["delivered"][cid] = dict(found["stack"]["guides"])
     return C.render_record(record)
 
 
@@ -1162,7 +1316,7 @@ def apply(source, target, found, day):
 
 def apply_checked(source, target, found, day, done):
     source, target = os.path.abspath(source), os.path.abspath(target)
-    destinations = found["copy"] + found["reuse"] + found["merge"] + list(found["incoming"]) + [C.RECEIPT_FILE, ".git"]
+    destinations = found["copy"] + found["reuse"] + found["merge"] + list(found["incoming"]) + list(found["guides"]["register"]) + [C.RECEIPT_FILE, ".git"]
     if found["mode"] != "stack-only":
         destinations += list(C.ITEM_FILES.values()) + [C.RECORD_FILE]
     if found["layer"]:
@@ -1174,6 +1328,10 @@ def apply_checked(source, target, found, day, done):
     for path in found["reuse"]:
         if not same_content(source, target, found, path):
             raise OSError("el fichero compartido cambio despues del plan: %s" % path)
+    vanished = [path for path in sorted(found["guides"]["register"])
+                if path not in found["incoming"] and not os.path.isfile(contained_path(target, path))]
+    if vanished:
+        raise OSError("la guia %s ya no esta donde el plan la vio, y una que no existe no se declara" % ", ".join(vanished))
     commit = run_git(source, "rev-parse", "HEAD")["out"].strip()
     if found["mode"] in ("stack", "stack-only"):
         os.makedirs(contained_path(target), exist_ok=True)
@@ -1249,6 +1407,15 @@ def apply_checked(source, target, found, day, done):
                 write_text(path, text)
         done.append("capa %s: %d filas de puerta, %d estandares, %d ficheros" % (found["layer"]["name"], len(found["layer"]["gates"]),
                                                                                   len(found["layer"]["standards"]), len(planned["copies"])))
+    guides = found["guides"]["register"]
+    if guides:
+        declared = guide_texts(guides, lambda rel: instance_text(target, rel), prose_of(instance_text(target, PROSE_FILE)))
+        if declared["conflicts"]:
+            return {"code": 1, "done": done, "said": "; ".join(declared["conflicts"])}
+        for rel, text in declared["texts"].items():
+            if instance_text(target, rel) != text:
+                write_text(contained_path(target, rel), text)
+        done.append("guias del producto declaradas al tablero: %s" % ", ".join(sorted(guides)))
     if written is not None or found["stack"] or found.get("receipt"):
         write_text(contained_path(target, C.RECORD_FILE), recorded(target, found, written, commit, source))
         if found.get("receipt") and os.path.isfile(contained_path(target, C.RECEIPT_FILE)):
@@ -1341,10 +1508,31 @@ def describe(found, target):
                      % (layer["name"], len(layer["gates"]), len(layer["documents"]), len(layer["ignore"]), len(layer["standards"]),
                         len(layer["authority"]), len(layer["files"])))
         lines += ["capa %s: entra con %s (%s)" % (layer["name"], need["what"], need["pattern"]) for need in layer["needs"]]
+    lines += describe_guides(found)
     if found["mode"] == "stack-only":
         lines.append("se escribe el recibo %s con la procedencia, parametros y piezas del stack" % C.RECEIPT_FILE)
     elif found["layer"] or found["stack"] or found.get("receipt"):
         lines.append("se registra en %s lo que entra, con el commit de la plantilla del que viene" % C.RECORD_FILE)
+    return lines
+
+
+def describe_guides(found):
+    """What the plan says of the product's guides: what it writes for each,
+    and what it leaves for the owner to decide."""
+    guides = found["guides"]
+    lines = ["guia %s: es del producto; se declara `live` en %s y gana su fila en la tabla de autoridad de %s, sin tocar lo que dice"
+             % (path, DOCUMENTS_FILE, CONTRACT) for path in sorted(guides["register"])]
+    if found["mode"] == "stack-only" and found["stack"] and not found["stack"]["problems"]:
+        lines += ["guia %s: es del producto; el recibo guarda que la entrego el starter, para declararla al tablero si un dia entra el andamio"
+                  % path for path in sorted(found["stack"]["guides"])]
+    lines += ["guia %s: el recibo dice que el starter la entrego y esa ruta ya no existe; no se recrea ni se declara. Si el producto la tiene en"
+              " otra ruta, es suya: declarala alli en %s y, si manda sobre algo, en la tabla de autoridad de %s" % (path, DOCUMENTS_FILE, CONTRACT)
+              for path in guides["gone"]]
+    if guides["links"]:
+        lines.append("enlaces a una guia que ya no esta en su ruta: %s; el tablero los dara por rotos hasta que se corrijan" % ", ".join(guides["links"]))
+    lines += ["%s existe en el destino y el recibo no dice que lo entregara el starter: puede ser otro documento del producto, asi que no se"
+              " declara ni se toca; el tablero lo dara por documento sin casa hasta que lo declares en %s" % (path, DOCUMENTS_FILE)
+              for path in guides["unproven"]]
     return lines
 
 
@@ -1362,10 +1550,15 @@ def main(argv, source=B.ROOT, day=None):
     found = plan(source, request["target"], request["layer"], stack_request, stack_only=request["stack_only"])
     if found["layer"] and not found["problems"]:
         found["problems"] += engine_problems(found["layer"]["requires"][0], found["version"])
+    layered = None
     if found["layer"] and not found["problems"]:
         layered = layer_plan(source, request["target"], found["layer"], projected_texts(source, request["target"], found),
                              found["copy"] + found["merge"] + list(found["incoming"]))
         found["conflicts"] += layered["conflicts"] + layer_readiness(request["target"], found, layered)
+    if (found["guides"]["register"] or found["guides"]["gone"]) and not found["problems"]:
+        guided = guide_plan(source, request["target"], found, layered)
+        found["conflicts"] += guided["conflicts"]
+        found["guides"]["links"] = guided["links"]
     if (found["layer"] or found["stack"]) and found["mode"] != "stack-only" and not found["problems"]:
         found["problems"] += record_problems(source, request["target"])
     for line in describe(found, request["target"]):

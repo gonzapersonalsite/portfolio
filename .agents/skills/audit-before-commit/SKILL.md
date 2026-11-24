@@ -1,6 +1,6 @@
 ---
 name: audit-before-commit
-description: Pasos para auditar desde cero lo preparado para un commit antes de pedírselo al dueño. Úsala al cerrar una parte, antes de proponer el mensaje del commit.
+description: Pasos para auditar desde cero lo que llevará un commit, en el árbol de trabajo y sin prepararlo, antes de pedírselo al dueño. Úsala al cerrar una parte, antes de proponer el mensaje del commit.
 ---
 # Auditar antes de pedir un commit
 
@@ -9,24 +9,33 @@ Es una ayuda para ejecutar la auditoría que pide la regla dura 3 de
 dice el contrato. Donde esta skill discrepe, manda el contrato y esta skill se
 corrige en el mismo cambio.
 
-1. **Qué hay.** `git status --short`: lo preparado, lo que no y lo que no está
-   versionado.
-2. **La parte, y nada más.** `git diff --cached --stat`, contra lo que cuenta
-   la entrega de la parte.
-3. **El diff, fichero a fichero.** `git diff --cached -- <fichero>` para cada
-   uno, leído entero, buscando restos de una sonda, código comentado o un
-   cambio que la entrega no cuente.
+Nada se prepara (`git add`) antes de la autorización del dueño: se audita el
+árbol de trabajo.
+
+1. **Qué hay.** `git status --short`: lo que cambia, lo que no está versionado
+   y, si algo aparece ya preparado, de quién es; lo que preparó otro no se
+   toca.
+2. **La parte, y nada más.** Esa lista y `git diff --stat`, contra lo que
+   cuenta la entrega de la parte.
+3. **El diff, fichero a fichero.** `git diff -- <fichero>` para cada uno, y
+   cada fichero nuevo leído entero, buscando restos de una sonda, código
+   comentado o un cambio que la entrega no cuente.
 4. **Secretos.** Por ejemplo
-   `git diff --cached | grep -inE "api[_-]?key|secret|passw|token|private key"`,
-   y cada coincidencia mirada a mano.
-5. **Finales de línea.** `git ls-files --eol` sobre lo que se toca: `i/lf`.
-6. **Las puertas sobre lo preparado.** Si `git diff` no está vacío, lo no
-   preparado se aparta con la edición inversa. Después, las puertas que el
-   cambio puede mover, `./dev verify -- <etiqueta> [...]` (en Windows
-   `.\dev.cmd verify -- <etiqueta> [...]`), en verde, y `git add` de los
-   derivados que regeneren. Ante la duda de si una se mueve, se pasa; la
-   completa la corre el hook `pre-push` al empujar.
+   `git diff | grep -inE "api[_-]?key|secret|passw|token|private key"`, lo
+   mismo sobre cada fichero nuevo, y cada coincidencia mirada a mano.
+5. **Finales de línea.** `git ls-files --eol` sobre lo que se toca, y con
+   `--others --exclude-standard` sobre lo nuevo: `w/lf`, salvo donde
+   `.gitattributes` pide otra cosa.
+6. **Las puertas sobre eso.** Si el árbol tiene cambios ajenos a la parte, se
+   apartan con la edición inversa. Después, las puertas que el cambio puede
+   mover, `./dev verify -- <etiqueta> [...]` (en Windows
+   `.\dev.cmd verify -- <etiqueta> [...]`), en verde; los derivados que
+   regeneren entran en la parte y se auditan con ella. Ante la duda de si una
+   se mueve, se pasa; la completa la corre el hook `pre-push` al empujar.
 7. **El mensaje.** Con la forma de la regla dura 3; el hook `commit-msg` lo
    comprueba al commitear.
 8. **Pedirlo.** La parte en verde, lo auditado en el informe y el mensaje
    propuesto.
+9. **Con la autorización.** `git add` de cada ruta auditada, por su nombre y
+   nunca con `--all`; `git diff --cached --stat` tiene que decir lo mismo que
+   se auditó; y el commit.

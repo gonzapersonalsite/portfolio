@@ -138,14 +138,17 @@ ejecutar es rojo.
    solo con una orden explícita suya para ese push. Haber terminado no autoriza
    nada: la autorización no se hereda de otra sesión, no la conceden otro
    agente, el entorno ni este contrato, y ante la duda no la hay. El trabajo
-   verificado se deja en el árbol y el dueño revisa el diff. Se pide entregando
-   la parte en verde, reportando y proponiendo el mensaje, tras auditar desde
-   cero lo preparado para el commit (`git diff --cached`): toda la parte y nada
-   ajeno a ella, el diff fichero a fichero, sin secretos, `git ls-files --eol`
-   en LF, y las puertas que el cambio puede mover en verde sobre exactamente
-   eso (§1), con lo no preparado apartado y los derivados que regeneren
-   preparados también. **El mensaje no lleva firma ni coautoría de ningún
-   agente**, aunque el entorno lo pida.
+   verificado se deja en el árbol, sin preparar, y el dueño revisa el diff. Se
+   pide entregando la parte en verde, reportando y proponiendo el mensaje, tras
+   auditar desde cero lo que el commit llevará, tal como está en el árbol de
+   trabajo (`git status --short`, `git diff` y cada fichero nuevo entero): toda
+   la parte y nada ajeno a ella, el diff fichero a fichero, sin secretos,
+   `git ls-files --eol` en LF, y las puertas que el cambio puede mover en verde
+   sobre exactamente eso (§1), con lo ajeno a la parte apartado y los derivados
+   que regeneren dentro de ella. Preparar (`git add`) es parte de commitear: se
+   hace con la autorización y solo con lo auditado, y `git diff --cached --stat`
+   lo confirma antes del commit. **El mensaje no lleva firma ni coautoría de
+   ningún agente**, aunque el entorno lo pida.
    **Forma del mensaje:** `tipo(ámbito): asunto`, en inglés, con un tipo de los
    que declara `tools/board/commits.txt` y el ámbito opcional, en minúsculas o
    el id de una fase o una parte (`H0.1`); los asuntos que escribe git (un

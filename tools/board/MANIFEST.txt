@@ -23,20 +23,20 @@
 #            instantiate.py writes a copy's manifest without them, adopt.py
 #            refuses where they are and seal where they are not.
 #
-version 0.7.0
+version 0.8.1
 
 # The runner, the board, their tests and the tools around them.
 engine verify.py ccdbaa2852c6b7a069f0d7f5660a24271dc69532415464f53ea2224a8c9828c4
 engine tools/board/board.py fb7c0ff9664ea6cf121a64a30b4d5303ae08b7e86c087f7d9cf2ebf52d6a6587
-engine tools/board/test_board.py 084b0f2702ae69b80ea838677dd26a9d3198d8705c58c75d9bf66a4fd172f070
+engine tools/board/test_board.py 1c7a17b3345199d26fcaebcdddfb928a9f2822e907e38834a0ba260067d24b3e
 engine tools/board/adopt.py 1c8d9c0fa54fde890928dd54b54a6593d3e4cb0ae91c6cf454c7b8949a324ae8
-engine tools/board/instantiate.py debf46034319b9022ef34e48fafd7cd89dfb95cd295c4bb7e1c9fd65b9635072
-engine tools/board/components.py c8c9a0c3a70dc64abffbe3c679b5d1484ce4419834431a63dfd53655f5cace5d
+engine tools/board/instantiate.py d4f036e235433afc96173ad29d321f599f6f6b5f41bd591784f03835248441e3
+engine tools/board/components.py eb3aa81d87229228c9985615fa5cb846150aee51f070f4c211ab7d5a945b235d
 engine tools/board/commit_message.py 54ca90d780dd80827a90b24d22cbc8d5700aa00b932c0fe8e929d36ff817e75d
 engine tools/board/pre_push.py c4f46eaf8c91938df0377c676be5c94311d2042a9fb7cda220e640d8faade13c
 engine tools/board/README.md f45c2dfef140aff4093cbcd2a6a249af5dbfd9265e68cce38afbd7a889b1b566
 engine docs/registry/README.md 0e74568f7e0b560d4c8e2f454c1dca064cfbc1158c49cda2b535500a093bfdba
-engine docs/ACTUALIZAR.md 33bc3a1fff65dde6a900636b3387e4c225504c40c3542e2629d302b32211012e
+engine docs/ACTUALIZAR.md 95695454f7511a86b6debd3ce59d74b0b04f8ef4eb4e1da549dd5f07e29f6cb8
 
 # Containerized scaffold runtime and dual-OS host launcher.
 engine tools/board/git-view.sh d59f988e9452466d3d14868b54e04bb4167086dc1d39406d9fc0939aef411040

@@ -16,7 +16,9 @@ Every piece of an instance has one owner:
   wrote into the contract are the instance's prose from then on: a change of
   them is said to merge by hand, never written;
 - a stack template: the files its template.txt declares;
-- the product: everything else, which no tool here writes.
+- the product: everything else, which no tool here writes. A guide of the
+  starter (a `guide` row of its template.txt) is the product's too: the
+  creation declares it to the board once, and no update reads or writes it.
 No piece has two owners: what two components bring at one path, even with the
 same bytes, what a component brings at a path of the engine or of a file whose
 lines have their own owners, and a record that gives one path to two
@@ -46,6 +48,9 @@ NO_PARAMS = "-"
 SOURCE_KEY = "source"
 COMPONENT_KEY, FILE_KEY, ITEM_KEY, PENDING_KEY, APPLIED_KEY = "component", "file", "item", "pending", "applied"
 STACK_KEY, PARAM_KEY, PIECE_KEY, RENDERED_KEY = "stack", "param", "piece", "rendered"
+# A guide is a document of the starter that the product owns and that has
+# authority in it; a receipt keeps which ones the starter delivered.
+GUIDE_KEY, DELIVERED_KEY = "guide", "delivered"
 GATES_FILE, DOCUMENTS_FILE, IGNORE_FILE, CONTRACT = "gates.txt", B.BOARD_DIR + "/documents.txt", ".gitignore", "AGENTS.md"
 # The host launcher files shared between standalone stack templates and the
 # scaffold engine: in a scaffolded repository the engine owns them; in a
@@ -89,6 +94,14 @@ RECORD_HEADER = """# What this instance incorporated beyond the engine (whose re
 #             document, ignore or skill), the gate's label as its key or '-',
 #             and the sha256 of the line as the component shipped it; a gate
 #             adopted without a base anyone can verify says '-'.
+# delivered : '<id> | <path> | <what it is consulted for> | <its authority>':
+#             a guide the stack template delivered when it created this
+#             product without the scaffold, with the two cells of its row of
+#             the authority table. It says where the file came from, whatever
+#             it holds today and whatever commit an upgrade brings the
+#             component to, so only the creation writes it. When the scaffold
+#             enters, a guide still at its path is declared to the board, and
+#             one that is not there is neither recreated nor declared.
 # applied   : '<commit>': the commit of the template the last upgrade that
 #             wrote anything brought this instance to, at most once; what
 #             changed outside the engine up to it is pending or done already.
@@ -133,7 +146,7 @@ def line_hash(line):
 
 
 def empty_record():
-    return {"source": "", "components": {}, "files": {}, "items": {}, "pending": [], "applied": ""}
+    return {"source": "", "components": {}, "files": {}, "items": {}, "delivered": {}, "pending": [], "applied": ""}
 
 
 def split_fields(value, count):
@@ -217,6 +230,16 @@ def read_record(text, problems):
                     continue
                 owners[(fields[2], key)] = fields[0]
                 record["items"][fields[0]][(fields[2], key)] = fields[4]
+        elif row["keyword"] == DELIVERED_KEY:
+            fields = split_fields(row["value"], 4)
+            if not fields or not is_relative_path(fields[1]) or "|" in fields[3]:
+                problems.append("%s: '%s' no es '<componente> | <ruta> | <para saber> | <manda sobre>'" % (where, row["value"]))
+            elif component_kind(fields[0]) != STACK or fields[0] not in record["components"]:
+                problems.append("%s: la guia %s es de %s, que no es una plantilla de stack declarada antes" % (where, fields[1], fields[0]))
+            elif any(fields[1] in guides for guides in record["delivered"].values()):
+                problems.append("%s: la guia %s ya se declaro antes" % (where, fields[1]))
+            else:
+                record["delivered"].setdefault(fields[0], {})[fields[1]] = {"learn": fields[2], "rules": fields[3]}
         elif row["keyword"] == APPLIED_KEY:
             if record["applied"] or not COMMIT_SHAPE.match(row["value"]):
                 problems.append("%s: '%s %s' va una vez y es un commit" % (where, APPLIED_KEY, row["value"]))
@@ -239,8 +262,9 @@ def item_key(kind, key, sha):
 
 def render_record(record):
     """The text of components.txt or a standalone receipt: its legend, optional
-    source provenance, each component with its files and items, applied commit
-    and what is pending, each group in a stable order."""
+    source provenance, each component with its files, its items and the guides
+    it delivered, applied commit and what is pending, each group in a stable
+    order."""
     lines = [RECORD_HEADER.rstrip("\n")]
     if record.get("source"):
         lines.append("%s %s" % (SOURCE_KEY, record["source"]))
@@ -250,6 +274,8 @@ def render_record(record):
         group += ["%s %s | %s | %s" % (FILE_KEY, cid, path, sha) for path, sha in sorted(record["files"].get(cid, {}).items())]
         for (kind, key), sha in sorted(record["items"].get(cid, {}).items()):
             group.append("%s %s | %s | %s | %s | %s" % (ITEM_KEY, cid, ITEM_FILES[kind], kind, key if kind == GATE else NO_BASE, sha))
+        group += ["%s %s | %s | %s | %s" % (DELIVERED_KEY, cid, path, guide["learn"], guide["rules"])
+                  for path, guide in sorted(record.get("delivered", {}).get(cid, {}).items())]
         lines.append("\n".join(group))
     if record.get("applied"):
         lines.append("%s %s" % (APPLIED_KEY, record["applied"]))
@@ -292,9 +318,10 @@ def owner_conflicts(engine_paths, brought):
 
 
 def read_stack(text, source, problems):
-    """A stack template's template.txt: its identity, its creation parameters
-    and the patterns of its pieces, each copied byte for byte or rendered."""
-    stack = {"id": "", "params": [], "pieces": [], "source": source}
+    """A stack template's template.txt: its identity, its creation parameters,
+    the patterns of its pieces, each copied byte for byte or rendered, and the
+    guides the product owns."""
+    stack = {"id": "", "params": [], "pieces": [], "guides": {}, "source": source}
     rows = B.parse_data(text, source, problems)
     stack["shared"] = B.values_of(rows, "shared")
     for path in stack["shared"]:
@@ -345,6 +372,12 @@ def read_stack(text, source, problems):
         stack["pieces"].append({"pattern": fields[0], "what": fields[1], "rendered": row["keyword"] == RENDERED_KEY})
     if not stack["pieces"]:
         problems.append("%s no declara ninguna pieza ('piece' o 'rendered'): una plantilla de stack sin piezas no tiene nada que mantener" % source)
+    for value in B.values_of(rows, GUIDE_KEY):
+        fields = split_fields(value, 3)
+        if not fields or not is_relative_path(fields[0]) or "|" in fields[2] or fields[0] in stack["guides"]:
+            problems.append("%s: 'guide %s' no es '<ruta> | <para saber> | <manda sobre>', o repite la ruta" % (source, value))
+            continue
+        stack["guides"][fields[0]] = {"learn": fields[1], "rules": fields[2]}
     return stack
 
 
@@ -444,6 +477,24 @@ def stack_pieces(stack, files, problems):
                 problems.append("%s: %s lo declaran a la vez una fila 'piece' y una 'rendered'" % (stack["source"], path))
             found[path] = piece["rendered"]
     return found
+
+
+def stack_guides(stack, files, pieces, problems):
+    """{template path: its row of the authority table} of the guides a stack
+    template delivers. A guide is a file of the starter and never a piece:
+    the product owns what it says, and a piece is the template's to update."""
+    for path in sorted(stack["guides"]):
+        if path not in files:
+            problems.append("%s: la guia '%s' no es un fichero de la plantilla" % (stack["source"], path))
+        elif path in pieces:
+            problems.append("%s: %s es a la vez una guia y una pieza: una guia es del producto, y una pieza la actualiza la plantilla"
+                            % (stack["source"], path))
+    return dict(stack["guides"])
+
+
+def authority_row(path, guide):
+    """The row a guide has in the authority table of the contract."""
+    return "| %s | `%s` | %s |" % (guide["learn"], path, guide["rules"])
 
 
 def rendered_pieces(stack, pieces, params, raw_of):

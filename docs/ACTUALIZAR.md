@@ -16,7 +16,10 @@ añadió a `.gitignore` y la línea del índice de cada skill que trae; los
 estándares y las filas de autoridad que escribió en el contrato pasan a ser
 prosa de la instancia. De una plantilla de stack, los que declara su
 template.txt. Todo lo demás es del producto, y ninguna herramienta lo
-escribe. Ninguna pieza tiene dos dueños.
+escribe. Ninguna pieza tiene dos dueños. Una guía que el starter entrega con
+autoridad en el producto (una fila guide de su template.txt, como la guía de
+diseño de los starters con interfaz) también es del producto: la creación la
+declara al tablero una vez, y ninguna actualización la lee ni la escribe.
 
 1. **Crear o incorporar.** Un producto nuevo se crea con
    `sh templates new <destino> --stack <id> --param <nombre>=<valor>`.
@@ -38,6 +41,19 @@ escribe. Ninguna pieza tiene dos dueños.
    y actualiza el propietario sin borrar el fichero. Las filas de
    `tools/board/documents.txt` y las líneas de `.gitignore` de la capa que el
    producto ya tiene siguen siendo suyas: nada dice que las escribiera la capa.
+   **Las guías del starter.** Un producto creado con el andamio declara cada
+   guía `live` en `tools/board/documents.txt` y le da su fila en el §4 de
+   `AGENTS.md`; las dos filas, y lo que la guía dice, son suyas desde
+   entonces. Uno creado sin el andamio guarda en su recibo que el starter la
+   entregó, y el día que el andamio entra se declara igual si sigue en su
+   ruta, diga lo que diga ya. Si no está, porque se borró o se movió, ni se
+   recrea ni se declara: el plan dice que esa ruta ya no existe y qué enlaces
+   la siguen citando, y declarar la que el producto tenga en otra ruta es
+   decisión suya. Un fichero en esa ruta que ningún recibo acredita (el de un
+   producto anterior, o uno copiado a mano) puede ser cualquier otro
+   documento: el plan lo nombra, no lo toca, y el tablero pide su casa como a
+   cualquier markdown sin declarar. Un producto anterior no recibe la guía al
+   actualizarse: si la quiere, la copia del starter y la declara él.
 2. **Planificar.** La instancia tiene que estar en git con el árbol limpio,
    para que lo escrito sea el diff que se revisa. El destino es el HEAD
    commiteado del catálogo, o la etiqueta o el commit disponible que diga

@@ -2811,6 +2811,12 @@ def test_instantiate_merges():
           "fusion: .editorconfig gana root = true y las secciones que le faltan, antes de las suyas (visto fallar)")
     check(I.merge_editorconfig("root = true\n\n[*]\nx = 1\n", "root = true\n\n[*]\ncharset = utf-8\n") == "root = true\n\n[*]\nx = 1\n",
           "fusion: una seccion que el repositorio ya tiene no se toca")
+    crlf = "root = true\r\n\r\n[*]\r\nx = 1\r\n"
+    check(I.merge_editorconfig(crlf, "root = true\n\n[*]\ncharset = utf-8\n") == crlf,
+          "fusion: un .editorconfig en CRLF que ya dice root = true y tiene la seccion no se toca (visto fallar)")
+    editor = I.merge_editorconfig("Root=True\r\n\r\n[*.js]\r\nindent_size = 2\r\n", "root = true\n\n[*]\ncharset = utf-8\n")
+    check(sum("".join(line.split()).lower() == "root=true" for line in editor.split("\n")) == 1 and editor.index("[*]") < editor.index("[*.js]"),
+          "fusion: a un .editorconfig en CRLF le llegan las secciones que le faltan sin repetir root = true, lo escriba como lo escriba (visto fallar)")
     check(I.merge_readme("# Mi app\n\nYa existe.\n", "# Producto\n\nPlaceholder.\n\n## Trabajar aqui\n\n1. x\n") == "# Mi app\n\nYa existe.\n\n## Trabajar aqui\n\n1. x\n",
           "fusion: el README del repositorio sigue primero y entero, y le siguen las secciones de la plantilla sin su titulo (visto fallar)")
     contract = I.merges(PENDING)["AGENTS.md"]("# Reglas viejas\n", "# Contrato\n")
@@ -3847,7 +3853,59 @@ def test_components_model():
           " tienen dos duenos (visto fallar) %s" % said)
     check(C.owner_conflicts({"verify.py"}, {"layer:demo": ["tools/x.py"], "stack:app": ["tools/y.py"]}) == [],
           "componentes: rutas distintas de componentes distintos, fuera del motor, tienen un dueno cada una")
+    guide = {"learn": "Que decisiones visuales rigen", "rules": "**Diseno**: decisiones y como comprobarlas"}
+    receipt = C.render_record({"source": "catalogo", "components": {"stack:app": {"commit": "abc1234", "params": {}}}, "files": {"stack:app": {}},
+                               "items": {"stack:app": {}}, "delivered": {"stack:app": {"DESIGN.md": guide}}, "pending": []})
+    problems = []
+    read = C.read_record(receipt, problems)
+    check(not problems and read["delivered"] == {"stack:app": {"DESIGN.md": guide}} and C.render_record(read) == receipt
+          and "delivered stack:app | DESIGN.md | Que decisiones visuales rigen | **Diseno**: decisiones y como comprobarlas\n" in receipt,
+          "guias: el recibo guarda la guia que entrego el starter con su fila de autoridad, y se lee y se vuelve a escribir igual (visto fallar) %s" % problems)
+    older = without_legend_key(receipt.replace("delivered stack:app | DESIGN.md | %s | %s\n" % (guide["learn"], guide["rules"]), ""), C.DELIVERED_KEY)
+    problems = []
+    read = C.read_record(older, problems)
+    check(not problems and C.DELIVERED_KEY not in B.legend_keys(older) and read["delivered"] == {} and "\n%s " % C.DELIVERED_KEY not in C.render_record(read),
+          "guias: un recibo de antes, cuya leyenda no conoce la clave, se lee, y al reescribirlo sigue sin decir que el starter entregara nada"
+          " (visto fallar) %s" % problems)
+    for row, says in (("delivered stack:app | DESIGN.md | solo dos", "<para saber>"), ("delivered stack:app | /DESIGN.md | a | b", "<para saber>"),
+                      ("delivered stack:app | DESIGN.md | a | b | c", "<para saber>"), ("delivered layer:demo | DESIGN.md | a | b", "plantilla de stack"),
+                      ("delivered stack:otra | DESIGN.md | a | b", "plantilla de stack"), ("delivered stack:app | DESIGN.md | a | b", "ya se declaro")):
+        problems = []
+        C.read_record(receipt + "component layer:demo | abc1234 | -\n" + row + "\n", problems)
+        check(len(problems) == 1 and says in problems[0], "guias: la fila '%s' del recibo se rechaza diciendo '%s' (visto fallar) %s" % (row, says, problems))
+    guided = stack_text.replace("# rendered : r\n", "# rendered : r\n# guide : g\n")
+    problems = []
+    stack = C.read_stack(guided + "guide DESIGN.md | Que decisiones visuales rigen | **Diseno**: decisiones y como comprobarlas\n", "template.txt", problems)
+    check(not problems and stack["guides"] == {"DESIGN.md": guide} and C.read_stack(stack_text, "template.txt", [])["guides"] == {}
+          and C.authority_row("DESIGN.md", guide) == "| Que decisiones visuales rigen | `DESIGN.md` | **Diseno**: decisiones y como comprobarlas |",
+          "guias: una plantilla de stack declara la guia con las dos celdas de su fila de autoridad, y una sin guias no declara ninguna (visto fallar) %s" % problems)
+    for row in ("guide DESIGN.md | solo dos", "guide ../DESIGN.md | a | b", "guide DESIGN.md | a | b | c", "guide DESIGN.md | a | b\nguide DESIGN.md | c | d"):
+        problems = []
+        C.read_stack(guided + row + "\n", "template.txt", problems)
+        check(len(problems) == 1 and "'guide " in problems[0], "guias: la declaracion '%s' se rechaza (visto fallar) %s" % (row.replace("\n", " + "), problems))
+    problems = []
+    found = C.stack_guides(stack, ["DESIGN.md", "tools/a.py"], {"tools/a.py": False}, problems)
+    check(found == {"DESIGN.md": guide} and not problems, "guias: una guia es un fichero del starter que no es pieza")
+    for files, pieces, says in ((["tools/a.py"], {}, "no es un fichero de la plantilla"), (["DESIGN.md"], {"DESIGN.md": False}, "a la vez una guia y una pieza")):
+        problems = []
+        C.stack_guides(stack, files, pieces, problems)
+        check(len(problems) == 1 and says in problems[0], "guias: una guia que la plantilla no tiene, o que tambien es pieza, se rechaza: %s (visto fallar)" % says)
     end()
+
+
+def without_legend_key(text, key):
+    """A data file as an engine that did not know `key` wrote it: its legend
+    without that key's entry, which runs to the next key or to the legend's end."""
+    kept, inside = [], False
+    for line in text.split("\n"):
+        entry = re.match(r"# ([a-z-]+) *:", line)
+        if entry:
+            inside = entry.group(1) == key
+        elif inside and not line.startswith("#  "):
+            inside = False
+        if not inside:
+            kept.append(line)
+    return "\n".join(kept)
 
 
 # A stack template for the suite, in a folder beside the template, and the
@@ -4595,6 +4653,261 @@ def test_component_adoption():
     end()
 
 
+GUIDE_ROW = "guide DESIGN.md | Que decisiones visuales rigen la interfaz | **Diseno de la interfaz**: sus decisiones y como comprobarlas\n"
+GUIDED_STACK = APP_STACK.replace("# rendered : r\n", "# rendered : r\n# guide : g\n") + GUIDE_ROW
+GUIDE = "# Diseno de Demo\n\nLa pantalla vive en [la app](src/Demo/App.txt).\n"
+DELIVERED_GUIDE = b"# Diseno de Billing\n\nLa pantalla vive en [la app](src/Billing/App.txt).\n"
+# A document another product keeps at the same path, which is not a design guide.
+ARCHITECTURE_NOTES = b"# Diseno de la arquitectura\n\nLos modulos del sistema y de quien depende cada uno.\n"
+ARCHITECTURE_ROW = "| Como se organiza el sistema | `DESIGN.md` | **Arquitectura**: modulos y dependencias |"
+
+
+def test_starter_guides():
+    """A guide a stack template delivers is the product's from its first day.
+    Created with the scaffold, the product declares it to the board once;
+    created without it, the receipt keeps that the starter delivered it, and
+    the day the scaffold enters a guide still at its path is declared whatever
+    it says by then, while one that was deleted or moved is neither recreated
+    nor declared. An older product never gets one, and a document it keeps at
+    the same path keeps its bytes and its meaning, also when an upgrade moved
+    its receipt to a commit whose stack template declares the guide."""
+    begin("test_starter_guides")
+    U = upgrade_tool()
+    if U is None or shutil.which("git") is None:
+        check(U is None or shutil.which("git") is None, "guias: solo la plantilla tiene upgrade.py, y sin git no se crea nada")
+        end()
+        return
+    import components as C
+    import instantiate as I
+    day = "2026-02-03"
+    live_row = "live DESIGN.md\n"
+    row = C.authority_row("DESIGN.md", C.read_stack(GUIDED_STACK, "template.txt", [])["guides"]["DESIGN.md"])
+
+    def text(root, rel):
+        return read_bytes(root, rel).decode("utf-8")
+
+    def standalone(folder, scratch, name):
+        product = os.path.join(scratch, name)
+        code, said = quietly(I.main, [product, "--stack", "demo-app", "--stack-only", "--param", "name=Billing", "--apply"], folder, day)
+        if code == 0:
+            commit_all(product)
+        return product, code, said
+
+    def adopted(product, folder):
+        """The plan of adding the scaffold with its layer, which writes nothing, and then its apply."""
+        before = tree_bytes(product)
+        code, said = quietly(I.main, [product, "--layer", "app"], folder, day)
+        untouched = code == 0 and "plan sin escribir" in said and tree_bytes(product) == before
+        code, applied = quietly(I.main, [product, "--layer", "app", "--apply"], folder, day)
+        if code == 0:
+            quietly(B.build, product)
+            commit_all(product)
+        return {"plan": said, "untouched": untouched, "code": code, "said": applied}
+
+    def repeated(product, folder):
+        """Asking again for what is already there writes nothing: neither the adoption nor an upgrade."""
+        before = tree_bytes(product)
+        again, _ = quietly(I.main, [product, "--layer", "app", "--apply"], folder, day)
+        code, said = quietly(U.main, [product], folder)
+        return again == 1 and code == 0 and "no hay nada que escribir" in said and tree_bytes(product) == before
+
+    guides = {"DESIGN.md": {"learn": "Que decisiones visuales rigen la interfaz", "rules": "**Diseno de la interfaz**: sus decisiones y como comprobarlas"}}
+    texts = {I.DOCUMENTS_FILE: legend(DOCUMENT_KEYS) + "live README.md\n", I.CONTRACT: FAKE_CONTRACT % AUTHORITY}
+    once = I.guide_texts(guides, texts.get, {I.AUTHORITY_KEY: AUTHORITY})
+    twice = I.guide_texts(guides, once["texts"].get, {I.AUTHORITY_KEY: AUTHORITY})
+    check(not once["conflicts"] and once["texts"][I.DOCUMENTS_FILE].endswith("\n" + I.GUIDES_NOTE + "\n" + live_row) and row in once["texts"][I.CONTRACT]
+          and twice["texts"] == once["texts"],
+          "guias: declarar una guia anade su fila `live` y su fila de autoridad, y declararla otra vez no anade nada (visto fallar)")
+    lost = I.guide_texts(guides, texts.get, {I.AUTHORITY_KEY: "Una seccion que no existe"})
+    check(len(lost["conflicts"]) == 1 and "no se sabe donde escribir la fila de DESIGN.md" in lost["conflicts"][0],
+          "guias: sin la tabla de autoridad en el contrato no se declara nada: se dice antes de escribir (visto fallar)")
+    with scratch_tree() as nowhere:
+        declared, why = I.catalog_guides(nowhere, C.empty_record())
+    check(declared == {} and len(why) == 1 and "git no lista el catalogo" in why[0],
+          "guias: si git no lista el catalogo, el plan lo dice en vez de dar por hecho que ninguna plantilla declara una guia (visto fallar) %s" % why)
+    with scratch_tree() as repo, scratch_tree() as scratch:
+        folder = component_template(repo)
+        # Products born before the stack template had a guide.
+        older, code, said = created_product(I, folder, scratch, "anterior")
+        check(code == 0 and "guia " not in said and not os.path.exists(os.path.join(older, "DESIGN.md")) and "DESIGN.md" not in text(older, "tools/board/documents.txt"),
+              "guias: un stack que no declara ninguna crea su producto sin guia, sin fila y sin decir nada de guias (visto fallar) %s" % last_words(said))
+        write(older, C.RECORD_FILE, without_legend_key(text(older, C.RECORD_FILE), C.DELIVERED_KEY))
+        commit_all(older)
+        homonym = os.path.join(scratch, "homonimo")
+        shutil.copytree(older, homonym)
+        write(homonym, "DESIGN.md", ARCHITECTURE_NOTES)
+        append(homonym, "tools/board/documents.txt", live_row)
+        write(homonym, "AGENTS.md", I.insert_in_section(text(homonym, "AGENTS.md"), AUTHORITY, [ARCHITECTURE_ROW], I.last_table_row))
+        quietly(B.build, homonym)
+        commit_all(homonym)
+        check(findings_of(homonym) == [], "guias: un producto anterior con un documento propio en esa ruta, declarado por el, pasa el tablero")
+        old_solo, code, said = standalone(folder, scratch, "recibo-anterior")
+        write(old_solo, C.RECEIPT_FILE, without_legend_key(text(old_solo, C.RECEIPT_FILE), C.DELIVERED_KEY))
+        write(old_solo, "DESIGN.md", ARCHITECTURE_NOTES)
+        commit_all(old_solo)
+        bare, _ = quietly(I.main, [os.path.join(scratch, "solo-andamio"), "--apply"], folder, day)
+        check(bare == 0 and not os.path.exists(os.path.join(scratch, "solo-andamio", "DESIGN.md"))
+              and "DESIGN.md" not in text(os.path.join(scratch, "solo-andamio"), "tools/board/documents.txt"),
+              "guias: el andamio solo no trae guia ni fila de guia")
+
+        # The stack template gains its guide, and changes a piece, so an upgrade moves the commit a record names.
+        stack = os.path.join(repo, "stack", "app")
+        write(stack, "template.txt", GUIDED_STACK)
+        write(stack, "DESIGN.md", GUIDE)
+        write(stack, "README.md", "# Demo\n\nEl producto Demo, con su [guia de diseno](DESIGN.md).\n")
+        write(stack, "tools/runner.py", "print('corre mejor')\n")
+        commit_template(repo, folder, "feat: the starter delivers its design guide")
+
+        # Created with the scaffold: delivered, declared once, and the product's from then on.
+        planned = os.path.join(scratch, "solo-plan")
+        code, said = quietly(I.main, [planned, "--stack", "demo-app", "--param", "name=Billing"], folder, day)
+        check(code == 0 and "guia DESIGN.md: es del producto; se declara `live` en tools/board/documents.txt" in said and not os.path.exists(planned),
+              "guias: el plan de un producto nuevo dice que declara la guia, y no escribe nada (visto fallar) %s" % last_words(said))
+        product, code, said = created_product(I, folder, scratch, "combinado")
+        contract = text(product, "AGENTS.md") if code == 0 else ""
+        check(code == 0 and read_bytes(product, "DESIGN.md") == DELIVERED_GUIDE and text(product, "tools/board/documents.txt").count(live_row) == 1
+              and contract.count(row) == 1 and contract.index("`README.md`") < contract.index(row) < contract.index("Prosa tras la tabla"),
+              "guias: creado con el andamio, el producto recibe la guia con sus parametros, la declara `live` una vez y le da su fila en la tabla de"
+              " autoridad (visto fallar) %s" % last_words(said))
+        check(code == 0 and findings_of(product) == [] and "\ndelivered " not in text(product, C.RECORD_FILE),
+              "guias: el producto creado pasa el tablero, y su registro no guarda la entrega: sus filas ya son de la instancia (visto fallar)")
+        # Created without the scaffold: the receipt keeps that the starter delivered it.
+        solo, code, said = standalone(folder, scratch, "solo")
+        receipt = text(solo, C.RECEIPT_FILE) if code == 0 else ""
+        check(code == 0 and read_bytes(solo, "DESIGN.md") == DELIVERED_GUIDE and not os.path.exists(os.path.join(solo, "AGENTS.md"))
+              and "delivered stack:demo-app | DESIGN.md | Que decisiones visuales rigen la interfaz | **Diseno de la interfaz**: sus decisiones y como comprobarlas\n"
+              in receipt and "el recibo guarda que la entrego el starter" in said,
+              "guias: creado sin el andamio, el producto recibe la guia y su recibo guarda que la entrego el starter (visto fallar) %s" % last_words(said))
+
+        # The product makes the guide its own, and the template moves on.
+        write(product, "DESIGN.md", "# Diseno de Billing\n\nEl equipo decidio otra cosa.\n")
+        commit_all(product)
+        write(stack, "DESIGN.md", GUIDE + "\nLa plantilla mejora su ejemplo.\n")
+        write(stack, "tools/runner.py", "print('corre aun mejor')\n")
+        commit_template(repo, folder, "docs: the starter's guide moves on")
+        before = tree_bytes(product)
+        code, said = quietly(U.main, [product], folder)
+        check(code == 0 and "DESIGN.md" not in said and plan_id_of(said) and tree_bytes(product) == before,
+              "guias: el plan de una actualizacion no nombra la guia ni escribe nada (visto fallar) %s" % last_words(said))
+        code, said, _ = planned_and_applied(U, product, folder)
+        commit_all(product)
+        check(code == 0 and read_bytes(product, "DESIGN.md") == b"# Diseno de Billing\n\nEl equipo decidio otra cosa.\n"
+              and read_bytes(product, "tools/runner.py") == b"print('corre aun mejor')\n" and text(product, "tools/board/documents.txt").count(live_row) == 1
+              and text(product, "AGENTS.md").count(row) == 1,
+              "guias: una actualizacion toma las piezas y deja la guia que el producto personalizo, con sus filas una sola vez (visto fallar) %s" % last_words(said))
+        code, said = quietly(U.main, [product], folder)
+        check(code == 0 and "no hay nada que escribir" in said, "guias: repetir la actualizacion no tiene nada que escribir (visto fallar) %s" % last_words(said))
+
+        # The scaffold enters later, over a guide rewritten, deleted or moved.
+        ours = b"# Lo que decidimos\n\nNada de lo que traia el ejemplo.\n"
+        write(solo, "DESIGN.md", ours)
+        commit_all(solo)
+        code, said, _ = planned_and_applied(U, solo, folder)
+        commit_all(solo)
+        check(code == 0 and "component stack:demo-app | %s" % head(repo) in text(solo, C.RECEIPT_FILE)
+              and "delivered stack:demo-app | DESIGN.md | " in text(solo, C.RECEIPT_FILE) and read_bytes(solo, "DESIGN.md") == ours,
+              "guias: una actualizacion del producto sin andamio reescribe su recibo, y conserva la entrega y la guia que el equipo reescribio (visto fallar) %s"
+              % last_words(said))
+        rewritten, deleted, moved, vanished = (os.path.join(scratch, name) for name in ("reescrita", "borrada", "movida", "desaparecida"))
+        for copy in (rewritten, deleted, moved, vanished):
+            shutil.copytree(solo, copy)
+        result = adopted(rewritten, folder)
+        check(result["untouched"] and "guia DESIGN.md: es del producto; se declara `live`" in result["plan"],
+              "guias: el plan de anadir el andamio dice que declara la guia que el starter entrego, y no escribe nada (visto fallar) %s" % last_words(result["plan"]))
+        check(result["code"] == 0 and read_bytes(rewritten, "DESIGN.md") == ours and text(rewritten, "tools/board/documents.txt").count(live_row) == 1
+              and text(rewritten, "AGENTS.md").count(row) == 1 and not os.path.exists(os.path.join(rewritten, C.RECEIPT_FILE))
+              and "delivered stack" not in text(rewritten, C.RECORD_FILE) and findings_of(rewritten) == [],
+              "guias: al entrar el andamio, la guia que el equipo reescribio entera se declara una vez, byte a byte como estaba, y el tablero pasa"
+              " (visto fallar) %s" % last_words(result["said"]))
+        check(repeated(rewritten, folder) and text(rewritten, "tools/board/documents.txt").count(live_row) == 1 and text(rewritten, "AGENTS.md").count(row) == 1,
+              "guias: repetir la adopcion o actualizar despues no escribe nada ni duplica una fila (visto fallar)")
+
+        os.remove(os.path.join(deleted, "DESIGN.md"))
+        commit_all(deleted)
+        result = adopted(deleted, folder)
+        check(result["untouched"] and "guia DESIGN.md: el recibo dice que el starter la entrego y esa ruta ya no existe; no se recrea ni se declara" in result["plan"]
+              and "enlaces a una guia que ya no esta en su ruta: README.md:3;" in result["plan"],
+              "guias: si la guia ya no esta, el plan dice que su ruta no existe, sin decir por que, y que enlaces la siguen citando, y no escribe nada"
+              " (visto fallar) %s" % last_words(result["plan"]))
+        found = [(f["kind"], f["key"]) for f in findings_of(deleted)] if result["code"] == 0 else None
+        check(result["code"] == 0 and not os.path.exists(os.path.join(deleted, "DESIGN.md")) and "DESIGN.md" not in text(deleted, "tools/board/documents.txt")
+              and "`DESIGN.md`" not in text(deleted, "AGENTS.md") and found == [(B.KIND_CITE, "DESIGN.md")],
+              "guias: una guia borrada no se recrea ni se declara, y el tablero senala el enlace que quedo roto, como cualquier otro (visto fallar) %s %s"
+              % (last_words(result["said"]), found))
+        check(repeated(deleted, folder) and not os.path.exists(os.path.join(deleted, "DESIGN.md")) and "DESIGN.md" not in text(deleted, "tools/board/documents.txt"),
+              "guias: repetir la adopcion o actualizar no recrea la guia borrada ni la declara (visto fallar)")
+        seen = I.plan(folder, vanished, "app")
+        os.remove(os.path.join(vanished, "DESIGN.md"))
+        before = tree_bytes(vanished)
+        result = I.apply(folder, vanished, seen, day)
+        check(seen["guides"]["register"] and result["code"] == 1 and "la guia DESIGN.md ya no esta donde el plan la vio" in result["said"]
+              and tree_bytes(vanished) == before,
+              "guias: si la guia desaparece entre el plan y la escritura, la adopcion se para antes de escribir nada (visto fallar) %s" % result["said"])
+
+        elsewhere = "docs/design/GUIDE.md"
+        os.makedirs(os.path.join(moved, "docs", "design"))
+        os.replace(os.path.join(moved, "DESIGN.md"), os.path.join(moved, *elsewhere.split("/")))
+        write(moved, "README.md", "# Demo\n\nEl producto Billing, con su [guia de diseno](%s).\n" % elsewhere)
+        own_contract = "# Reglas del equipo\n\n| Para saber | Fichero | Manda sobre |\n|---|---|---|\n| El diseno de la interfaz | `%s` | la interfaz |\n" % elsewhere
+        write(moved, "AGENTS.md", own_contract)
+        commit_all(moved)
+        result = adopted(moved, folder)
+        check(result["untouched"] and "guia DESIGN.md: el recibo dice que el starter la entrego y esa ruta ya no existe" in result["plan"]
+              and "enlaces a una guia" not in result["plan"] and elsewhere not in result["plan"],
+              "guias: si la guia se movio, el plan dice que su ruta original no existe y no elige otra en su lugar (visto fallar) %s" % last_words(result["plan"]))
+        contract = text(moved, "AGENTS.md") if result["code"] == 0 else ""
+        found = sorted((f["kind"], f["key"]) for f in findings_of(moved)) if result["code"] == 0 else None
+        check(result["code"] == 0 and read_bytes(moved, elsewhere) == ours and not os.path.exists(os.path.join(moved, "DESIGN.md"))
+              and "DESIGN.md" not in text(moved, "tools/board/documents.txt") and "`DESIGN.md`" not in contract
+              and contract.endswith("\n## " + PENDING + "\n\n" + own_contract),
+              "guias: una guia movida conserva sus bytes donde el equipo la puso y la autoridad que su contrato le daba, y su ruta original ni se"
+              " recrea ni se declara (visto fallar) %s" % last_words(result["said"]))
+        check(found == sorted([(B.KIND_DATA, elsewhere), (B.KIND_SHAPE, PENDING)]),
+              "guias: tras la adopcion, declarar la guia movida y fusionar el contrato es la conciliacion de siempre: el tablero pide casa para un"
+              " markdown sin declarar y la seccion por fusionar (visto fallar) %s" % found)
+        append(moved, "tools/board/documents.txt", "live %s\n" % elsewhere)
+        quietly(B.build, moved)
+        commit_all(moved)
+        check([f["key"] for f in findings_of(moved)] == [PENDING] and repeated(moved, folder)
+              and text(moved, "tools/board/documents.txt").count(elsewhere) == 1 and "DESIGN.md" not in text(moved, "tools/board/documents.txt"),
+              "guias: declarada por el equipo en su ruta, la guia movida tiene casa, y repetir no anade la ruta original ni duplica la suya (visto fallar)")
+
+        # Older products: none gains a guide, and a document of their own at that path keeps its bytes and its meaning.
+        code, said, _ = planned_and_applied(U, older, folder)
+        commit_all(older)
+        check(code == 0 and "se toma tools/runner.py" in said and not os.path.exists(os.path.join(older, "DESIGN.md"))
+              and "DESIGN.md" not in text(older, "tools/board/documents.txt") and "DESIGN.md" not in text(older, "AGENTS.md")
+              and C.DELIVERED_KEY in B.legend_keys(text(older, C.RECORD_FILE)) and "\ndelivered " not in text(older, C.RECORD_FILE),
+              "guias: un producto anterior se actualiza y no gana guia, fila ni entrega, aunque su registro pase al commit que la declara (visto fallar) %s"
+              % last_words(said))
+        quietly(B.build, older)
+        check(findings_of(older) == [], "guias: el producto anterior sin guia sigue pasando el tablero tras actualizarse")
+        code, said, _ = planned_and_applied(U, homonym, folder)
+        commit_all(homonym)
+        check(code == 0 and read_bytes(homonym, "DESIGN.md") == ARCHITECTURE_NOTES and text(homonym, "tools/board/documents.txt").count(live_row) == 1
+              and text(homonym, "AGENTS.md").count("`DESIGN.md`") == 1 and ARCHITECTURE_ROW in text(homonym, "AGENTS.md"),
+              "guias: el documento de arquitectura que un producto anterior tiene en esa ruta conserva sus bytes, su fila y lo que significa al"
+              " actualizarse (visto fallar) %s" % last_words(said))
+        code, said, _ = planned_and_applied(U, old_solo, folder)
+        commit_all(old_solo)
+        receipt = text(old_solo, C.RECEIPT_FILE)
+        check(code == 0 and "component stack:demo-app | %s" % head(repo) in receipt and "\ndelivered " not in receipt
+              and read_bytes(old_solo, "DESIGN.md") == ARCHITECTURE_NOTES,
+              "guias: un recibo anterior pasa al commit de una plantilla que declara la guia sin decir por ello que el starter la entregara"
+              " (visto fallar) %s" % last_words(said))
+        result = adopted(old_solo, folder)
+        check(result["untouched"] and "DESIGN.md existe en el destino y el recibo no dice que lo entregara el starter" in result["plan"]
+              and "guia DESIGN.md" not in result["plan"],
+              "guias: ni el commit del recibo ni un fichero con ese nombre prueban la entrega: el plan lo dice y no lo declara (visto fallar) %s"
+              % last_words(result["plan"]))
+        found = [(f["kind"], f["key"]) for f in findings_of(old_solo)] if result["code"] == 0 else None
+        check(result["code"] == 0 and read_bytes(old_solo, "DESIGN.md") == ARCHITECTURE_NOTES and "DESIGN.md" not in text(old_solo, "tools/board/documents.txt")
+              and "`DESIGN.md`" not in text(old_solo, "AGENTS.md") and found == [(B.KIND_DATA, "DESIGN.md")],
+              "guias: el documento de arquitectura sigue intacto y sin fila de diseno, y declararlo es del dueno: el tablero pide su casa (visto fallar) %s %s"
+              % (last_words(result["said"]), found))
+    end()
+
+
 def test_f1_commit_message_and_pre_push_snapshots():
     """F1 portable contract: commit_message.py supports '-' stdin with UTF-8,
     BOM, CRLF and display path; pre_push.py judges host-captured Git snapshots
@@ -5120,7 +5433,7 @@ def main():
              test_settled_citations_and_verify, test_encoding, test_links_and_comments, test_derived_strict,
              test_gates_file, test_run_gate, test_gate_environment, test_kill_report, test_verify_main, test_verify_lock, test_atomic_writes, test_board_end_to_end,
              test_tree_listing_with_git, test_adapters, test_harness_rows, test_skills, test_commit_message, test_pre_push,
-             test_hooks_through_git, test_long_paths, test_hook_modes, test_guard_adapters, test_dart_test_adapter, test_runner_by_its_path, test_instantiate_merges, test_instantiate, test_instantiate_command_line, test_layer_readiness, test_template_layers, test_python_layer_needs, test_released_engine, test_layer_requires_its_engine, test_engine_manifest, test_upgrade_plan, test_upgrade, test_components_model, test_component_creation_and_update, test_component_safety, test_component_review_safety, test_component_rendered_paths, test_component_blob_failure, test_component_physical_paths, test_component_unreadable_gate_row, test_scratch_tree_is_physical, test_stack_rendered_destinations, test_component_adoption, test_f1_commit_message_and_pre_push_snapshots, test_f1_guards_and_coordinated_verify, test_f1_stack_only_receipt_and_ownership_transfer, test_record_rules, test_prose_is_data, test_order_line_and_parts, test_plan_position, test_live_debts, test_one_phase_in_progress, test_provisional_is_not_done, test_split_indexes,
+             test_hooks_through_git, test_long_paths, test_hook_modes, test_guard_adapters, test_dart_test_adapter, test_runner_by_its_path, test_instantiate_merges, test_instantiate, test_instantiate_command_line, test_layer_readiness, test_template_layers, test_python_layer_needs, test_released_engine, test_layer_requires_its_engine, test_engine_manifest, test_upgrade_plan, test_upgrade, test_components_model, test_component_creation_and_update, test_component_safety, test_component_review_safety, test_component_rendered_paths, test_component_blob_failure, test_component_physical_paths, test_component_unreadable_gate_row, test_scratch_tree_is_physical, test_stack_rendered_destinations, test_component_adoption, test_starter_guides, test_f1_commit_message_and_pre_push_snapshots, test_f1_guards_and_coordinated_verify, test_f1_stack_only_receipt_and_ownership_transfer, test_record_rules, test_prose_is_data, test_order_line_and_parts, test_plan_position, test_live_debts, test_one_phase_in_progress, test_provisional_is_not_done, test_split_indexes,
              test_registry_says_what_holds_today, test_adopt]
     for test in tests:
         try:

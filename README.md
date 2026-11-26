@@ -4,7 +4,7 @@
 
 🇺🇸 **English** | [🇪🇸 Español](docs/es/README.md)
 
-**Professional Portfolio** is a static, bilingual web application that presents the career of Gonzalo Martínez, Full Stack Developer: projects, experience, skills and profile, with a responsive interface and three visual themes.
+**Professional Portfolio** is a static, bilingual web application that presents the career of Gonzalo Martínez, Full Stack Developer: projects, experience, skills and profile, with a responsive interface and light/dark themes.
 
 **Live Demo:** [https://mi-portafolio-gonzalo.vercel.app/](https://mi-portafolio-gonzalo.vercel.app/)
 
@@ -12,25 +12,25 @@
 
 ## ✨ Key Features
 
-### 🎨 Immersive User Experience (UX)
-- **Liquid Glass Interface:** Cutting-edge visual style inspired by visionOS, featuring advanced glassmorphism and neon accents.
-- **Interactive Project Gallery:** full-screen viewer with captions, a thumbnail strip, zoom up to 4× (buttons, click or keyboard) and keyboard navigation (arrows, +/−, 0).
-- **Theme Engine:** Light, Dark and the exclusive Liquid Glass mode. The site follows the operating system until the visitor picks a theme, and paints the right background before the app loads.
-- **Dynamic Localization:** full bilingual support (Spanish/English) with instant interface and content translation, Spanish root routes and dedicated `/en` routes (plus `?lang=es|en` query overrides) so sharing any URL preserves the active language and its localized social preview.
+### 🎨 Crafting-Bench Experience (UX)
+- **Mesa de Taller Interface:** Technical drafting-table aesthetic across Light and Dark modes, subtle grid surface, tactile borders, and a dedicated rig bay hosting an animated handmade pixel-art mascot (`PixelGoblin`).
+- **Interactive Project Gallery:** Native `<dialog>` full-screen viewer with captions, thumbnail strip, zoom up to 4× (buttons, click, or keyboard), touch swipe support, and deterministic keyboard focus return.
+- **Preview & Architecture Mode:** Flagship and regular project cards switch directly between product preview (`Vista` / `Preview`) and technical architecture breakdown (`Arquitectura` / `Architecture`).
+- **Theme Engine & Motion Control:** Light and Dark modes driven by CSS custom properties. The site follows the operating system until the visitor picks a theme, keeps legacy `'glass'` storage safely falling back to OS preference without overwriting it, and provides a direct animation pause toggle respecting `prefers-reduced-motion`.
+- **Dynamic Localization:** full bilingual support (Spanish/English) with direct `ES` / `EN` route switching, Spanish root routes and dedicated `/en` routes (plus `?lang=es|en` query overrides) so sharing any URL preserves the active language and its localized social preview.
 
 ### 📦 Content as Data
-- **Static JSON content model:** projects, skills, experience, profile, and spoken languages live in versioned JSON files — no CMS, no API, no database. Adding a project is a data change, not a code change.
-- **Self-hosted assets:** every image, icon and font (Inter) is served from the site itself — zero third-party image or font hosts.
+- **Static JSON content model:** projects, skills (with concrete applied examples), experience, profile, and spoken languages live in versioned JSON files — no CMS, no API, no database. Adding a project is a data change, not a code change.
+- **Self-hosted assets:** every image, icon and font (self-hosted Inter Variable with technical alternates) is served from the site itself — zero third-party image or font hosts.
 - **Contact form:** powered by EmailJS (browser-only, no backend required), loaded only when a message is sent.
-- **Responsive Design:** fluid layouts optimized for desktop, tablet, and mobile devices.
-- **Ambient Glass Background:** static radial gradients provide depth without continuously animating behind the glass surfaces.
+- **Responsive Design:** fluid CSS Grid and Flexbox layouts with native accessible controls optimized for desktop, tablet, and mobile devices down to 320 px with enlarged text.
 
 ---
 
 ## 🛠️ Tech Stack
 
 - **Frontend:** React + TypeScript (Vite)
-- **UI Framework:** Material UI (MUI) with deep theme customization
+- **UI & Styling:** Native semantic HTML, custom SVGs, and co-located CSS with CSS custom property tokens (zero MUI or Emotion dependencies anywhere in source or lockfile)
 - **Routing:** React Router with lazy-loaded pages
 - **i18n:** i18next + react-i18next
 - **Contact:** EmailJS (browser-only)

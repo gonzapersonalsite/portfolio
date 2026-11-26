@@ -1,7 +1,12 @@
 import projectsData from './data.json' with { type: 'json' }
-import type { Project } from '../model/types.ts'
+import { toProjectLinkKind } from '../model/projectLinks.ts'
+import { toProjectType, type Project } from '../model/types.ts'
 
-const projects = projectsData as Project[]
+const projects: Project[] = projectsData.map((project) => ({
+  ...project,
+  type: toProjectType(project.type),
+  links: project.links.map((link) => ({ ...link, kind: toProjectLinkKind(link.kind) })),
+}))
 
 export const getAllProjects = (): Project[] => projects
 

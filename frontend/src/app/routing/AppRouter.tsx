@@ -1,17 +1,15 @@
 import React, { Suspense, useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
-import { Box, Container } from '@mui/material'
 import { PublicLayout } from '../layouts'
 import { APP_ROUTES, localizedPath, type Language, type RouteId } from '@/shared/config'
 import {
-  HeroSkeleton,
-  PageHeaderSkeleton,
-  SkillsSkeleton,
-  ExperienceSkeleton,
-  ProjectGridSkeleton,
   AboutSkeleton,
   ContactSkeleton,
+  ExperienceSkeleton,
+  HomeSkeleton,
   NotFoundSkeleton,
+  ProjectsSkeleton,
+  SkillsSkeleton,
 } from '@/shared/ui'
 
 type PageModule = { default: React.ComponentType }
@@ -43,42 +41,13 @@ const PAGE_LOADERS: Record<RouteId, () => Promise<PageModule>> = {
   contact: () => import('@/pages/contact'),
 }
 
-const PageLoader = ({ children }: { children?: React.ReactNode }) => (
-  <Box sx={{ py: 8 }}>
-    <Container maxWidth="lg">
-      <PageHeaderSkeleton />
-      {children}
-    </Container>
-  </Box>
-)
-
 const PAGE_SKELETONS: Record<RouteId, React.ReactNode> = {
-  home: <HeroSkeleton />,
-  about: (
-    <PageLoader>
-      <AboutSkeleton />
-    </PageLoader>
-  ),
-  skills: (
-    <PageLoader>
-      <SkillsSkeleton />
-    </PageLoader>
-  ),
-  experience: (
-    <PageLoader>
-      <ExperienceSkeleton />
-    </PageLoader>
-  ),
-  projects: (
-    <PageLoader>
-      <ProjectGridSkeleton />
-    </PageLoader>
-  ),
-  contact: (
-    <PageLoader>
-      <ContactSkeleton />
-    </PageLoader>
-  ),
+  home: <HomeSkeleton />,
+  about: <AboutSkeleton />,
+  skills: <SkillsSkeleton />,
+  experience: <ExperienceSkeleton />,
+  projects: <ProjectsSkeleton />,
+  contact: <ContactSkeleton />,
 }
 
 const PAGES = APP_ROUTES.map((route) => ({ ...route, Page: React.lazy(PAGE_LOADERS[route.id]) }))

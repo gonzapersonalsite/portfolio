@@ -12,6 +12,8 @@ describe('static skill content', () => {
     for (const skill of data) {
       expect(skill.nameEn.length).toBeGreaterThan(0)
       expect(skill.nameEs.length).toBeGreaterThan(0)
+      expect(skill.appliedEn.length).toBeGreaterThan(0)
+      expect(skill.appliedEs.length).toBeGreaterThan(0)
       expect(skill.level).toBeGreaterThanOrEqual(0)
       expect(skill.level).toBeLessThanOrEqual(100)
       expect(SKILL_CATEGORY_ORDER, `${skill.nameEn}: unknown category ${skill.category}`).toContain(skill.category)

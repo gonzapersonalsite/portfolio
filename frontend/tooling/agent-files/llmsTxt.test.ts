@@ -50,10 +50,9 @@ describe('buildLlmsTxt', () => {
     expect(llms).toContain(
       '- [Kanban Board App](https://kanban-board-app-kappa.vercel.app/): Web App — React, TypeScript, Vite, Feature-Sliced Design ([Repository](https://github.com/gonzapersonalsite/kanban-board-app))',
     )
-    expect(llms).toContain(
-      '- [License Generator](https://github.com/gonzapersonalsite/license-generator-docs/releases/latest): Desktop App — ',
-    )
-    expect(llms).toContain('([Documentation](https://github.com/gonzapersonalsite/license-generator-docs))')
+    expect(llms).toContain('- [License Generator](https://apps.microsoft.com/detail/9NR38VBCF8JK): Desktop App — ')
+    expect(llms).toContain('[Download](https://github.com/gonzapersonalsite/license-generator-docs/releases/latest)')
+    expect(llms).toContain('[Documentation](https://github.com/gonzapersonalsite/license-generator-docs))')
     // No primary link: the title stays plain and the documentation link is kept.
     expect(llms).toMatch(
       /^- NutriManager: Desktop App — .+ \(\[Documentation\]\(https:\/\/github\.com\/gonzapersonalsite\/nutrimanager-docs\)\)$/m,

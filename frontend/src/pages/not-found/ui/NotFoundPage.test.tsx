@@ -55,6 +55,13 @@ describe('NotFoundPage', () => {
     expect(document.querySelector('meta[name="robots"]')?.getAttribute('content')).toBe('noindex')
   })
 
+  it('describes the lost goblin of the 404, not the coding goblin of Home and Contact', () => {
+    renderNotFound('/ruta-inexistente')
+
+    expect(screen.getByRole('img', { name: i18n.t('notFound.goblinLabel') })).toBeTruthy()
+    expect(screen.queryByRole('img', { name: i18n.t('home.goblinLabel') })).toBeNull()
+  })
+
   it('leaves the focus indicator of the terminal input to the browser instead of removing it', () => {
     renderNotFound('/ruta-inexistente')
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getAllSkills, getCoreSkills, getSkillGroups } from './skillApi'
+import { getAllSkills, getCoreSkillGroups, getCoreSkills, getSkillGroups } from './skillApi'
 import { CORE_SKILL_CATEGORIES, CORE_SKILL_LEVEL, SKILL_CATEGORY_ORDER } from '../model/categories'
 
 describe('getSkillGroups', () => {
@@ -37,5 +37,16 @@ describe('getCoreSkills', () => {
     expect(names).toContain('Flutter')
     expect(names).not.toContain('Windows')
     expect(names).not.toContain('Hardware repair')
+  })
+})
+
+describe('getCoreSkillGroups', () => {
+  it('groups exactly the core skills, in the display order and with no empty group', () => {
+    const groups = getCoreSkillGroups()
+    const categories = groups.map((group) => group.category)
+
+    expect(groups.flatMap((group) => group.skills)).toEqual(getCoreSkills())
+    expect(categories).toEqual(SKILL_CATEGORY_ORDER.filter((category) => categories.includes(category)))
+    expect(groups.every((group) => group.skills.length > 0)).toBe(true)
   })
 })

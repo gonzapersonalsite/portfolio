@@ -249,7 +249,6 @@ const DARK_PALETTE: GoblinPalette = {
 export const GOBLIN_PALETTES: Record<ColorMode, GoblinPalette> = {
   light: LIGHT_PALETTE,
   dark: DARK_PALETTE,
-  glass: DARK_PALETTE,
 }
 
 const U = GOBLIN_PIXEL_UNIT

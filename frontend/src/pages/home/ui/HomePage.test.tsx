@@ -39,7 +39,7 @@ const renderHomePage = () => {
   return { ...view, goblin }
 }
 
-describe('HomePage hero goblin', () => {
+describe('HomePage hero goblin and workbench layout', () => {
   beforeEach(async () => {
     window.localStorage.clear()
     await i18n.changeLanguage('es')
@@ -50,7 +50,7 @@ describe('HomePage hero goblin', () => {
     vi.restoreAllMocks()
   })
 
-  it('mounts the animated goblin and its 2D pixel portals inside the floating hero panel container', () => {
+  it('mounts the animated goblin and its 2D pixel portals inside the hero rig panel beside the focus areas and portrait', () => {
     fakeMediaQueries({ prefersLight: false, reducedMotion: false })
     const { goblin } = renderHomePage()
 
@@ -72,20 +72,19 @@ describe('HomePage hero goblin', () => {
     const exitPortal = goblin.querySelector('g[data-portal="exit"]')
     expect(entryPortal?.getAttribute('transform')).toBe('translate(18 27)')
     expect(exitPortal?.getAttribute('transform')).toBe('translate(366 27)')
-    expect(
-      Array.from(entryPortal?.querySelectorAll('g[data-portal-layer]') ?? []).map((layer) =>
-        layer.getAttribute('data-portal-layer'),
-      ),
-    ).toEqual(['outer', 'rim', 'core'])
-    expect(
-      entryPortal?.querySelectorAll('g[data-portal-layer="core"] animateTransform[type="translate"]'),
-    ).toHaveLength(0)
     expect(goblin.querySelectorAll('g[data-portal-particle="entry"]')).toHaveLength(8)
     expect(goblin.querySelectorAll('g[data-portal-particle="exit"]')).toHaveLength(8)
 
-    const frontendChip = screen.getByText('Desarrollador Frontend')
-    const floatingWrapper = goblin.parentElement?.parentElement
-    expect(floatingWrapper?.contains(frontendChip)).toBe(true)
+    const focusAreas = screen.getByRole('list', { name: 'Áreas de trabajo' })
+    const rigPanel = goblin.parentElement?.parentElement
+    expect(rigPanel?.contains(focusAreas)).toBe(true)
+    expect(Array.from(focusAreas.querySelectorAll('li'), (tile) => tile.textContent)).toEqual([
+      'WebReact · TypeScript · Spring Boot',
+      'EscritorioC# · .NET · Avalonia UI',
+      'MóvilFlutter · Dart · Kotlin',
+      'InfraestructuraProxmox VE · Docker · CI/CD',
+    ])
+    expect(screen.getByRole('heading', { level: 2, name: 'Ponte en contacto' })).toBeTruthy()
   })
 
   it('switches the goblin to its central resting coding pose with closed portals when animations are paused', () => {
@@ -118,7 +117,6 @@ describe('HomePage hero goblin', () => {
   it.each([
     ['light', '#9a6b2f', '0.18'],
     ['dark', '#d4a373', '0.55'],
-    ['glass', '#d4a373', '0.55'],
   ] as const)('applies the %s theme palette to the goblin SVG', (themeMode, glyphFill, shadowOpacity) => {
     fakeMediaQueries({ prefersLight: themeMode === 'light', reducedMotion: true })
     window.localStorage.setItem('themeMode', themeMode)
@@ -130,6 +128,15 @@ describe('HomePage hero goblin', () => {
     expect(shadow?.getAttribute('opacity')).toBe(shadowOpacity)
     expect(glyphs.map((glyph) => glyph.textContent)).toEqual(['{}', '</>', ';'])
     expect(glyphs[0]?.getAttribute('fill')).toBe(glyphFill)
+  })
+
+  it('falls back to the OS theme palette for the goblin when legacy glass is saved without altering storage', () => {
+    fakeMediaQueries({ prefersLight: true, reducedMotion: true })
+    window.localStorage.setItem('themeMode', 'glass')
+    const { goblin } = renderHomePage()
+
+    expect(goblin.querySelector('ellipse')?.getAttribute('opacity')).toBe('0.18')
+    expect(window.localStorage.getItem('themeMode')).toBe('glass')
   })
 
   it('pauses the SVG SMIL clock when the goblin scrolls out of the viewport and resumes it when visible', () => {

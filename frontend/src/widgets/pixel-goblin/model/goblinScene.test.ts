@@ -27,7 +27,6 @@ describe('goblinScene', () => {
   it.each([
     ['light', '#1f2328', '#c4beb8', '#a8a29c', '#9a6b2f', 0.18, '#90caf9', '#1976d2', '#fff8e1'],
     ['dark', '#0b0b0b', '#cfc9c3', '#b4aea8', '#d4a373', 0.55, '#4b35b8', '#5de0e6', '#e0f7fa'],
-    ['glass', '#0b0b0b', '#cfc9c3', '#b4aea8', '#d4a373', 0.55, '#4b35b8', '#5de0e6', '#e0f7fa'],
   ] as const)(
     'selects the %s palette matching the profile README and portal theme colors',
     (mode, ink, lidLight, deck, glyph, shadow, portalGlow, portalRim, portalCore) => {

@@ -1,17 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { ThemeProvider as MuiThemeProvider, CssBaseline, GlobalStyles } from '@mui/material'
-import { COLOR_MODES, createAppTheme, type ColorMode } from '@/shared/config'
+import { THEME_BACKGROUNDS, resolveStoredColorMode, type ColorMode } from '@/shared/config'
 import { readStorage, writeStorage } from '@/shared/lib'
 import { ColorModeContext } from '../model/ThemeContext'
+import './ThemeProvider.css'
 
 const THEME_STORAGE_KEY = 'themeMode'
 const ANIMATIONS_STORAGE_KEY = 'animationsPaused'
 const LIGHT_SCHEME_QUERY = '(prefers-color-scheme: light)'
 
-const readSavedMode = (): ColorMode | null => {
-  const saved = readStorage(THEME_STORAGE_KEY)
-  return COLOR_MODES.find((mode) => mode === saved) ?? null
-}
+const readSavedMode = (): ColorMode | null => resolveStoredColorMode(readStorage(THEME_STORAGE_KEY))
 
 const lightSchemeQuery = (): MediaQueryList | null =>
   typeof window.matchMedia === 'function' ? window.matchMedia(LIGHT_SCHEME_QUERY) : null
@@ -20,7 +17,8 @@ const lightSchemeQuery = (): MediaQueryList | null =>
 const systemModeOf = (query: MediaQueryList | null): ColorMode => (query?.matches ? 'light' : 'dark')
 
 // Until the visitor picks a theme, the site follows the operating system, including when it
-// switches between light and dark on a schedule. Only an explicit choice is saved.
+// switches between light and dark on a schedule. Only an explicit choice is saved, leaving
+// any legacy stored value (such as 'glass') untouched while falling back passively to the OS.
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [savedMode, setSavedMode] = useState<ColorMode | null>(readSavedMode)
   const [systemMode, setSystemMode] = useState<ColorMode>(() => systemModeOf(lightSchemeQuery()))
@@ -51,10 +49,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     [mode, setColorMode, animationsPaused, setAnimationsPaused],
   )
 
-  const theme = useMemo(() => createAppTheme(mode), [mode])
-
-  // index.html paints the page background and colour scheme on <html> before the app loads.
-  // From the first render on, CssBaseline owns them and follows every theme change.
+  // index.html paints the pre-load background and color-scheme inline on <html> to prevent flashes.
+  // Once mounted, tokens.css drives theme colors via [data-theme] so inline style stays clean.
   useEffect(() => {
     const root = document.documentElement.style
     root.removeProperty('background-color')
@@ -62,25 +58,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [])
 
   useEffect(() => {
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme.palette.background.default)
-  }, [theme])
+    document.documentElement.dataset.theme = mode
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_BACKGROUNDS[mode])
+  }, [mode])
 
-  return (
-    <ColorModeContext.Provider value={colorMode}>
-      <MuiThemeProvider theme={theme}>
-        {/* enableColorScheme makes scrollbars and native form controls follow the theme. */}
-        <CssBaseline enableColorScheme />
-        {/* Shared UI consumes CSS, so it never has to import this feature's context. */}
-        <GlobalStyles
-          styles={{
-            ':root': { '--decorative-animation-state': animationsPaused ? 'paused' : 'running' },
-            '@media (prefers-reduced-motion: reduce)': {
-              ':root': { '--decorative-animation-state': 'paused' },
-            },
-          }}
-        />
-        {children}
-      </MuiThemeProvider>
-    </ColorModeContext.Provider>
-  )
+  useEffect(() => {
+    document.documentElement.dataset.animations = animationsPaused ? 'paused' : 'running'
+  }, [animationsPaused])
+
+  return <ColorModeContext.Provider value={colorMode}>{children}</ColorModeContext.Provider>
 }

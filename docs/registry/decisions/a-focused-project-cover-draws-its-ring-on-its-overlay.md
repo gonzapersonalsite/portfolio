@@ -1,7 +1,7 @@
 ---
 title: La portada enfocada de un proyecto dibuja su anillo sobre la capa que la oscurece, blanco con una banda oscura dentro
 state: confirmed
-date: 2026-11-24
+date: 2026-11-25
 domain: interface
 phase: none
 ---
@@ -9,8 +9,8 @@ phase: none
 dibuja la capa que oscurece la captura, no el botón: un contorno blanco de 3
 píxeles en el borde y, dentro, una banda casi negra de 2.** Así una de las dos
 destaca a más de 3:1 de lo que muestre la captura, también de una blanca. Está
-en `ProjectCard.tsx` (`FOCUS_RING_OF_THE_COVER`) y lo sujeta
-`ProjectCard.test.tsx`.
+definido en `ProjectCard.css` sobre la capa interior de `ProjectCard.tsx` y lo
+sujeta `ProjectCard.test.tsx`.
 
 El botón no puede llevarlo: la capa está posicionada y el navegador la pinta
 encima del contorno de su padre, así que el anillo blanco del botón salía
@@ -27,8 +27,8 @@ provisional. Medida en `#2026-11-24-interface-decisions-closed-before-redesign`.
 
 ## Refutación
 
-En contra: un anillo de dos colores es una elección de aspecto, y el rediseño
-visual podría preferir otro. Se mantiene: el anillo blanco ya existía; la banda
-solo aparece con el foco del teclado y es el mínimo que lo hace visible sobre
-cualquier captura, y el rediseño puede cambiar su forma siempre que conserve
-el 3:1 (`#choices-of-look-wait-for-the-visual-redesign`).
+En contra: un anillo de dos colores es una elección de aspecto que conviene
+revisar si cambia el tratamiento visual de las tarjetas. Se mantiene en
+«Mesa de Taller» (`#visual-redesign-workbench-two-themes`): el anillo blanco ya
+existía, la banda oscura solo aparece con el foco del teclado para mantener el
+3:1 sobre cualquier captura y el rediseño lo conserva en sus hojas de estilo.

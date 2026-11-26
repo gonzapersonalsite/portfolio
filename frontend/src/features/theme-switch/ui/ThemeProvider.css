@@ -1,0 +1,13 @@
+:root {
+  --decorative-animation-state: running;
+}
+
+:root[data-animations='paused'] {
+  --decorative-animation-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --decorative-animation-state: paused;
+  }
+}

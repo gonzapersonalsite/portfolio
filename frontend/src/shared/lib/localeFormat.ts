@@ -1,4 +1,4 @@
-// Dates and numbers written the way each UI language expects. The markdown twins use the same
+// Dates written the way each UI language expects. The markdown twins use the same
 // functions, so the page and its twin never disagree.
 
 const localeOf = (language: string): string => (language === 'en' ? 'en-US' : 'es-ES')
@@ -20,9 +20,4 @@ export function formatPeriod(
 ): string {
   const end = endDate === undefined ? presentLabel : formatMonthYear(endDate, language)
   return `${formatMonthYear(startDate, language)} – ${end}`
-}
-
-// '80%' in English, '80 %' (non-breaking space) in Spanish.
-export function formatPercent(value: number, language: string): string {
-  return new Intl.NumberFormat(localeOf(language), { style: 'percent' }).format(value / 100)
 }

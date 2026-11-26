@@ -1,0 +1,33 @@
+.empty-state {
+  padding: clamp(2rem, 5vw, 3.5rem) 1.5rem;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 0.65rem;
+}
+
+.empty-state__icon {
+  font-size: 3rem;
+  color: var(--ink-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-state__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.empty-state__desc {
+  margin: 0;
+  max-width: 46ch;
+  color: var(--ink-muted);
+  font-size: 0.95rem;
+}

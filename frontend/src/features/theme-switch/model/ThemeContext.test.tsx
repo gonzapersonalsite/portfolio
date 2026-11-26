@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import React from 'react'
 import { ThemeProvider, useColorMode } from '@/features/theme-switch'
+import { THEME_BACKGROUNDS } from '@/shared/config'
 
 // jsdom has no matchMedia: a controllable stand-in for '(prefers-color-scheme: light)'.
 const fakeSystemScheme = (prefersLight: boolean) => {
@@ -34,6 +35,8 @@ const animationState = () =>
 describe('ThemeProvider', () => {
   beforeEach(() => {
     window.localStorage.clear()
+    document.documentElement.removeAttribute('data-theme')
+    document.documentElement.removeAttribute('data-animations')
   })
 
   afterEach(() => {
@@ -46,6 +49,7 @@ describe('ThemeProvider', () => {
     const { result } = renderColorMode()
 
     expect(result.current.mode).toBe('light')
+    expect(document.documentElement.dataset.theme).toBe('light')
     expect(window.localStorage.getItem('themeMode')).toBeNull()
     expect(result.current.animationsPaused).toBe(false)
     expect(animationState()).toBe('running')
@@ -71,7 +75,7 @@ describe('ThemeProvider', () => {
     const { result } = renderColorMode()
 
     act(() => result.current.setAnimationsPaused(true))
-    act(() => result.current.setColorMode('glass'))
+    act(() => result.current.setColorMode('light'))
 
     expect(result.current.animationsPaused).toBe(true)
     expect(animationState()).toBe('paused')
@@ -82,7 +86,7 @@ describe('ThemeProvider', () => {
     expect(result.current.animationsPaused).toBe(false)
     expect(animationState()).toBe('running')
     expect(window.localStorage.getItem('animationsPaused')).toBe('false')
-    expect(result.current.mode).toBe('glass')
+    expect(result.current.mode).toBe('light')
   })
 
   it('keeps following the operating system when it switches while nothing is chosen', () => {
@@ -92,16 +96,32 @@ describe('ThemeProvider', () => {
     act(() => system.switchTo(false))
 
     expect(result.current.mode).toBe('dark')
+    expect(document.documentElement.dataset.theme).toBe('dark')
   })
 
   it('saves an explicit choice and then ignores the operating system', () => {
     const system = fakeSystemScheme(false)
     const { result } = renderColorMode()
 
-    act(() => result.current.setColorMode('glass'))
+    act(() => result.current.setColorMode('dark'))
     act(() => system.switchTo(true))
 
-    expect(result.current.mode).toBe('glass')
+    expect(result.current.mode).toBe('dark')
+    expect(window.localStorage.getItem('themeMode')).toBe('dark')
+  })
+
+  it('falls back to the OS scheme when legacy glass is stored without overwriting storage', () => {
+    const system = fakeSystemScheme(true)
+    window.localStorage.setItem('themeMode', 'glass')
+
+    const { result } = renderColorMode()
+
+    expect(result.current.mode).toBe('light')
+    expect(window.localStorage.getItem('themeMode')).toBe('glass')
+
+    act(() => system.switchTo(false))
+
+    expect(result.current.mode).toBe('dark')
     expect(window.localStorage.getItem('themeMode')).toBe('glass')
   })
 
@@ -123,7 +143,7 @@ describe('ThemeProvider', () => {
 
     act(() => result.current.setColorMode('light'))
 
-    expect(meta.getAttribute('content')).toBe('#f5f5f5')
+    expect(meta.getAttribute('content')).toBe(THEME_BACKGROUNDS.light)
     meta.remove()
   })
 

@@ -22,6 +22,12 @@ const STARTUP_PROGRESS_LABEL: Record<Locale, string> = {
   es: 'Cargando portafolio',
 }
 
+// The card itself is in English; the alt quotes its text in the language of the shell.
+const SOCIAL_IMAGE_ALT: Record<Locale, string> = {
+  en: 'Dark workbench card: Gonzalo Martínez, Full Stack Developer, with React, TypeScript, Spring Boot, .NET and Flutter',
+  es: 'Tarjeta oscura de mesa de taller: Gonzalo Martínez, Full Stack Developer, con React, TypeScript, Spring Boot, .NET y Flutter',
+}
+
 const HEAD_END = '</head>'
 const APP_ROOT = '<div id="root">'
 
@@ -178,6 +184,8 @@ const applyRouteMeta = (html: string, route: RouteSpec, locale: Locale): string 
   result = updateMeta(result, 'property', 'og:url', () => pageUrl)
   result = updateMeta(result, 'property', 'og:locale', () => OG_LOCALES[locale])
   result = updateMeta(result, 'property', 'og:image', absoluteImagePath('og:image'))
+  result = updateMeta(result, 'property', 'og:image:alt', () => SOCIAL_IMAGE_ALT[locale])
+  result = updateMeta(result, 'name', 'twitter:image:alt', () => SOCIAL_IMAGE_ALT[locale])
   return updateMeta(result, 'name', 'twitter:image', absoluteImagePath('twitter:image'))
 }
 

@@ -26,7 +26,7 @@ describe('NotificationProvider', () => {
 
     const alert = screen.getByRole('alert')
     expect(alert.textContent).toContain('Could not send')
-    expect(alert.className).toContain('Error')
+    expect(alert.className).toContain('notification-alert--error')
   })
 
   it('names the close button in the site language', async () => {

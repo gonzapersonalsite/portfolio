@@ -1,89 +1,106 @@
-import React from 'react'
-import { Box, TextField, Button, CircularProgress } from '@mui/material'
-import SendIcon from '@mui/icons-material/Send'
+import React, { useId } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ShowNotification } from '@/shared/lib'
+import { SendIcon } from '@/shared/ui'
 import { useContactForm } from '../model/useContactForm'
+import './ContactForm.css'
 
 interface ContactFormProps {
   onShowNotification: ShowNotification
 }
 
-// noValidate: the browser would word its own error bubbles in the browser's language, not the
-// site's, so the hook validates and the fields show translated messages. `required` stays for
-// the asterisk and aria-required. While sending, readOnly preserves focus and prevents a new
-// draft from being erased when the submitted message succeeds.
 const ContactForm: React.FC<ContactFormProps> = ({ onShowNotification }) => {
   const { t } = useTranslation()
   const { formData, fieldErrors, loading, handleChange, handleSubmit } = useContactForm(onShowNotification)
+  const nameId = useId()
+  const emailId = useId()
+  const messageId = useId()
+  const nameErrorId = useId()
+  const emailErrorId = useId()
+  const messageErrorId = useId()
 
   return (
-    <Box
-      component="form"
-      noValidate
-      onSubmit={handleSubmit}
-      aria-busy={loading}
-      sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}
-    >
-      <TextField
-        label={t('contact.form.name')}
-        name="name"
-        autoComplete="name"
-        slotProps={{ input: { readOnly: loading } }}
-        value={formData.name}
-        onChange={handleChange}
-        error={fieldErrors.name !== undefined}
-        helperText={fieldErrors.name}
-        required
-        fullWidth
-        variant="outlined"
-      />
-      <TextField
-        label={t('contact.form.email')}
-        name="email"
-        type="email"
-        autoComplete="email"
-        slotProps={{ input: { readOnly: loading } }}
-        value={formData.email}
-        onChange={handleChange}
-        error={fieldErrors.email !== undefined}
-        helperText={fieldErrors.email}
-        required
-        fullWidth
-        variant="outlined"
-      />
-      <TextField
-        label={t('contact.form.message')}
-        name="message"
-        slotProps={{ input: { readOnly: loading } }}
-        value={formData.message}
-        onChange={handleChange}
-        error={fieldErrors.message !== undefined}
-        helperText={fieldErrors.message}
-        required
-        fullWidth
-        multiline
-        rows={4}
-        variant="outlined"
-      />
+    <form className="contact-form" onSubmit={handleSubmit} noValidate aria-busy={loading}>
+      <div className="contact-form__field">
+        <label className="contact-form__label" htmlFor={nameId}>
+          {t('contact.form.name')} *
+        </label>
+        <input
+          id={nameId}
+          type="text"
+          name="name"
+          autoComplete="name"
+          required
+          value={formData.name}
+          readOnly={loading}
+          onChange={handleChange}
+          aria-invalid={Boolean(fieldErrors.name)}
+          aria-describedby={fieldErrors.name ? nameErrorId : undefined}
+          className="contact-form__input"
+        />
+        {fieldErrors.name ? (
+          <p id={nameErrorId} className="contact-form__error">
+            {fieldErrors.name}
+          </p>
+        ) : null}
+      </div>
 
-      {/* aria-disabled instead of disabled: a disabled button drops the keyboard focus. */}
-      <Button
+      <div className="contact-form__field">
+        <label className="contact-form__label" htmlFor={emailId}>
+          {t('contact.form.email')} *
+        </label>
+        <input
+          id={emailId}
+          type="email"
+          name="email"
+          autoComplete="email"
+          required
+          value={formData.email}
+          readOnly={loading}
+          onChange={handleChange}
+          aria-invalid={Boolean(fieldErrors.email)}
+          aria-describedby={fieldErrors.email ? emailErrorId : undefined}
+          className="contact-form__input"
+        />
+        {fieldErrors.email ? (
+          <p id={emailErrorId} className="contact-form__error">
+            {fieldErrors.email}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="contact-form__field">
+        <label className="contact-form__label" htmlFor={messageId}>
+          {t('contact.form.message')} *
+        </label>
+        <textarea
+          id={messageId}
+          name="message"
+          rows={5}
+          required
+          value={formData.message}
+          readOnly={loading}
+          onChange={handleChange}
+          aria-invalid={Boolean(fieldErrors.message)}
+          aria-describedby={fieldErrors.message ? messageErrorId : undefined}
+          className="contact-form__textarea"
+        />
+        {fieldErrors.message ? (
+          <p id={messageErrorId} className="contact-form__error">
+            {fieldErrors.message}
+          </p>
+        ) : null}
+      </div>
+
+      <button
         type="submit"
-        variant="contained"
-        size="large"
-        endIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
-        aria-disabled={loading}
-        sx={{
-          mt: 2,
-          py: 1.5,
-          fontWeight: 'bold',
-          borderRadius: 2,
-        }}
+        className="wb-btn-primary contact-form__submit"
+        aria-disabled={loading ? 'true' : undefined}
       >
-        {loading ? t('common.sending') : t('contact.form.submit')}
-      </Button>
-    </Box>
+        <SendIcon />
+        <span>{loading ? t('common.sending') : t('contact.form.submit')}</span>
+      </button>
+    </form>
   )
 }
 

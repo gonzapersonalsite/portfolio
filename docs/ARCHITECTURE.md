@@ -1,7 +1,7 @@
 # Arquitectura del producto
 
-El producto es una aplicación React estática bilingüe con Vite, TypeScript y Material UI (en `frontend/`) organizada con
-Feature-Sliced Design. Este documento manda sobre la forma del código de
+El producto es una aplicación React estática bilingüe con Vite y TypeScript (en `frontend/`) organizada con
+Feature-Sliced Design: un dominio y una superficie para agentes con datos en JSON estático, sin cliente HTTP propio y sin dependencias ni importaciones de MUI/Emotion en `frontend/`. Este documento manda sobre la forma del código de
 `frontend/src`: dónde va cada cosa, qué puede importar qué y cómo se leen los datos y se accede a la red.
 Cómo se trabaja en el repositorio lo manda `AGENTS.md`, y cómo se pone en
 marcha un clon, `README.md`.
@@ -99,7 +99,7 @@ segmentos que tengan algo:
   no admite ningún caso que el informe de Vitest dé por saltado
   (`--forbid-skipped`), también el que esa regla no lee. Vitest rechaza un
   `.only` (`allowOnly: false`) y hace fallar un test que no comprueba nada
-  (`expect.requireAssertions`), los dos en `frontend/vite.config.ts`.
+  (`expect.requireAssertions`), los dos en `frontend/vitest.config.ts`.
 
 ## Dónde va el código nuevo
 
@@ -112,17 +112,13 @@ lint solo impide que una capa use lo que tiene encima.
 
 ## Estilos
 
-- Los estilos de interfaz usan Material UI (`sx` + tema en `frontend/src/shared/config/theme.ts`) y CSS co-localizado en `ui/`. Que no se importen
-  estilos desde `model`, `api` ni `lib` lo hace cumplir el lint; el resto es
-  convención.
-- Los estilos globales de la aplicación viven en
-  `frontend/src/app/styles/index.css`, que importa la entrada y nadie más, por
-  convención.
+- La interfaz usa HTML semántico y hojas CSS co-localizadas en `ui/` con variables de tema en `frontend/src/app/styles/tokens.css`. Que no se importen estilos ni `@mui/*`/`@emotion/*` desde `model`, `api` ni `lib` lo hace cumplir el lint; el resto es convención.
+- Los estilos globales de la aplicación viven en `frontend/src/app/styles/tokens.css` y `frontend/src/app/styles/index.css` (con `Inter Variable` y rasgos OpenType técnicos más pila monoespaciada), que importa la entrada y nadie más, por convención.
 
 ## Datos y red
 
 - **Contenido estático bilingüe:** todo el contenido de negocio vive en ficheros JSON versionados en el segmento `api` de cada entidad (`frontend/src/entities/<slice>/api/`), expuestos por getters síncronos y validados por tests de integridad.
-- **Sin peticiones HTTP ad-hoc:** `fetch`, `XMLHttpRequest`, `window.fetch`, `globalThis.fetch` y `self.fetch` fuera de `frontend/src/shared/api` son errores de `no-restricted-globals` y `no-restricted-properties`. El único envío externo es el formulario de contacto (`frontend/src/features/contact-form/api/contactApi.ts`), que carga EmailJS bajo demanda con un tope estricto de 15 s.
+- **Sin peticiones HTTP ad-hoc:** `fetch`, `XMLHttpRequest`, `window.fetch`, `globalThis.fetch` y `self.fetch` son errores de `no-restricted-globals` y `no-restricted-properties` en todo `frontend/src`, salvo en los tests. El único envío externo es el formulario de contacto (`frontend/src/features/contact-form/api/contactApi.ts`), que carga EmailJS bajo demanda con un tope estricto de 15 s.
 - **Las reglas de negocio son funciones puras en `model`**, con su test en el
   mismo cambio; los hooks del modelo solo guardan estado y llaman a esas
   funciones. Convención.
@@ -133,7 +129,7 @@ lint solo impide que una capa use lo que tiene encima.
   fuente.** `frontend/src/shared/config/site.ts`, `frontend/tooling/agent-files/routes.ts` y los JSON de entidades definen la dirección del sitio, las rutas, los textos, los gemelos Markdown bilingües y las páginas HTML por ruta; el plugin
   cableado en `frontend/vite.config.ts` emite llms.txt, robots.txt, sitemap.xml, los gemelos Markdown y los shells HTML en `frontend/dist/` (y el servidor de desarrollo sirve
   los ficheros de agentes por middleware). Los tests de `frontend/tooling/agent-files` y `frontend/tooling/hosting/vercelConfig.test.ts`
-  cruzan cada valor con los ficheros reales —la portada `frontend/public/og-cover-gonzalo-martinez-full-stack.jpg`, los iconos y el hash CSP del script inline de `frontend/index.html` incluidos— y comprueban que el plugin sigue cableado en la
+  cruzan cada valor con los ficheros reales —la portada `frontend/public/og-cover-mesa-taller-gonzalo-martinez.jpg`, los iconos `frontend/public/icons/g-workbench.*` y el hash CSP del script inline de `frontend/index.html` incluidos— y comprueban que el plugin sigue cableado en la
   configuración real: quitarlo de `frontend/vite.config.ts` los deja en rojo.
 
 ## Nombres

@@ -6,7 +6,7 @@ import { getAllProjects, getFeaturedProjects } from '../../src/entities/project/
 import { getCoreSkills, getSkillGroups } from '../../src/entities/skill/api/skillApi.ts'
 import { getAllSpokenLanguages } from '../../src/entities/spoken-language/api/languageApi.ts'
 import { getLocalizedText } from '../../src/shared/lib/getLocalizedText.ts'
-import { formatPercent, formatPeriod } from '../../src/shared/lib/localeFormat.ts'
+import { formatPeriod } from '../../src/shared/lib/localeFormat.ts'
 import { TWIN_LABELS, type TwinLabels } from './labels.ts'
 import { richTextToBlocks } from './richText.ts'
 import { ROUTES, twinPathOf, type Locale, type RouteId } from './routes.ts'
@@ -56,7 +56,7 @@ const experienceBlock = (experience: Experience, locale: Locale, labels: TwinLab
   ])
 }
 
-// Same groups, order and percentage format as the Skills page.
+// Same groups, order and applied-experience examples as the Skills page.
 const skillsByCategory = (locale: Locale, labels: TwinLabels): string =>
   getSkillGroups()
     .map(({ category, skills }) =>
@@ -65,7 +65,7 @@ const skillsByCategory = (locale: Locale, labels: TwinLabels): string =>
         skills
           .map(
             (skill) =>
-              `- ${getLocalizedText(locale, skill.nameEn, skill.nameEs)} — ${formatPercent(skill.level, locale)}`,
+              `- ${getLocalizedText(locale, skill.nameEn, skill.nameEs)} — ${getLocalizedText(locale, skill.appliedEn, skill.appliedEs)}`,
           )
           .join('\n'),
       ]),
@@ -81,6 +81,12 @@ const buildHome = (locale: Locale, labels: TwinLabels): string => {
       `> ${getLocalizedText(locale, profile.subtitleEn, profile.subtitleEs)}`,
       openToWorkLine(labels),
       ...richTextToBlocks(getLocalizedText(locale, profile.descriptionEn, profile.descriptionEs)),
+      join([
+        `## ${labels.focusAreas}`,
+        profile.focusAreas
+          .map((area) => `- ${getLocalizedText(locale, area.labelEn, area.labelEs)}: ${area.technologies.join(', ')}`)
+          .join('\n'),
+      ]),
       join([
         `## ${labels.featuredProjects}`,
         getFeaturedProjects()

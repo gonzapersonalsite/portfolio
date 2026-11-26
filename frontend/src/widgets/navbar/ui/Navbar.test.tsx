@@ -46,7 +46,7 @@ describe('Navbar', () => {
   )
 
   it.each(['/en/projects', '/en/projects/', '/EN/PROJECTS/'])(
-    'marks the current page in the mobile menu at %s',
+    'marks the current page in the native mobile dialog drawer at %s',
     (path) => {
       renderNavbar(path)
       const menuButton = screen.getByRole('button', { name: 'Open menu' })
@@ -56,6 +56,7 @@ describe('Navbar', () => {
 
       expect(menuButton.getAttribute('aria-expanded')).toBe('true')
       const drawer = screen.getByRole('dialog', { name: 'Menu' })
+      expect(drawer.tagName).toBe('DIALOG')
       expect(menuButton.getAttribute('aria-controls')).toBe(drawer.id)
       expect(drawer.querySelector('p')?.textContent).toBe('GONZALO MARTÍNEZ')
       const current = within(within(drawer).getByRole('navigation')).getByRole('link', { current: 'page' })
@@ -82,25 +83,28 @@ describe('Navbar', () => {
     expect(within(nav).queryByRole('link', { current: 'page' })).toBeNull()
   })
 
-  it.each(['Escape', 'navigation'] as const)('releases background ARIA hiding when closing via %s', (action) => {
-    const { container } = renderNavbar('/skills')
-    const menuButton = screen.getByRole('button', { name: 'Open menu' })
-    menuButton.focus()
-    fireEvent.click(menuButton)
+  it.each(['Escape', 'navigation', 'backdrop'] as const)(
+    'closes the mobile drawer cleanly and restores focus via %s',
+    (action) => {
+      renderNavbar('/skills')
+      const menuButton = screen.getByRole('button', { name: 'Open menu' })
+      menuButton.focus()
+      fireEvent.click(menuButton)
 
-    const drawer = screen.getByRole('dialog', { name: 'Menu' })
-    expect(drawer.contains(document.activeElement)).toBe(true)
-    expect(container.getAttribute('aria-hidden')).toBe('true')
+      const drawer = screen.getByRole('dialog', { name: 'Menu' })
+      expect(drawer.contains(document.activeElement)).toBe(true)
 
-    if (action === 'Escape') {
-      fireEvent.keyDown(drawer, { key: 'Escape' })
-    } else {
-      fireEvent.click(within(drawer).getByRole('link', { name: 'About' }))
-    }
+      if (action === 'Escape') {
+        fireEvent.keyDown(drawer, { key: 'Escape' })
+      } else if (action === 'backdrop') {
+        fireEvent.click(drawer)
+      } else {
+        fireEvent.click(within(drawer).getByRole('link', { name: 'About' }))
+      }
 
-    expect(menuButton.getAttribute('aria-expanded')).toBe('false')
-    expect(document.activeElement).toBe(menuButton)
-    // Focus must not return to a hidden ancestor during the drawer's exit animation.
-    expect(container.getAttribute('aria-hidden')).toBeNull()
-  })
+      expect(menuButton.getAttribute('aria-expanded')).toBe('false')
+      expect(drawer.hasAttribute('open')).toBe(false)
+      expect(document.activeElement).toBe(menuButton)
+    },
+  )
 })

@@ -1,29 +1,29 @@
 ---
-title: El icono conserva el monograma G con su punto, con nombres de fichero nuevos
+title: El icono adopta Mesa de Taller con G crema y punto naranja en ficheros nuevos
 state: confirmed
-date: 2026-10-27
+date: 2026-11-25
 domain: brand
 phase: none
 ---
-**El icono del portafolio sigue siendo la «G» blanca con un punto azul claro
-(`90caf9`) sobre el degradado del hero; solo cambian los nombres de sus
-ficheros**, de `gonzalo-dev.*` a `g-monogram.*` en `frontend/public/icons/`.
-Lo propone el agente; el dueño pidió que se le preguntara si el punto se queda.
+**El icono del portafolio adopta la estética «Mesa de Taller»: cuadrado carbón
+(23, 24, 26) con filete de borde (52, 56, 65), «G» crema (244, 241, 234) y punto
+naranja acento (255, 120, 71), en los ficheros nuevos `g-workbench.*` dentro de
+`frontend/public/icons/`.** Lo decidió el dueño al pedir que el favicon y la
+tarjeta social cambien con el rediseño completo
+(`#visible-brand-is-the-owner-name`, `#visual-redesign-workbench-two-themes`).
+`BrandMarkIcon` en `frontend/src/shared/ui/Icons.tsx` comparte el mismo trazo,
+perímetro y posición del punto.
 
-No abre fase: es un detalle de presentación de la marca
-(`#visible-brand-is-the-owner-name`).
+No abre fase: renombra y regenera los iconos de `frontend/index.html` porque
+production los sirve con caché inmutable de un año (`frontend/vercel.json`).
 
 ## Refutación
 
-- **Evidencia en contra:** el punto se dibujó para evocar `.dev`, y quien
-  conociera la marca anterior puede seguir leyéndolo así. Quitarlo es borrar un
-  círculo del SVG, pero el ICO y el PNG de 180 px se derivan de él sin script
-  versionado y habría que regenerarlos a mano.
-- **Lo que se mantiene y por qué:** sin el texto `.dev` en ningún sitio, el
-  punto se lee como el de una inicial («G.») y repite el color de acento que la
-  barra da al apellido. Si el dueño prefiere quitarlo, los tres ficheros se
-  regeneran antes del despliegue con los mismos nombres nuevos, porque esos
-  nombres aún no se han publicado.
-
-El dueño eligió esta opción entre las que le puso el agente y la confirmó
-después de leer esta refutación.
+- **Evidencia en contra:** un icono cuadrado muy oscuro puede perder contorno
+  en barras de pestañas oscuras, y añadir filete más punto en `16 px` exige
+  grosor suficiente para que no se empasten al reducirse.
+- **Lo que se mantiene y por qué:** el filete perimetral de dos unidades separa
+  la pieza en pestañas claras y oscuras, el trazo de siete unidades y el punto
+  de radio cinco conservan lectura nítida a `16`, `32` y `48 px`
+  (`g-workbench.ico` y `g-workbench.svg`), y `g-workbench-180.png` rellena opaco
+  a sangre completa para Apple Touch Icon.

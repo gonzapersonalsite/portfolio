@@ -1,7 +1,7 @@
 # Notas de desarrollo (índice)
 
 GENERADO por tools/board desde `docs/registry/deliveries/` y `docs/registry/lessons/`. No editar a mano: se reescribe.
-board-fingerprint:bfb73c4cc0395105 — su contenido cambió por última vez el 2026-11-24.
+board-fingerprint:6d24f4bb150b55f3 — su contenido cambió por última vez el 2026-11-25.
 
 Cada entrega es un fichero `docs/registry/deliveries/<fecha>-<tema>.md` con lo que se hizo, cómo se
 verificó y qué costó; cada lección es un fichero `docs/registry/lessons/<identidad>.md` y se cita como
@@ -9,8 +9,12 @@ verificó y qué costó; cada lección es un fichero `docs/registry/lessons/<ide
 entregas dicen cómo llegó a estar así. Aquí van las más recientes de cada clase; todas,
 mes a mes, en su índice del mes.
 
-## Entregas (22; aquí las 20 más recientes)
+## Entregas (26; aquí las 20 más recientes)
 
+- 2026-11-26 `#2026-11-26-workbench-cross-review-and-finish` Revisión transversal y acabado de «Mesa de Taller»
+- 2026-11-25 `#2026-11-25-mesa-de-taller-redesign-and-mui-source-removal` Migración completa de frontend/src a Mesa de Taller sin Material UI
+- 2026-11-25 `#2026-11-25-native-dialog-project-gallery` Galería nativa de proyectos sobre dialog sin Material UI
+- 2026-11-25 `#2026-11-25-workbench-branding-and-mui-package-removal` Identidad Mesa de Taller en favicon y tarjeta social y retirada de MUI
 - 2026-11-24 `#2026-11-24-design-guide-and-current-operations-docs` Guía de diseño, documentos de operación al día y los iconos que no seguían el tamaño de letra
 - 2026-11-24 `#2026-11-24-interface-decisions-closed-before-redesign` Las abiertas de la interfaz cerradas antes del rediseño, con el foco visible en cada control y la letra del lector en toda la interfaz
 - 2026-11-24 `#2026-11-24-scaffold-upgrade-to-0-8-1` Actualización a agentic-scaffold 0.8.1 y auditoría sobre el árbol de trabajo
@@ -27,10 +31,6 @@ mes a mes, en su índice del mes.
 - 2026-10-24 `#2026-10-24-full-stack-role` El portafolio declara el puesto Full Stack Developer
 - 2026-10-24 `#2026-10-24-install-policy-and-pnpm-pin` Contrato de instalación coherente y herramientas verificadas sin el aviso de Zod
 - 2026-10-23 `#2026-10-23-quotidia-brand-refresh` Actualizar las capturas y la presentación pública de Quotidia
-- 2026-10-20 `#2026-10-20-localized-spanish-routes-and-shells` Rutas y shells HTML localizados por idioma (raíz en español y /en en inglés)
-- 2026-10-20 `#2026-10-20-project-gonzaloapps-site-id-and-assets` Alinear el identificador y las imágenes del proyecto gonzaloapps-site
-- 2026-10-19 `#2026-10-19-hero-card-pixel-goblin` Duende pixelado sobre la tarjeta del hero de Inicio
-- 2026-10-19 `#2026-10-19-pixel-goblin-portals-and-contact-panel` Portales pixel 2D de entrada y salida y reutilización en el panel de Contacto
 
 ## Lecciones (7; aquí las 7 más recientes)
 
@@ -44,6 +44,6 @@ mes a mes, en su índice del mes.
 
 ## Por mes (3 índices)
 
-- `docs/registry/index/notes-2026-11.md` — 2026-11: 7 entregas, 0 lecciones
+- `docs/registry/index/notes-2026-11.md` — 2026-11: 11 entregas, 0 lecciones
 - `docs/registry/index/notes-2026-10.md` — 2026-10: 15 entregas, 0 lecciones
 - `docs/registry/index/notes-2026-09.md` — 2026-09: 0 entregas, 7 lecciones

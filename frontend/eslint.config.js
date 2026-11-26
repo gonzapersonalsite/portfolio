@@ -52,7 +52,7 @@ const NO_FIXED_FONT_SIZE_IN_STYLES = [
   `${FONT_SIZE_KEY} > ObjectExpression > Property > ${FIXED_SIZE}`,
   `${FONT_SIZE_KEY} > ObjectExpression > Property > TemplateLiteral > ${FIXED_SIZE}`,
 ].map((selector) => ({ selector, message: FONT_SIZE_FOLLOWS_THE_READER }))
-// The same in a fontSize attribute, which a MUI component reads as a style.
+// The same in a fontSize attribute, which an SVG element or a UI-kit component reads as a style.
 const NO_FIXED_FONT_SIZE_IN_ATTRIBUTES = [
   `JSXAttribute[name.name="fontSize"] > ${FIXED_SIZE}`,
   `JSXAttribute[name.name="fontSize"] > JSXExpressionContainer > ${FIXED_SIZE}`,
@@ -63,8 +63,8 @@ const NO_FIXED_FONT_SIZE = [...NO_FIXED_FONT_SIZE_IN_STYLES, ...NO_FIXED_FONT_SI
 const SVG_DRAWINGS = ['src/widgets/pixel-goblin/ui/PixelGoblin.tsx']
 
 // What a logic segment may not import, statically or dynamically: a ui segment,
-// any entry of react-dom, the JSX runtimes, this site's UI kit and its styling
-// (MUI and Emotion, as a whole: ARCHITECTURE.md, Styles) and stylesheets.
+// any entry of react-dom, the JSX runtimes, a UI kit and its styling (MUI and
+// Emotion, which this site retired: ARCHITECTURE.md, Styles) and stylesheets.
 const UI_MODULES = [
   '(^|/)ui(/|$)',
   '^react-dom(/|$)',

@@ -4,7 +4,7 @@
 
 🇺🇸 [English](../../README.md) | **🇪🇸 Español**
 
-**Portafolio profesional** es una aplicación web estática y bilingüe que presenta la trayectoria de Gonzalo Martínez, desarrollador Full Stack: proyectos, experiencia, habilidades y perfil, con una interfaz responsive y tres temas visuales.
+**Portafolio profesional** es una aplicación web estática y bilingüe que presenta la trayectoria de Gonzalo Martínez, desarrollador Full Stack: proyectos, experiencia, habilidades y perfil, con una interfaz responsive en temas claro y oscuro.
 
 **Demo en vivo:** [https://mi-portafolio-gonzalo.vercel.app/](https://mi-portafolio-gonzalo.vercel.app/)
 
@@ -12,25 +12,25 @@
 
 ## ✨ Características principales
 
-### 🎨 Experiencia de usuario inmersiva (UX)
-- **Interfaz Liquid Glass:** estilo visual vanguardista inspirado en visionOS, con glassmorphism avanzado y acentos de neón.
-- **Galería de proyectos interactiva:** visor a pantalla completa con pies de imagen, tira de miniaturas, zoom hasta 4× (botones, clic o teclado) y navegación por teclado (flechas, +/−, 0).
-- **Motor de temas:** modo claro, oscuro y el exclusivo modo Liquid Glass. El sitio sigue al sistema operativo hasta que el visitante elige un tema, y pinta el fondo correcto antes de que cargue la aplicación.
-- **Localización dinámica:** soporte bilingüe completo (español/inglés) con traducción instantánea de interfaz y contenido, rutas raíz en español y rutas propias en inglés bajo `/en` (además del parámetro `?lang=es|en`) para que compartir cualquier dirección conserve el idioma activo y su vista previa social localizada.
+### 🎨 Experiencia Mesa de Taller (UX)
+- **Estética «Mesa de Taller»:** diseño técnico de mesa de trabajo en modos claro y oscuro, retícula de plano sutil, bordes táctiles y una bahía propia para el duende pixelado SVG artesanal (`PixelGoblin`).
+- **Galería de proyectos interactiva:** visor a pantalla completa sobre `<dialog>` nativo con pies de imagen, tira de miniaturas, zoom hasta 4× (botones, clic o teclado), deslizamiento táctil y retorno determinista del foco.
+- **Conmutador Vista / Arquitectura:** las tarjetas de proyecto alternan entre vista previa del producto (`Vista`) y especificaciones técnicas de arquitectura (`Arquitectura`).
+- **Motor de temas y control de movimiento:** modos claro y oscuro guiados por variables CSS. El sitio sigue al sistema operativo hasta que el visitante elige un tema (con compatibilidad pasiva si `themeMode` conservaba `glass`), pinta el fondo antes de cargar e incluye pausa directa de animaciones respetando `prefers-reduced-motion`.
+- **Localización dinámica:** soporte bilingüe completo (español/inglés) con conmutador directo `ES` / `EN`, rutas raíz en español y rutas propias en inglés bajo `/en` (además del parámetro `?lang=es|en`) para que compartir cualquier dirección conserve el idioma activo y su vista previa social localizada.
 
 ### 📦 Contenido como datos
-- **Modelo de contenido JSON estático:** proyectos, habilidades, experiencia, perfil e idiomas viven en ficheros JSON versionados — sin CMS, sin API, sin base de datos. Añadir un proyecto es un cambio de datos, no de código.
-- **Recursos autohospedados:** todas las imágenes, los iconos y la fuente (Inter) se sirven desde el propio sitio — cero hosts de imágenes o fuentes de terceros.
+- **Modelo de contenido JSON estático:** proyectos, habilidades (con ejemplos aplicados concretos), experiencia, perfil e idiomas viven en ficheros JSON versionados — sin CMS, sin API, sin base de datos. Añadir un proyecto es un cambio de datos, no de código.
+- **Recursos autohospedados:** todas las imágenes, los iconos y la fuente (Inter Variable autoalojada con rasgos técnicos) se sirven desde el propio sitio — cero hosts de imágenes o fuentes de terceros.
 - **Formulario de contacto:** impulsado por EmailJS (solo navegador, sin backend), que se carga solo al enviar un mensaje.
-- **Diseño responsive:** layouts fluidos optimizados para escritorio, tablet y móvil.
-- **Fondo ambiental Glass:** degradados radiales estáticos aportan profundidad sin animarse continuamente detrás de las superficies de cristal.
+- **Diseño responsive:** rejillas fluidas CSS Grid/Flexbox con controles HTML nativos optimizados para escritorio, tablet y móvil hasta 320 px con letra ampliada.
 
 ---
 
 ## 🛠️ Stack tecnológico
 
 - **Frontend:** React + TypeScript (Vite)
-- **UI:** Material UI (MUI) con personalización profunda de temas
+- **UI y estilos:** HTML semántico nativo, iconos SVG propios y CSS co-localizado con tokens en propiedades personalizadas (MUI y Emotion retirados por completo de código, manifiesto y lockfile)
 - **Routing:** React Router con páginas lazy-loaded
 - **i18n:** i18next + react-i18next
 - **Contacto:** EmailJS (solo navegador)

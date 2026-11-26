@@ -13,6 +13,7 @@ const MIRRORED_LABELS: ReadonlyArray<readonly [string, string]> = [
   ['nav.experience', 'nav.experience'],
   ['nav.projects', 'nav.projects'],
   ['nav.contact', 'nav.contact'],
+  ['focusAreas', 'home.focusAreas'],
   ['featuredProjects', 'projects.featured'],
   ['types.WEB', 'projects.types.WEB'],
   ['types.DESKTOP', 'projects.types.DESKTOP'],

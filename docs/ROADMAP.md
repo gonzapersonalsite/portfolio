@@ -11,7 +11,7 @@ por identidad).
 - **El orden de trabajo, en una línea.** Los números son IDENTIDAD, no
   secuencia; aquí solo entran fases con número:
 
-  **F0 ✔ → F1 ✔ → F2 ✔**
+  **F0 ✔ → F1 ✔ → F2 ✔ → F3 (IN PROGRESS)**
 
   Esta línea es la única que enuncia la secuencia y lleva el cursor: en negrita,
   las fases unidas por `→` (o por `·`, que separa igual), y nada que no sea una
@@ -56,3 +56,11 @@ por identidad).
 ## F2 — Rutas y shells HTML localizados por idioma (raíz en español y /en en inglés) (DONE)
 
 - Cuerpo y entregas archivados en `archive/ROADMAP.md`.
+
+## F3 — Rediseño visual («Mesa de Taller») y retirada incremental de Material UI (IN PROGRESS)
+
+- **F3.1 — Galería nativa de proyectos — DONE.** Integración de `ProjectGallery` sobre `<dialog>` nativo con estilos propios y cero dependencias de Material UI o Emotion en `../frontend/src/entities/project/ui/` (`#visual-redesign-workbench-two-themes`, `#2026-11-25-native-dialog-project-gallery`).
+- **F3.2 — Migración completa de `frontend/src/` a «Mesa de Taller» sin Material UI — DONE.** Tokens claro/oscuro (`tokens.css`) con respaldo pasivo ante `glass`, controles directos HTML de idioma y tema/animaciones (opción 2), cajón móvil nativo sobre `<dialog>`, tarjetas `Vista`/`Arquitectura`, skills con ejemplos aplicados, formulario y avisos propios (`#2026-11-25-mesa-de-taller-redesign-and-mui-source-removal`).
+- **F3.3 — Identidad visual («Mesa de Taller» en favicon y tarjeta social), ajuste tipográfico y retirada de dependencias MUI/Emotion — DONE.** Iconos `g-workbench.*` y tarjeta social `frontend/public/og-cover-mesa-taller-gonzalo-martinez.jpg` alineados con «Mesa de Taller» (`#icon-keeps-the-g-monogram-dot`, `#github-social-preview-is-a-tolerated-copy`), rasgos OpenType técnicos de `Inter Variable` y cifras tabulares en `frontend/src/app/styles/index.css` (`#workbench-type-is-self-hosted-inter-with-technical-features`) y retirada definitiva de `@mui/*` y `@emotion/*` en `frontend/package.json` y `frontend/pnpm-lock.yaml` (`#2026-11-25-workbench-branding-and-mui-package-removal`).
+- **F3.4 — Revisión transversal y acabado de «Mesa de Taller» — DONE.** Textos de toda la web contrastados con los repositorios y la experiencia real, datos JSON estrechados en su borde con tipos cerrados, esqueleto propio por página, áreas de trabajo en Inicio, enlace a Microsoft Store, alt social por idioma e impresión sin controles (`#2026-11-26-workbench-cross-review-and-finish`).
+- **Pendiente para cerrar F3:** revisión visual final del dueño sobre las superficies actualizadas, en la que confirma o cambia la tipografía (`#workbench-type-is-self-hosted-inter-with-technical-features`), antes de dar `F3` por `(DONE)` y archivar la fase en `archive/ROADMAP.md`.

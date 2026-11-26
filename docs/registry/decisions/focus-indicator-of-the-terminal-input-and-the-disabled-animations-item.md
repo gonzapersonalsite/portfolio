@@ -1,22 +1,22 @@
 ---
 title: La terminal del 404 conserva el contorno del navegador y la opción de animaciones es alcanzable con opacidad completa
 state: confirmed
-date: 2026-11-24
+date: 2026-11-25
 domain: interface
 phase: none
 ---
 **Tanto el campo de comandos de la página 404 como la opción deshabilitada «Animaciones»
 muestran su foco al navegar con teclado y explican su estado sin ocultarlo.**
 
-- **Terminal del 404 (`NotFoundPage.tsx`).** El campo de entrada conserva el contorno de
-  foco propio del navegador con separación (`outlineOffset`) en lugar de suprimirlo,
-  cubierto por `NotFoundPage.test.tsx` y medido en Chrome sobre los temas claro, oscuro y
-  Liquid Glass por encima del mínimo `3:1`.
-- **Opción de animaciones (`ThemeSelector.tsx`).** El menú declara `disabledItemsFocusable`
-  para permitir recorrer la opción con teclado aun cuando `reducedMotion` la deshabilita,
-  conserva opacidad `1` en el elemento deshabilitado para que su foco y motivo en
-  `aria-describedby` sigan legibles y atenúa solo la etiqueta principal
-  (`ThemeSelector.test.tsx`).
+- **Terminal del 404 (`NotFoundPage.tsx`).** El campo de entrada conserva su contorno
+  de foco visible con separación mediante CSS en lugar de suprimirlo, cubierto por
+  `NotFoundPage.test.tsx` y medido en Chrome sobre los temas claro y oscuro por encima
+  del mínimo `3:1`.
+- **Opción de animaciones (`ThemeSelector.tsx`).** El botón HTML directo permanece
+  alcanzable por teclado usando el atributo HTML `aria-disabled` (no `disabled`) aun
+  cuando `reducedMotion` bloquea el cambio, conserva opacidad `1` y borde discontinuo
+  en `ThemeSelector.css` para que su foco y el motivo en `aria-describedby` sigan
+  legibles (`ThemeSelector.test.tsx`).
 
 Propuesto por el agente bajo la delegación del dueño («No quiero deuda de ningun tipo»,
 «Dejo a tu preferencia recomendados») y verificado en
@@ -28,8 +28,8 @@ decides por el bien de cada proyecto».
 
 ## Refutación
 
-En contra: dibujar un marco propio alrededor del campo de la terminal o saltar del teclado
-una opción deshabilitada oculta el cursor de teclado o impide leer por qué no se puede
-activar las animaciones. Se mantiene: delegar en el contorno del navegador en la terminal y
-conservar el foco y opacidad legible en el menú resuelve ambos casos sin inventar estética
-nueva, a la espera del rediseño visual (`#choices-of-look-wait-for-the-visual-redesign`).
+En contra: dibujar un marco propio cerrado o saltar del teclado una opción
+deshabilitada oculta el foco o impide leer por qué no se puede activar las
+animaciones. Se mantiene: conservar el foco visible en la terminal y mantener
+alcanzable y legible con `aria-disabled` el botón directo de animaciones resuelve
+ambos casos (`#visual-redesign-workbench-two-themes`).

@@ -1,0 +1,11 @@
+.public-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: relative;
+}
+
+.public-layout__main {
+  flex: 1 0 auto;
+  outline: none;
+}

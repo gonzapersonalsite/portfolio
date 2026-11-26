@@ -1,11 +1,16 @@
+export interface FocusArea {
+  labelEn: string
+  labelEs: string
+  technologies: string[]
+}
+
 export interface Profile {
   id: string
-  greetingEn: string
-  greetingEs: string
   subtitleEn: string
   subtitleEs: string
   descriptionEn: string
   descriptionEs: string
+  focusAreas: FocusArea[]
   aboutTitleEn: string
   aboutTitleEs: string
   aboutIntroTitleEn: string

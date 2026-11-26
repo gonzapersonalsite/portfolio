@@ -1,0 +1,213 @@
+.not-found {
+  padding-block: clamp(2rem, 5vw, 4rem);
+  display: grid;
+  gap: 2rem;
+}
+
+.not-found__hero {
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+}
+
+.not-found__badge {
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.not-found__code {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: clamp(4.2rem, 11vw, 7rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--accent);
+  user-select: none;
+}
+
+.not-found__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.75rem, 3.6vw, 2.4rem);
+  color: var(--ink);
+}
+
+.not-found__desc {
+  margin: 0;
+  max-width: 52ch;
+  color: var(--ink-muted);
+  font-size: 1rem;
+}
+
+.terminal-card {
+  max-width: 42rem;
+  width: 100%;
+  margin-inline: auto;
+  overflow: hidden;
+}
+
+.terminal-card__body {
+  padding: clamp(1rem, 2.5vw, 1.75rem);
+  display: grid;
+  gap: 1rem;
+}
+
+.terminal-chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.terminal-dots {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.terminal-dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+}
+
+.terminal-dot:first-child {
+  border-color: var(--accent);
+  background-color: var(--accent);
+}
+
+.terminal-chrome__title {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+
+.terminal-chrome__spacer {
+  width: 2.5rem;
+}
+
+.terminal-scroll {
+  padding: 0.9rem 1rem;
+  max-height: 16rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  border-radius: 0.375rem;
+  background-color: var(--surface-sub);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+  cursor: text;
+}
+
+.terminal-line {
+  margin: 0 0 0.25rem;
+}
+
+.terminal-line--prompt {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.terminal-line--error {
+  color: var(--error-ink);
+  font-weight: 600;
+}
+
+.terminal-line--hint {
+  color: var(--ink-muted);
+}
+
+.terminal-block {
+  margin-bottom: 0.75rem;
+}
+
+.terminal-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.terminal-prompt {
+  color: var(--accent);
+  font-weight: 700;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.terminal-prompt--compact {
+  display: none;
+}
+
+@media (max-width: 37.5rem) {
+  .terminal-prompt--full {
+    display: none;
+  }
+
+  .terminal-prompt--compact {
+    display: inline;
+  }
+}
+
+.terminal-input {
+  flex: 1 1 0%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  padding: 0;
+  caret-color: var(--accent);
+}
+
+/* Keep the browser keyboard focus ring around the TTY input clearly offset (#focus-indicator-of-the-terminal-input-and-the-disabled-animations-item). */
+.terminal-input:focus-visible {
+  outline-offset: 4px;
+}
+
+.terminal-input::placeholder {
+  color: var(--ink-muted);
+  opacity: 0.7;
+}
+
+.terminal-quick {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.terminal-quick-btn {
+  appearance: none;
+  min-height: 2rem;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  background-color: var(--surface-sub);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.terminal-quick-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.terminal-nav-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}

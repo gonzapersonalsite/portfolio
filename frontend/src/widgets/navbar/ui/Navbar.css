@@ -1,0 +1,273 @@
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background-color: var(--surface);
+  border-bottom: 1.5px solid var(--border);
+}
+
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 3.75rem;
+  padding-block: 0.45rem;
+}
+
+.site-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(0.85rem, 3.6vw, 1.05rem);
+  letter-spacing: 0.04em;
+  /* At 320px the name and the three header buttons do not fit on one line: the name wraps
+     onto two lines instead of running under the buttons. */
+  line-height: 1.15;
+  min-width: 0;
+}
+
+.site-brand__mark {
+  font-size: 1.55rem;
+  flex-shrink: 0;
+}
+
+.site-brand__text {
+  min-width: 0;
+}
+
+.site-brand__surname {
+  color: var(--accent);
+}
+
+.site-nav {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0.2rem;
+  background-color: var(--surface-sub);
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  gap: 0.15rem;
+  align-items: center;
+}
+
+.site-nav__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.2rem;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  text-decoration: none;
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+.site-nav__link:hover {
+  color: var(--ink);
+}
+
+.site-nav__link[aria-current='page'] {
+  background-color: var(--surface);
+  color: var(--ink);
+  border-color: var(--border);
+  box-shadow: var(--shadow-tactile);
+  /* Not color alone marks the current page (DESIGN.md). */
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.site-header__tools {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.site-menu-btn {
+  appearance: none;
+  min-height: 2.35rem;
+  min-width: 2.35rem;
+  padding: 0.32rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 0.32rem;
+  background-color: var(--surface-sub);
+  color: var(--ink);
+  box-shadow: var(--shadow-tactile);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.site-menu-btn:hover {
+  border-color: var(--border-strong);
+}
+
+.site-menu-btn__icon {
+  font-size: 1.15rem;
+}
+
+@media (max-width: 63.99rem) {
+  .site-nav {
+    display: none;
+  }
+}
+
+@media (min-width: 64rem) {
+  .site-menu-btn {
+    display: none;
+  }
+}
+
+/* Simplify compact mobile top bar so full brand name and quick theme/motion toggles fit cleanly; language stays in drawer. */
+@media (max-width: 34rem) {
+  .site-header__tools .lang-switch {
+    display: none;
+  }
+}
+
+@media (max-width: 19.99em) {
+  .site-header__inner {
+    flex-wrap: wrap;
+  }
+}
+
+/* Native top-layer modal navigation drawer */
+dialog.mobile-drawer {
+  inset: 0;
+  margin: 0 0 0 auto;
+  width: min(20rem, 86vw);
+  max-width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  padding: 0;
+  border: 0;
+  border-left: 1.5px solid var(--border-strong);
+  background-color: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-panel);
+  opacity: 0;
+  transform: translateX(1rem);
+  transition:
+    opacity 0.18s ease-out,
+    transform 0.18s ease-out;
+}
+
+dialog.mobile-drawer[open] {
+  display: flex;
+  flex-direction: column;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+dialog.mobile-drawer::backdrop {
+  background-color: rgba(10, 12, 16, 0.56);
+}
+
+html:has(dialog.mobile-drawer[open]) {
+  overflow: hidden;
+}
+
+.mobile-drawer__sheet {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1.1rem;
+  gap: 1rem;
+  overflow-y: auto;
+}
+
+.mobile-drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.mobile-drawer__brand {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.mobile-drawer__close {
+  appearance: none;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.32rem;
+  background-color: var(--surface-sub);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.mobile-drawer__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.mobile-drawer__link {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 0.32rem;
+  text-decoration: none;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.mobile-drawer__link:hover {
+  background-color: var(--surface-sub);
+}
+
+.mobile-drawer__link[aria-current='page'] {
+  background-color: var(--surface-sub);
+  border-color: var(--border-strong);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.mobile-drawer__footer {
+  margin-top: auto;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.mobile-drawer__footer .theme-control-btn__label--desktop {
+  display: inline;
+}

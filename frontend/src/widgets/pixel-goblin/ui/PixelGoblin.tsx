@@ -1,7 +1,7 @@
 import React, { useEffect, useId, useMemo, useRef } from 'react'
-import { Box, useMediaQuery } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { useColorMode } from '@/features/theme-switch'
+import { usePrefersReducedMotion } from '@/shared/lib'
 import {
   GOBLIN_GROUND_OFFSET_PERCENT,
   buildGoblinScene,
@@ -12,6 +12,7 @@ import {
   type PortalSpec,
   type TimelineSpec,
 } from '../model/goblinScene'
+import './PixelGoblin.css'
 
 const renderRects = (rects: readonly PixelRect[]) =>
   rects.map((rect, index) => (
@@ -325,15 +326,23 @@ export interface PixelGoblinProps {
   readonly variant?: GoblinVariant
 }
 
+const GROUND_OFFSET_STYLE: React.CSSProperties & { '--goblin-ground-offset': string } = {
+  '--goblin-ground-offset': `${GOBLIN_GROUND_OFFSET_PERCENT}%`,
+}
+
 const PixelGoblin: React.FC<PixelGoblinProps> = ({ variant = 'coding' }) => {
   const { t } = useTranslation()
   const { mode, animationsPaused } = useColorMode()
-  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
+  const reducedMotion = usePrefersReducedMotion()
   const svgRef = useRef<SVGSVGElement | null>(null)
   const rawId = useId()
   const clipId = `goblin-portal-clip-${rawId.replace(/[^a-zA-Z0-9_-]/g, '')}`
   const motion: GoblinMotion = animationsPaused || reducedMotion ? 'resting' : 'animated'
   const scene = useMemo(() => buildGoblinScene(mode, undefined, variant), [mode, variant])
+  const labels: Record<GoblinVariant, string> = {
+    coding: t('home.goblinLabel'),
+    lost: t('notFound.goblinLabel'),
+  }
 
   useEffect(() => {
     const svg = svgRef.current
@@ -366,45 +375,22 @@ const PixelGoblin: React.FC<PixelGoblinProps> = ({ variant = 'coding' }) => {
   }, [motion])
 
   return (
-    <Box
-      sx={{
-        position: 'absolute',
-        bottom: '100%',
-        left: 0,
-        right: 0,
-        // Match the 32px corner radius of the panel below so the portals and goblin sit on its flat roof.
-        px: 4,
-        zIndex: 2,
-        pointerEvents: 'none',
-        userSelect: 'none',
-        // Isolate SVG repaints from the panel below so backdrop-filter and box-shadow are never re-rasterized.
-        contain: 'layout style paint',
-      }}
-    >
-      <Box
+    <div className="pixel-goblin">
+      <svg
         ref={svgRef}
-        component="svg"
         xmlns="http://www.w3.org/2000/svg"
         width={scene.width}
         height={scene.height}
         viewBox={`0 0 ${scene.width} ${scene.height}`}
         shapeRendering="crispEdges"
         role="img"
-        aria-label={t('home.goblinLabel')}
-        sx={{
-          display: 'block',
-          width: '100%',
-          maxWidth: scene.width,
-          height: 'auto',
-          mx: 'auto',
-          // Row 18 of 20 is the ground plane; shifting down by 10% lands the feet, laptop and portals on the border.
-          transform: `translateY(${GOBLIN_GROUND_OFFSET_PERCENT}%) translateZ(0)`,
-          willChange: motion === 'animated' ? 'transform' : 'auto',
-        }}
+        aria-label={labels[variant]}
+        className={motion === 'animated' ? 'pixel-goblin__svg is-animated' : 'pixel-goblin__svg'}
+        style={GROUND_OFFSET_STYLE}
       >
         {SCENE_RENDERERS[motion](scene, clipId)}
-      </Box>
-    </Box>
+      </svg>
+    </div>
   )
 }
 

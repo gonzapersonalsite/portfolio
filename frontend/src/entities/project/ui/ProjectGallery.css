@@ -1,0 +1,396 @@
+/* Co-located styles for native <dialog> ProjectGallery (rem/em scaling, zero MUI). */
+
+dialog.project-gallery {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: rgba(8, 10, 14, 0.96);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+dialog.project-gallery[open] {
+  display: flex;
+  flex-direction: column;
+  opacity: 1;
+  transition: opacity 0.18s ease-out;
+}
+
+@starting-style {
+  dialog.project-gallery[open] {
+    opacity: 0;
+  }
+}
+
+dialog.project-gallery::backdrop {
+  background: rgba(0, 0, 0, 0.78);
+  overscroll-behavior: contain;
+}
+
+.project-gallery-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.project-gallery-title {
+  margin: 0;
+  flex: 1 1 10rem;
+  min-width: 0;
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  font-weight: 700;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-gallery-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  margin-inline-start: auto;
+}
+
+@media (max-width: 24em) {
+  .project-gallery-title {
+    flex-basis: 100%;
+    white-space: normal;
+  }
+
+  .project-gallery-toolbar-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+.project-gallery-zoom-group {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.project-gallery-btn {
+  appearance: none;
+  margin: 0;
+  padding: 0.45rem 0.65rem;
+  min-width: 2.5em;
+  min-height: 2.5em;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  cursor: pointer;
+}
+
+.project-gallery-zoom-group .project-gallery-btn {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.project-gallery-btn:hover:not(:disabled):not([aria-disabled='true']) {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.project-gallery-btn:disabled {
+  color: rgba(255, 255, 255, 0.35);
+  cursor: not-allowed;
+}
+
+.project-gallery-btn[aria-disabled='true'] {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.project-gallery-btn:focus-visible,
+.project-gallery-thumb:focus-visible,
+.project-gallery-viewport:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: -2px;
+}
+
+.project-gallery-icon {
+  width: 1.25em;
+  height: 1.25em;
+  display: block;
+  flex-shrink: 0;
+}
+
+.project-gallery-zoom-label {
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  padding-inline: 0.25rem;
+  display: none;
+}
+
+@media (min-width: 37.5rem) {
+  .project-gallery-zoom-label {
+    display: inline;
+  }
+}
+
+.project-gallery-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.project-gallery-viewport {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 1rem 5.5rem;
+  /* Reserve horizontal touch tracking for slide swipes until zoomed; native pan-x triggers early pointercancel. */
+  touch-action: pan-y;
+}
+
+@media (max-width: 56.25rem) {
+  .project-gallery-viewport {
+    padding: 1rem;
+  }
+}
+
+.project-gallery-viewport.is-zoomed {
+  cursor: grab;
+  touch-action: pan-x pan-y;
+}
+
+.project-gallery-viewport.is-dragging {
+  cursor: grabbing;
+}
+
+.project-gallery-img {
+  margin: auto;
+  flex-shrink: 0;
+  display: block;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.5));
+  user-select: none;
+}
+
+.project-gallery-overlay {
+  position: absolute;
+  inset: 0;
+  padding: 1.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  text-align: center;
+  pointer-events: none;
+}
+
+.project-gallery-overlay .project-gallery-btn {
+  pointer-events: auto;
+}
+
+@media (max-height: 28.125rem) {
+  .project-gallery-overlay {
+    flex-direction: row;
+    gap: 0.75rem;
+  }
+}
+
+.project-gallery-spinner {
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: project-gallery-spin 0.9s linear infinite;
+}
+
+@keyframes project-gallery-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  dialog.project-gallery[open] {
+    transition: none;
+  }
+
+  .project-gallery-spinner,
+  .project-gallery-thumb {
+    animation: none;
+    transition: none;
+  }
+}
+
+.project-gallery-state-message {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.project-gallery-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 2.75em;
+  min-height: 2.75em;
+  border-radius: 999px;
+}
+
+.project-gallery-nav--prev {
+  left: 0.75rem;
+}
+
+.project-gallery-nav--next {
+  right: 0.75rem;
+}
+
+@media (min-width: 56.25rem) {
+  .project-gallery-nav--prev {
+    left: 1.5rem;
+  }
+
+  .project-gallery-nav--next {
+    right: 1.5rem;
+  }
+}
+
+.project-gallery-status {
+  padding: 0.5rem 1rem;
+  text-align: center;
+}
+
+.project-gallery-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.project-gallery-counter {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.project-gallery-caption {
+  margin: 0.25rem auto 0;
+  max-width: 45rem;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.project-gallery-thumbs {
+  height: 6.25rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  padding: 1rem;
+  scroll-padding-inline: 1rem;
+  background: rgba(0, 0, 0, 0.4);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Auto margins center the strip while it fits and collapse cleanly once it overflows. */
+.project-gallery-thumbs > :first-of-type {
+  margin-inline-start: auto;
+}
+
+.project-gallery-thumbs > :last-of-type {
+  margin-inline-end: auto;
+}
+
+.project-gallery-thumb {
+  appearance: none;
+  padding: 0;
+  width: 5rem;
+  height: 3.5rem;
+  border: 2px solid transparent;
+  border-radius: 0.25rem;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.4;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    opacity 0.2s ease-in-out,
+    transform 0.2s ease-in-out;
+}
+
+.project-gallery-thumb[aria-pressed='true'] {
+  opacity: 1;
+  border-color: #ffffff;
+}
+
+.project-gallery-thumb:hover {
+  opacity: 0.8;
+  transform: scale(1.05);
+}
+
+.project-gallery-thumb:focus-visible {
+  opacity: 1;
+  outline-offset: 2px;
+}
+
+@media (max-height: 32em) {
+  dialog.project-gallery[open] {
+    overflow-y: auto;
+  }
+
+  .project-gallery-stage {
+    min-height: 11rem;
+  }
+
+  .project-gallery-thumbs {
+    height: 4.5rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .project-gallery-thumb {
+    width: 3.75rem;
+    height: 2.75rem;
+  }
+}
+
+@media (forced-colors: active) {
+  .project-gallery-btn:focus-visible,
+  .project-gallery-thumb:focus-visible,
+  .project-gallery-viewport:focus-visible {
+    outline: 2px solid ButtonText;
+  }
+}
+
+@media print {
+  dialog.project-gallery {
+    display: none !important;
+  }
+}

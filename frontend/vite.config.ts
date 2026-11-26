@@ -45,14 +45,6 @@ export default defineConfig({
               test: /[\\/]node_modules[\\/](react|react-dom|scheduler|react-router|react-router-dom)[\\/]/,
               priority: 20,
             },
-            // Only the MUI and Emotion code of the first render ($initial); components used by a
-            // single page (Timeline, TextField, Dialog...) stay in that page's chunk.
-            {
-              name: 'mui-vendor',
-              test: /[\\/]node_modules[\\/](@mui|@emotion)[\\/]/,
-              priority: 10,
-              tags: ['$initial'],
-            },
           ],
         },
       },

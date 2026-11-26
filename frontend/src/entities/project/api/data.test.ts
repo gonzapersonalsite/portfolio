@@ -42,6 +42,12 @@ describe('static project content', () => {
       expect(project.titleEs.length).toBeGreaterThan(0)
       expect(project.descriptionEn.length).toBeGreaterThan(0)
       expect(project.descriptionEs.length).toBeGreaterThan(0)
+      expect(project.architectureEn.length).toBeGreaterThan(0)
+      expect(project.architectureEs.length).toBe(project.architectureEn.length)
+      for (const spec of [...project.architectureEn, ...project.architectureEs]) {
+        expect(spec.label.length).toBeGreaterThan(0)
+        expect(spec.detail.length).toBeGreaterThan(0)
+      }
       expect(project.technologies.length).toBeGreaterThan(0)
       expect(['WEB', 'DESKTOP', 'MOBILE', 'OTHER']).toContain(project.type)
       expect(typeof project.featured).toBe('boolean')

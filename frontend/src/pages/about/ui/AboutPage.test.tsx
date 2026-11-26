@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import AboutPage from '@/pages/about'
@@ -23,18 +23,29 @@ describe('AboutPage', () => {
     await i18n.changeLanguage('es')
   })
 
-  afterEach(() => {
-    document.documentElement.style.removeProperty('font-size')
-  })
-
-  it("grows the icon of each competency group with the reader's font size, like its heading", () => {
-    document.documentElement.style.fontSize = '24px'
+  it('lists each core competency once, grouped by category in the Skills page order', () => {
     renderPage()
 
-    const icons = ['Frontend', 'Backend'].map(
-      (group) => screen.getByRole('heading', { level: 3, name: group }).parentElement?.previousElementSibling,
-    )
-    expect(icons.map((icon) => icon?.tagName)).toEqual(['svg', 'svg'])
-    expect(icons.map((icon) => icon && getComputedStyle(icon).fontSize)).toEqual(['48px', '48px'])
+    const section = screen.getByRole('heading', { level: 2, name: 'Competencias principales' }).parentElement
+    if (!section) throw new Error('competencies section not rendered')
+    const categories = Array.from(section.querySelectorAll('dt'), (term) => term.textContent)
+    const chips = Array.from(section.querySelectorAll('.wb-chip'), (chip) => chip.textContent)
+    const mobile = section.querySelectorAll('dt')[categories.indexOf('Móvil')]?.nextElementSibling
+
+    expect(categories).toEqual(['Frontend', 'Backend', 'Móvil', 'Escritorio', 'Bases de datos'])
+    expect(new Set(chips).size).toBe(chips.length)
+    expect(Array.from(mobile?.querySelectorAll('.wb-chip') ?? [], (chip) => chip.textContent)).toEqual([
+      'Flutter',
+      'Dart',
+    ])
+  })
+
+  it('captions the sentence that defines the author outside the quotation itself', () => {
+    renderPage()
+
+    const caption = screen.getByText('Una frase que me define')
+    expect(caption.tagName).toBe('FIGCAPTION')
+    expect(caption.parentElement?.querySelector('blockquote')?.textContent).toContain('revisa dos veces')
+    expect(screen.queryByRole('heading', { name: 'Una frase que me define' })).toBeNull()
   })
 })

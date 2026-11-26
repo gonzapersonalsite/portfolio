@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { ThemeProvider, ThemeSelector } from '@/features/theme-switch'
 import { i18n } from '@/shared/config'
 
@@ -48,112 +48,101 @@ describe('ThemeSelector', () => {
     vi.unstubAllGlobals()
   })
 
-  it('shows the translated theme name and says what the button controls', async () => {
+  it('renders direct theme and animation toggle buttons without custom menu roles', async () => {
     await i18n.changeLanguage('es')
     renderSelector()
 
-    const button = screen.getByRole('button', { name: 'Tema: Oscuro' })
-    expect(button.textContent).toContain('Oscuro')
-    expect(button.getAttribute('aria-haspopup')).toBe('menu')
+    const themeButton = screen.getByRole('button', { name: 'Tema: Oscuro. Cambiar a Claro' })
+    expect(themeButton.textContent).toContain('Oscuro')
+    expect(themeButton.hasAttribute('aria-haspopup')).toBe(false)
+    expect(screen.queryByRole('menu')).toBeNull()
   })
 
-  it('lists the three themes as radio items and applies the chosen one', () => {
+  it('toggles directly between Light and Dark themes on click and persists the choice', () => {
     renderSelector()
-    fireEvent.click(screen.getByRole('button', { name: 'Theme: Dark' }))
 
-    const menu = screen.getByRole('menu', { name: 'Theme: Dark' })
-    expect(
-      within(menu)
-        .getAllByRole('menuitemradio')
-        .map((item) => item.getAttribute('aria-checked')),
-    ).toEqual(['false', 'true', 'false'])
+    const button = screen.getByRole('button', { name: 'Theme: Dark. Switch to Light' })
+    fireEvent.click(button)
 
-    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Light' }))
-
-    expect(screen.getByRole('button', { name: 'Theme: Light' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Theme: Light. Switch to Dark' })).toBeTruthy()
     expect(window.localStorage.getItem('themeMode')).toBe('light')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Theme: Light. Switch to Dark' }))
+    expect(window.localStorage.getItem('themeMode')).toBe('dark')
   })
 
-  it('offers animation pause and resume separately from the three theme choices', () => {
+  it('names the animations button after the action it performs, without writing themeMode', () => {
     renderSelector()
-    fireEvent.click(screen.getByRole('button', { name: 'Theme: Dark' }))
 
-    const animations = screen.getByRole('menuitemcheckbox', { name: 'Animations' })
-    expect(animations.getAttribute('aria-checked')).toBe('true')
-    expect(animations.textContent).toContain(i18n.t('common.animations.enabled'))
-    expect(screen.getAllByRole('menuitemradio')).toHaveLength(3)
+    const animations = screen.getByRole('button', { name: 'Pause animations' })
+    expect(animations.hasAttribute('aria-pressed')).toBe(false)
 
     fireEvent.click(animations)
 
+    expect(animations.getAttribute('aria-label')).toBe('Play animations')
     expect(window.localStorage.getItem('animationsPaused')).toBe('true')
-    expect(screen.getByRole('button', { name: 'Theme: Dark' }).getAttribute('aria-expanded')).toBe('false')
-    fireEvent.click(screen.getByRole('button', { name: 'Theme: Dark' }))
-    const paused = screen.getByRole('menuitemcheckbox', { name: 'Animations' })
-    expect(paused.getAttribute('aria-checked')).toBe('false')
-    expect(paused.textContent).toContain(i18n.t('common.animations.paused'))
-
-    fireEvent.click(paused)
-
-    expect(window.localStorage.getItem('animationsPaused')).toBe('false')
     expect(window.localStorage.getItem('themeMode')).toBeNull()
+
+    fireEvent.click(animations)
+
+    expect(animations.getAttribute('aria-label')).toBe('Pause animations')
+    expect(window.localStorage.getItem('animationsPaused')).toBe('false')
   })
 
-  it.each(['true', 'false'])('prioritizes reduced motion without overwriting the saved pause %s', (saved) => {
+  it.each([
+    ['en', false, 'false'],
+    ['en', false, 'true'],
+    ['en', true, 'false'],
+    ['es', false, 'false'],
+    ['es', false, 'true'],
+    ['es', true, 'false'],
+  ] as const)(
+    'keeps the visible word inside the accessible name (%s, reduced motion %s, paused %s)',
+    async (language, reduced, saved) => {
+      await i18n.changeLanguage(language)
+      fakeReducedMotion(reduced)
+      window.localStorage.setItem('animationsPaused', saved)
+      renderSelector()
+
+      const animations = screen.getAllByRole('button')[1]
+      const visible = animations.textContent?.trim().toLowerCase() ?? ''
+      expect(visible.length).toBeGreaterThan(0)
+      expect(animations.getAttribute('aria-label')?.toLowerCase()).toContain(visible)
+    },
+  )
+
+  it.each(['true', 'false'])('prioritizes reduced motion without overwriting saved pause %s', (saved) => {
     const system = fakeReducedMotion(true)
     window.localStorage.setItem('animationsPaused', saved)
     renderSelector()
-    fireEvent.click(screen.getByRole('button', { name: 'Theme: Dark' }))
 
-    const animations = screen.getByRole('menuitemcheckbox', { name: 'Animations' })
+    const animations = screen.getByRole('button', { name: 'Animations paused' })
     expect(animations.getAttribute('aria-disabled')).toBe('true')
-    expect(animations.getAttribute('aria-checked')).toBe('false')
-    const explanation = document.getElementById(animations.getAttribute('aria-describedby') ?? '')
-    expect(explanation?.textContent).toBe(i18n.t('common.animations.reducedSystem'))
+    expect(document.getElementById(animations.getAttribute('aria-describedby') ?? '')?.textContent).toBe(
+      i18n.t('common.animations.reducedSystem'),
+    )
 
     fireEvent.click(animations)
     expect(window.localStorage.getItem('animationsPaused')).toBe(saved)
 
     act(() => system.setReduced(false))
 
-    expect(animations.getAttribute('aria-disabled')).not.toBe('true')
-    expect(animations.getAttribute('aria-checked')).toBe(String(saved === 'false'))
+    expect(animations.hasAttribute('aria-disabled')).toBe(false)
+    expect(animations.hasAttribute('aria-describedby')).toBe(false)
+    expect(animations.getAttribute('aria-label')).toBe(saved === 'true' ? 'Play animations' : 'Pause animations')
     expect(window.localStorage.getItem('animationsPaused')).toBe(saved)
   })
 
-  it('keeps the reduced-motion explanation reachable by keyboard without enabling animations', () => {
-    fakeReducedMotion(true)
-    window.localStorage.setItem('animationsPaused', 'false')
-    renderSelector()
-    fireEvent.click(screen.getByRole('button', { name: 'Theme: Dark' }))
-    const glass = screen.getByRole('menuitemradio', { name: 'Liquid Glass' })
-    const animations = screen.getByRole('menuitemcheckbox', { name: 'Animations' })
-
-    act(() => glass.focus())
-    fireEvent.keyDown(glass, { key: 'ArrowDown' })
-    expect(document.activeElement).toBe(animations)
-
-    fireEvent.keyDown(animations, { key: 'ArrowUp' })
-    expect(document.activeElement).toBe(glass)
-    fireEvent.keyDown(glass, { key: 'End' })
-    expect(document.activeElement).toBe(animations)
-    expect(animations.getAttribute('aria-disabled')).toBe('true')
-
-    fireEvent.keyDown(animations, { key: 'Enter' })
-    fireEvent.keyUp(animations, { key: 'Enter' })
-
-    expect(animations.getAttribute('aria-checked')).toBe('false')
-    expect(window.localStorage.getItem('animationsPaused')).toBe('false')
-    expect(screen.getByRole('menu', { name: 'Theme: Dark' })).toBeTruthy()
-  })
-
-  it('keeps the disabled animations item at full opacity, so its focus indicator and its reason can be read', () => {
+  it('keeps the reduced-motion animations toggle keyboard focusable and at full opacity', () => {
     fakeReducedMotion(true)
     renderSelector()
-    fireEvent.click(screen.getByRole('button', { name: 'Theme: Dark' }))
 
-    const animations = screen.getByRole('menuitemcheckbox', { name: 'Animations' })
-
+    const animations = screen.getByRole('button', { name: 'Animations paused' })
+    expect(animations.hasAttribute('disabled')).toBe(false)
     expect(animations.getAttribute('aria-disabled')).toBe('true')
     expect(getComputedStyle(animations).opacity).toBe('1')
+
+    act(() => animations.focus())
+    expect(document.activeElement).toBe(animations)
   })
 })

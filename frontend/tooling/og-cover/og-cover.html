@@ -1,8 +1,8 @@
 <!doctype html>
 <!--
-  Source of public/og-cover-gonzalo-martinez-full-stack.jpg. The font comes from node_modules, which
-  the launcher keeps in the project's container, so render it at 1200x630 through the development
-  server (./dev start, or .\dev.cmd start on Windows):
+  Source of public/og-cover-mesa-taller-gonzalo-martinez.jpg. The font comes from node_modules,
+  which the launcher keeps in the project's container, so render it at 1200x630 through the
+  development server (./dev start, or .\dev.cmd start on Windows):
     chrome --headless=new --hide-scrollbars --force-device-scale-factor=1 --window-size=1200,630
       --screenshot=<absolute path>/card.png http://127.0.0.1:5173/tooling/og-cover/og-cover.html
   (Edge takes the same flags as msedge), then save card.png as a quality 85 JPEG under a new file
@@ -11,12 +11,15 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Social card</title>
+    <title>Social card — Mesa de Taller</title>
     <style>
       @font-face {
         font-family: 'Inter Variable';
         font-weight: 100 900;
         src: url('../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2') format('woff2');
+      }
+      * {
+        box-sizing: border-box;
       }
       html,
       body {
@@ -28,77 +31,113 @@
         height: 630px;
         overflow: hidden;
         position: relative;
-        background: linear-gradient(135deg, #0d47a1 0%, #121212 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #131416;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+        background-size: 40px 40px;
         font-family: 'Inter Variable', sans-serif;
-        color: #fff;
+        font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+        color: #f1f2f0;
       }
-      .circle {
-        position: absolute;
-        border-radius: 50%;
-        background: #1976d2;
-      }
-      .circle.top {
-        width: 600px;
-        height: 600px;
-        right: -300px;
-        top: -300px;
-        opacity: 0.45;
-      }
-      .circle.bottom {
-        width: 490px;
-        height: 490px;
-        left: -245px;
-        bottom: -245px;
-        opacity: 0.27;
-      }
-      main {
-        position: absolute;
-        inset: 0;
+      .workbench-sheet {
+        position: relative;
+        width: 1056px;
+        height: 486px;
+        border-radius: 14px;
+        background-color: #1d1f23;
+        border: 1.5px solid #343841;
+        box-shadow: 0 6px 0 #0b0c0e;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         text-align: center;
+        padding: 40px 64px;
       }
-      /* 70px keeps the name inside the central 630x630 square that square previews crop to. */
+      /* Tactile drafting registration corners on the workbench panel */
+      .corner {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-color: #ff7847;
+        border-style: solid;
+      }
+      .corner--tl {
+        top: 20px;
+        left: 20px;
+        border-width: 2px 0 0 2px;
+      }
+      .corner--tr {
+        top: 20px;
+        right: 20px;
+        border-width: 2px 2px 0 0;
+      }
+      .corner--bl {
+        bottom: 20px;
+        left: 20px;
+        border-width: 0 0 2px 2px;
+      }
+      .corner--br {
+        bottom: 20px;
+        right: 20px;
+        border-width: 0 2px 2px 0;
+      }
+      /* 68px keeps the name comfortably inside the central 630x630 square that square previews crop to. */
       h1 {
         margin: 0;
-        font-size: 70px;
-        line-height: 1.1;
+        font-size: 68px;
+        line-height: 1.08;
         font-weight: 800;
-        letter-spacing: -0.01em;
-        background: linear-gradient(45deg, #fff 30%, #90caf9 90%);
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
+        letter-spacing: -0.025em;
+        color: #f1f2f0;
+      }
+      .surname {
+        color: #ff7847;
       }
       .role {
         margin: 18px 0 0;
-        font-size: 38px;
-        font-weight: 400;
+        font-size: 36px;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+        color: #b0b5be;
       }
       .rule {
-        width: 84px;
+        width: 96px;
         height: 4px;
         border-radius: 2px;
-        background: #90caf9;
+        background: #ff7847;
         margin: 30px 0 32px;
       }
       .stack {
         margin: 0;
         font-size: 27px;
-        font-weight: 500;
+        font-weight: 600;
+        color: #f1f2f0;
+      }
+      .sep {
+        color: #ff7847;
+        font-weight: 700;
+        padding-inline: 0.28em;
       }
     </style>
   </head>
   <body>
-    <div class="circle top"></div>
-    <div class="circle bottom"></div>
-    <main>
-      <h1>Gonzalo Martínez</h1>
+    <main class="workbench-sheet">
+      <span class="corner corner--tl" aria-hidden="true"></span>
+      <span class="corner corner--tr" aria-hidden="true"></span>
+      <span class="corner corner--bl" aria-hidden="true"></span>
+      <span class="corner corner--br" aria-hidden="true"></span>
+      <h1>Gonzalo <span class="surname">Martínez</span></h1>
       <p class="role">Full Stack Developer</p>
       <div class="rule"></div>
-      <p class="stack">React · TypeScript · Spring Boot · .NET · Flutter</p>
+      <p class="stack">
+        React<span class="sep">·</span>TypeScript<span class="sep">·</span>Spring Boot<span class="sep">·</span
+        >.NET<span class="sep">·</span>Flutter
+      </p>
     </main>
   </body>
 </html>

@@ -1,0 +1,22 @@
+.pixel-goblin {
+  padding: 0.7rem 0.9rem 0;
+  background-color: var(--surface-sub);
+  border-bottom: 1px solid var(--border);
+  pointer-events: none;
+  user-select: none;
+  contain: layout style paint;
+}
+
+.pixel-goblin__svg {
+  display: block;
+  width: 100%;
+  max-width: 24rem;
+  height: auto;
+  margin-inline: auto;
+  /* The offset comes from GOBLIN_GROUND_OFFSET_PERCENT, which puts the ground row on the bay border. */
+  transform: translateY(var(--goblin-ground-offset)) translateZ(0);
+}
+
+.pixel-goblin__svg.is-animated {
+  will-change: transform;
+}

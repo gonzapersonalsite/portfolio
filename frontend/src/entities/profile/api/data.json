@@ -1,11 +1,15 @@
 {
   "id": "profile",
-  "greetingEn": "HELLO WORLD!",
-  "greetingEs": "¡HOLA MUNDO!",
   "subtitleEn": "Full Stack Developer",
   "subtitleEs": "Desarrollador Full Stack",
   "descriptionEn": "I learn quickly, adapt to new technologies, and enjoy creating useful, maintainable applications for the web, desktop and mobile.",
   "descriptionEs": "Aprendo rápido, me adapto a nuevas tecnologías y disfruto creando aplicaciones útiles y mantenibles para web, escritorio y móvil.",
+  "focusAreas": [
+    { "labelEn": "Web", "labelEs": "Web", "technologies": ["React", "TypeScript", "Spring Boot"] },
+    { "labelEn": "Desktop", "labelEs": "Escritorio", "technologies": ["C#", ".NET", "Avalonia UI"] },
+    { "labelEn": "Mobile", "labelEs": "Móvil", "technologies": ["Flutter", "Dart", "Kotlin"] },
+    { "labelEn": "Infrastructure", "labelEs": "Infraestructura", "technologies": ["Proxmox VE", "Docker", "CI/CD"] }
+  ],
   "aboutTitleEn": "Full Stack Developer",
   "aboutTitleEs": "Desarrollador Full Stack",
   "aboutIntroTitleEn": "Versatile profile with a systems background and a focus on web development, also building desktop and mobile applications.",

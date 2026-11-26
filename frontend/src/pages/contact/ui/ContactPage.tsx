@@ -1,34 +1,17 @@
 import React from 'react'
-import { Box, Container, Typography, Grid, Paper, IconButton, Link, Stack, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import EmailIcon from '@mui/icons-material/Email'
-import LinkedInIcon from '@mui/icons-material/LinkedIn'
-import GitHubIcon from '@mui/icons-material/GitHub'
-import LocationOnIcon from '@mui/icons-material/LocationOn'
 import { ContactForm } from '@/features/contact-form'
 import { useNotification } from '@/features/notifications'
 import { useLanguage } from '@/features/language-switch'
 import { getProfile } from '@/entities/profile'
 import { getLocalizedText, useContent, usePageMeta } from '@/shared/lib'
+import { EmailIcon, GitHubIcon, LinkedInIcon, LocationIcon } from '@/shared/ui'
 import { PixelGoblin } from '@/widgets/pixel-goblin'
-
-// Fixed 48px circles: padding around an inline SVG made them taller than wide.
-const iconCircleSx = {
-  width: 48,
-  height: 48,
-  flexShrink: 0,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  borderRadius: '50%',
-  bgcolor: 'primary.main',
-  color: 'primary.contrastText',
-} as const
+import './ContactPage.css'
 
 const ContactPage: React.FC = () => {
   const { language } = useLanguage()
   const { t } = useTranslation()
-  const theme = useTheme()
   const { showNotification } = useNotification()
   const { data: profile } = useContent(() => getProfile())
   const [emailUser, emailDomain] = profile.email.split('@')
@@ -39,116 +22,79 @@ const ContactPage: React.FC = () => {
   })
 
   const socialLinks = [
-    { icon: <GitHubIcon fontSize="large" />, url: profile.githubUrl, label: 'GitHub' },
-    { icon: <LinkedInIcon fontSize="large" />, url: profile.linkedinUrl, label: 'LinkedIn' },
+    { icon: <GitHubIcon />, url: profile.githubUrl, label: 'GitHub' },
+    { icon: <LinkedInIcon />, url: profile.linkedinUrl, label: 'LinkedIn' },
   ]
 
   return (
-    <Box sx={{ py: 8 }}>
-      <Container maxWidth="lg">
-        <Typography variant="overline" color="primary" sx={{ fontWeight: 'bold' }}>
-          {t('nav.contact')}
-        </Typography>
-        <Typography variant="h2" component="h1" gutterBottom sx={{ mb: 6, fontWeight: 800 }}>
-          {t('contact.heading')}
-        </Typography>
+    <div className="wb-page wb-container">
+      <div className="wb-page-header">
+        <p className="wb-eyebrow">{t('nav.contact')}</p>
+        <h1 className="wb-page-title">{t('contact.heading')}</h1>
+      </div>
 
-        <Grid container spacing={6}>
-          <Grid size={{ xs: 12, md: 5 }}>
-            <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 600 }}>
-                {t('contact.subtitle')}
-              </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 4, fontSize: '1.1rem' }}>
-                {t('contact.description')}
-              </Typography>
+      <div className="contact-grid">
+        <div className="contact-info">
+          <div>
+            <h2 className="contact-info__subtitle">{t('contact.subtitle')}</h2>
+            <p className="contact-info__desc">{t('contact.description')}</p>
+          </div>
 
-              <Stack spacing={3} sx={{ mb: 6 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Box sx={iconCircleSx}>
-                    <EmailIcon aria-hidden="true" />
-                  </Box>
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                      {t('contact.email')}
-                    </Typography>
-                    {/* On narrow phones the address breaks after the "@" (the <wbr>) instead
-                                            of widening the page; overflowWrap is the last resort. */}
-                    <Link
-                      href={`mailto:${profile.email}`}
-                      variant="body1"
-                      underline="hover"
-                      sx={{ fontWeight: 500, overflowWrap: 'anywhere' }}
-                    >
-                      {emailUser}@<wbr />
-                      {emailDomain}
-                    </Link>
-                  </Box>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Box sx={iconCircleSx}>
-                    <LocationOnIcon aria-hidden="true" />
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                      {t('contact.location')}
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                      {getLocalizedText(language, profile.locationEn, profile.locationEs)}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Stack>
+          <div className="contact-channels">
+            <div className="wb-panel contact-channel">
+              <div className="contact-channel__icon" aria-hidden="true">
+                <EmailIcon />
+              </div>
+              <div className="contact-channel__body">
+                <span className="contact-channel__label">{t('contact.email')}</span>
+                {/* Break after "@" on narrow phones instead of widening the viewport. */}
+                <a href={`mailto:${profile.email}`} className="contact-channel__link">
+                  {emailUser}@<wbr />
+                  {emailDomain}
+                </a>
+              </div>
+            </div>
 
-              <Box>
-                <Typography variant="subtitle2" component="h3" gutterBottom sx={{ mb: 2 }}>
-                  {t('contact.social')}
-                </Typography>
-                <Stack direction="row" spacing={2}>
-                  {socialLinks.map((link) => (
-                    <IconButton
-                      key={link.label}
-                      component="a"
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={link.label}
-                      sx={{
-                        border: `1px solid ${theme.palette.divider}`,
-                        '&:hover': {
-                          bgcolor: 'primary.main',
-                          color: 'primary.contrastText',
-                          borderColor: 'primary.main',
-                        },
-                      }}
-                    >
-                      {link.icon}
-                    </IconButton>
-                  ))}
-                </Stack>
-              </Box>
-            </Box>
-          </Grid>
+            <div className="wb-panel contact-channel">
+              <div className="contact-channel__icon" aria-hidden="true">
+                <LocationIcon />
+              </div>
+              <div className="contact-channel__body">
+                <span className="contact-channel__label">{t('contact.location')}</span>
+                <p className="contact-channel__value">
+                  {getLocalizedText(language, profile.locationEn, profile.locationEs)}
+                </p>
+              </div>
+            </div>
+          </div>
 
-          <Grid size={{ xs: 12, md: 7 }}>
-            <Box sx={{ position: 'relative', mt: { xs: 4, md: 2 } }}>
-              <PixelGoblin />
-              <Paper
-                elevation={0}
-                sx={{
-                  p: { xs: 3, md: 5 },
-                  borderRadius: 4,
-                  bgcolor: theme.palette.mode === 'dark' ? 'background.paper' : 'grey.50',
-                  border: `1px solid ${theme.palette.divider}`,
-                }}
-              >
-                <ContactForm onShowNotification={showNotification} />
-              </Paper>
-            </Box>
-          </Grid>
-        </Grid>
-      </Container>
-    </Box>
+          <div>
+            <h3 className="contact-social__title">{t('contact.social')}</h3>
+            <div className="contact-social__links">
+              {socialLinks.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="wb-btn-secondary"
+                >
+                  {link.icon}
+                  <span>{link.label}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="wb-panel contact-form-card">
+          <PixelGoblin />
+          <div className="contact-form-card__body">
+            <ContactForm onShowNotification={showNotification} />
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 

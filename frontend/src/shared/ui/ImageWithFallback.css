@@ -1,0 +1,28 @@
+.img-fallback {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--surface-sub);
+}
+
+.img-fallback__img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.28s ease-in-out;
+}
+
+.img-fallback__img.is-loaded,
+.img-fallback__img.is-eager {
+  opacity: 1;
+}
+
+.img-fallback__img.is-eager {
+  transition: none;
+}
+
+.img-fallback__img.is-profile {
+  object-position: center 15%;
+}

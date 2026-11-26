@@ -19,3 +19,5 @@
 #
 applied pnpm-12-15-for-reproducible-local-gates 2026-10-24 2026-10-24-install-policy-and-pnpm-pin
 applied review-zod-lint-resource-exhaustion-advisory 2026-10-24 2026-10-24-install-policy-and-pnpm-pin
+applied mui-full-removal-incremental-parts 2026-11-25 2026-11-25-workbench-branding-and-mui-package-removal
+applied choices-of-look-wait-for-the-visual-redesign 2026-11-25 2026-11-25-workbench-branding-and-mui-package-removal

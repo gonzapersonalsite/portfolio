@@ -4,6 +4,7 @@ import {
   CORE_SKILL_CATEGORIES,
   CORE_SKILL_LEVEL,
   SKILL_CATEGORY_ORDER,
+  toSkillCategory,
   type SkillCategory,
 } from '../model/categories.ts'
 
@@ -12,7 +13,9 @@ export interface SkillGroup {
   skills: Skill[]
 }
 
-export const getAllSkills = (): Skill[] => skillsData as Skill[]
+const skills: Skill[] = skillsData.map((skill) => ({ ...skill, category: toSkillCategory(skill.category) }))
+
+export const getAllSkills = (): Skill[] => skills
 
 // Non-empty categories in display order; each keeps the data order of its skills.
 export const getSkillGroups = (): SkillGroup[] =>
@@ -21,8 +24,11 @@ export const getSkillGroups = (): SkillGroup[] =>
     skills: getAllSkills().filter((skill) => skill.category === category),
   })).filter((group) => group.skills.length > 0)
 
-// The single core-competency criterion, shared by the About page and its markdown twin.
-export const getCoreSkills = (): Skill[] =>
+// The single core-competency criterion, shared by the About page, its markdown twin and the JSON-LD.
+export const getCoreSkillGroups = (): SkillGroup[] =>
   getSkillGroups()
     .filter((group) => CORE_SKILL_CATEGORIES.has(group.category))
-    .flatMap((group) => group.skills.filter((skill) => skill.level >= CORE_SKILL_LEVEL))
+    .map((group) => ({ ...group, skills: group.skills.filter((skill) => skill.level >= CORE_SKILL_LEVEL) }))
+    .filter((group) => group.skills.length > 0)
+
+export const getCoreSkills = (): Skill[] => getCoreSkillGroups().flatMap((group) => group.skills)

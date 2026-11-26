@@ -6,7 +6,7 @@ import { i18n } from '@/shared/config'
 
 const PathProbe = () => <output data-testid="pathname">{useLocation().pathname}</output>
 
-const renderSelector = (initialEntry = '/projects') =>
+const renderSelector = (initialEntry = '/en/projects') =>
   render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <LanguageProvider>
@@ -22,38 +22,30 @@ describe('LanguageSelector', () => {
     await i18n.changeLanguage('en')
   })
 
-  it('is a menu button whose name says what it controls and keeps the visible code', () => {
+  it('renders a direct two-language toggle group named in each native language', () => {
     renderSelector()
-    const button = screen.getByRole('button', { name: 'Language: English (EN)' })
 
-    expect(button.getAttribute('aria-haspopup')).toBe('menu')
-    expect(button.getAttribute('aria-expanded')).toBe('false')
-    expect(button.textContent).toContain('EN')
-  })
-
-  it('names every option in its own language and marks the current one', () => {
-    renderSelector()
-    const button = screen.getByRole('button', { name: /EN/ })
-    fireEvent.click(button)
-
-    const menu = screen.getByRole('menu', { name: 'Language: English (EN)' })
-    const options = within(menu).getAllByRole('menuitemradio')
+    const group = screen.getByRole('group', { name: 'Language' })
+    const buttons = within(group).getAllByRole('button')
     expect(
-      options.map((option) => [option.textContent, option.getAttribute('lang'), option.getAttribute('aria-checked')]),
+      buttons.map((button) => [
+        button.getAttribute('aria-label'),
+        button.getAttribute('lang'),
+        button.getAttribute('aria-pressed'),
+        button.textContent,
+      ]),
     ).toEqual([
-      ['English', 'en', 'true'],
-      ['Español', 'es', 'false'],
+      ['Español', 'es', 'false', 'ES'],
+      ['English', 'en', 'true', 'EN'],
     ])
-    expect(button.getAttribute('aria-expanded')).toBe('true')
-    expect(button.getAttribute('aria-controls')).toBe(menu.closest('.MuiMenu-root')?.id)
   })
 
-  it('switches the whole interface and the URL path to the chosen language', () => {
+  it('switches the interface and navigates directly to the equivalent localized path', () => {
     renderSelector('/en/projects')
-    fireEvent.click(screen.getByRole('button', { name: /EN/ }))
-    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Español' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Español' }))
 
-    expect(screen.getByRole('button', { name: 'Idioma: Español (ES)' })).toBeTruthy()
+    expect(screen.getByRole('group', { name: 'Idioma' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Español' }).getAttribute('aria-pressed')).toBe('true')
     expect(document.documentElement.lang).toBe('es')
     expect(screen.getByTestId('pathname').textContent).toBe('/projects')
   })

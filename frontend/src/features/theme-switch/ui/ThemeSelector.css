@@ -1,0 +1,60 @@
+.theme-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.theme-control-btn {
+  appearance: none;
+  min-height: 2.35rem;
+  min-width: 2.35rem;
+  padding: 0.32rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 0.32rem;
+  background-color: var(--surface-sub);
+  color: var(--ink);
+  box-shadow: var(--shadow-tactile);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    border-color 0.16s ease,
+    transform 0.12s ease;
+}
+
+.theme-control-btn:hover {
+  border-color: var(--border-strong);
+}
+
+.theme-control-btn:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.theme-control-btn[aria-disabled='true'] {
+  opacity: 1;
+  cursor: default;
+  border-style: dashed;
+  color: var(--ink-muted);
+}
+
+.theme-control-btn__icon {
+  font-size: 1rem;
+}
+
+.theme-control-btn__label--desktop {
+  display: none;
+}
+
+@media (min-width: 37.5rem) {
+  .theme-control-btn__label--desktop {
+    display: inline;
+  }
+}

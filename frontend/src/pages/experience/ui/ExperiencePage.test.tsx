@@ -38,7 +38,7 @@ describe('ExperiencePage', () => {
     expect(roles).toHaveLength(getAllExperiences().length)
     expect(screen.queryByText(/^@/)).toBeNull()
     const internship = roles.find((role) => role.textContent === 'Prácticas formativas (CFGS)')
-    const card = internship?.closest<HTMLElement>('.MuiPaper-root')
+    const card = internship?.closest('article')
     if (!card) throw new Error('internship card not rendered')
     expect(within(card).getByText('Mistertransfer').tagName).toBe('P')
     expect(within(card).getAllByText('mar 2025 – jun 2025').length).toBeGreaterThan(0)

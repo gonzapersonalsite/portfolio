@@ -1,79 +1,68 @@
 import React from 'react'
-import { Typography, Box, List, ListItem, ListItemIcon, ListItemText } from '@mui/material'
-import CircleIcon from '@mui/icons-material/Circle'
 import { normalizeRichText, parseBulletLine } from '@/shared/lib'
+import { DotIcon } from './Icons'
+import './RichTextRenderer.css'
 
-interface RichTextRendererProps {
-  text: string
-  variant?: 'body1' | 'body2' | 'caption' | 'subtitle1' | 'subtitle2'
+export interface RichTextRendererProps {
+  readonly text: string
+  readonly variant?: 'body1' | 'body2'
+  readonly className?: string
 }
 
-const RichTextRenderer: React.FC<RichTextRendererProps> = ({ text, variant = 'body1' }) => {
-  if (!text) return null
+type Block = { readonly type: 'list'; readonly items: string[] } | { readonly type: 'paragraph'; readonly text: string }
 
-  const normalizedText = normalizeRichText(text)
+const groupBlocks = (text: string): Block[] => {
+  const lines = normalizeRichText(text).split('\n')
+  const blocks: Block[] = []
 
-  const lines = normalizedText.split(/\r?\n/)
+  for (const rawLine of lines) {
+    const trimmed = rawLine.trim()
+    if (!trimmed) continue
 
-  const elements: React.ReactNode[] = []
-  let currentList: string[] = []
-  const isSmallText = variant === 'body2' || variant === 'caption' || variant === 'subtitle2'
-  const bulletMt = isSmallText ? '0.4375rem' : '0.625rem'
-
-  const flushList = (keyIndex: number) => {
-    if (currentList.length > 0) {
-      elements.push(
-        <List key={`list-${keyIndex}`} dense sx={{ py: 0, my: 1, pl: 2 }}>
-          {currentList.map((item, i) => (
-            <ListItem key={i} alignItems="flex-start" sx={{ py: 0, pl: 0 }}>
-              <ListItemIcon sx={{ minWidth: 24, mt: bulletMt }}>
-                <CircleIcon sx={{ fontSize: '0.375rem', color: 'text.secondary' }} />
-              </ListItemIcon>
-              <ListItemText
-                primary={item}
-                slotProps={{
-                  primary: {
-                    variant: variant,
-                    color: 'text.secondary',
-                    sx: { lineHeight: 1.6 },
-                  },
-                }}
-                sx={{ m: 0 }}
-              />
-            </ListItem>
-          ))}
-        </List>,
-      )
-      currentList = []
+    const bullet = parseBulletLine(trimmed)
+    if (bullet !== null) {
+      const last = blocks[blocks.length - 1]
+      if (last?.type === 'list') {
+        last.items.push(bullet)
+      } else {
+        blocks.push({ type: 'list', items: [bullet] })
+      }
+      continue
     }
+
+    blocks.push({ type: 'paragraph', text: trimmed })
   }
 
-  lines.forEach((line, index) => {
-    const trimmed = line.trim()
-    const bullet = parseBulletLine(trimmed)
+  return blocks
+}
 
-    if (bullet !== null) {
-      currentList.push(bullet)
-    } else {
-      flushList(index)
+const RichTextRenderer: React.FC<RichTextRendererProps> = ({ text, variant = 'body1', className }) => {
+  if (!text) return null
 
-      if (!trimmed) {
-        if (lines.length > 1 && index > 0 && lines[index - 1].trim() !== '') {
-          elements.push(<Box key={`spacer-${index}`} sx={{ height: 8 }} />)
-        }
-      } else {
-        elements.push(
-          <Typography key={`text-${index}`} variant={variant} color="text.secondary" sx={{ mb: 1, lineHeight: 1.6 }}>
-            {line}
-          </Typography>,
-        )
-      }
-    }
-  })
+  const blocks = groupBlocks(text)
 
-  flushList(lines.length)
-
-  return <Box>{elements}</Box>
+  return (
+    <div className={className ? `rich-text rich-text--${variant} ${className}` : `rich-text rich-text--${variant}`}>
+      {blocks.map((block, blockIndex) =>
+        block.type === 'list' ? (
+          <ul key={blockIndex} className="rich-text__list">
+            {block.items.map((item, itemIndex) => (
+              <li key={itemIndex} className="rich-text__item">
+                <span className="rich-text__bullet">
+                  <DotIcon className="rich-text__bullet-icon" />
+                </span>
+                <span className="rich-text__item-text">{item}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p key={blockIndex} className="rich-text__paragraph">
+            {block.text}
+          </p>
+        ),
+      )}
+    </div>
+  )
 }
 
 export default RichTextRenderer

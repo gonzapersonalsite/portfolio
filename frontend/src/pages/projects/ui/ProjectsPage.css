@@ -1,0 +1,58 @@
+.projects-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 1.5rem;
+}
+
+.projects-filter-btn {
+  appearance: none;
+  min-height: 2.35rem;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.32rem;
+  background-color: var(--surface);
+  color: var(--ink-muted);
+  box-shadow: var(--shadow-tactile);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.projects-filter-btn:hover {
+  color: var(--ink);
+  border-color: var(--border-strong);
+}
+
+.projects-filter-btn[aria-pressed='true'] {
+  background-color: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+}
+
+.projects-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+@media (max-width: 54rem) {
+  .projects-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.projects-grid__item {
+  min-width: 0;
+}
+
+.projects-grid__item--wide {
+  grid-column: 1 / -1;
+}

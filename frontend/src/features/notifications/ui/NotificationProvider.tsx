@@ -1,49 +1,63 @@
-import React, { useState, useCallback } from 'react'
-import { Snackbar, Alert, useTheme } from '@mui/material'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { NotificationSeverity } from '@/shared/lib'
+import { CloseIcon } from '@/shared/ui'
 import { NotificationContext } from '../model/NotificationContext'
+import './NotificationProvider.css'
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const theme = useTheme()
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState('')
   const [severity, setSeverity] = useState<NotificationSeverity>('info')
-  const [duration, setDuration] = useState(10000)
+  const [duration, setDuration] = useState(6000)
+  const timerRef = useRef<number | null>(null)
 
-  const showNotification = useCallback((msg: string, sev: NotificationSeverity = 'info', dur: number = 10000) => {
-    setMessage(msg)
-    setSeverity(sev)
-    setDuration(dur)
-    setOpen(true)
+  const clearTimer = useCallback(() => {
+    if (timerRef.current !== null) {
+      window.clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
   }, [])
 
-  const handleClose = (_event?: React.SyntheticEvent | Event | null, reason?: string) => {
-    if (reason === 'clickaway') return
-    setOpen(false)
-  }
+  const showNotification = useCallback(
+    (msg: string, sev: NotificationSeverity = 'info', autoHideDuration = 6000) => {
+      clearTimer()
+      setMessage(msg)
+      setSeverity(sev)
+      setDuration(autoHideDuration)
+      setOpen(true)
+    },
+    [clearTimer],
+  )
+
+  useEffect(() => {
+    if (!open || duration <= 0) return
+    timerRef.current = window.setTimeout(() => {
+      setOpen(false)
+      timerRef.current = null
+    }, duration)
+    return clearTimer
+  }, [open, duration, message, severity, clearTimer])
 
   return (
     <NotificationContext.Provider value={{ showNotification }}>
       {children}
-      <Snackbar
-        open={open}
-        autoHideDuration={duration}
-        onClose={handleClose}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        sx={{ mt: 7, zIndex: theme.zIndex.snackbar + 100 }}
-      >
-        <Alert
-          onClose={handleClose}
-          closeText={t('common.close')}
-          severity={severity}
-          variant="filled"
-          sx={{ width: '100%', boxShadow: theme.shadows[3], borderRadius: `${theme.shape.borderRadius}px` }}
-        >
-          {message}
-        </Alert>
-      </Snackbar>
+      {open ? (
+        <div className="notification-region">
+          <div className={`notification-alert notification-alert--${severity}`} role="alert">
+            <span>{message}</span>
+            <button
+              type="button"
+              className="notification-alert__close"
+              aria-label={t('common.close')}
+              onClick={() => setOpen(false)}
+            >
+              <CloseIcon />
+            </button>
+          </div>
+        </div>
+      ) : null}
     </NotificationContext.Provider>
   )
 }

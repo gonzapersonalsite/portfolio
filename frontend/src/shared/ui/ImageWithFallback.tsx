@@ -1,94 +1,93 @@
 import React, { useState } from 'react'
-import { Box, Skeleton } from '@mui/material'
-import type { BoxProps } from '@mui/material'
+import './ImageWithFallback.css'
 
-const FALLBACK_URLS = {
-  profile: '/profile-fallback.webp',
+const FALLBACK_BY_TYPE: Record<'project' | 'profile', string> = {
   project: '/images/no-image.svg',
-} as const
+  profile: '/profile-fallback.webp',
+}
 
 const parseAspectDimensions = (aspectRatio: string): { readonly width?: number; readonly height?: number } => {
   const match = /^(\d+)\s*\/\s*(\d+)$/.exec(aspectRatio.trim())
   if (!match) return {}
-  const width = Number(match[1])
-  const height = Number(match[2])
-  return width > 0 && height > 0 ? { width, height } : {}
+  return { width: Number(match[1]), height: Number(match[2]) }
 }
 
-interface ImageWithFallbackProps extends BoxProps<'img'> {
-  src?: string
-  alt: string
-  type: keyof typeof FALLBACK_URLS
-  // Reserves the box before the image loads, so nothing shifts (CLS).
-  aspectRatio: string
+export interface ImageWithFallbackProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'src'> {
+  readonly src?: string
+  readonly alt: string
+  readonly type: 'project' | 'profile'
+  readonly aspectRatio: string
+  readonly imageClassName?: string
 }
 
-const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({ src, alt, type, aspectRatio, sx, srcSet, ...props }) => {
+const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
+  src,
+  alt,
+  type,
+  aspectRatio,
+  className,
+  imageClassName,
+  style,
+  srcSet,
+  loading,
+  decoding = 'async',
+  onLoad,
+  onError,
+  ...props
+}) => {
   const [hasError, setHasError] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoaded, setIsLoaded] = useState(false)
+  const [prevSrc, setPrevSrc] = useState(src)
 
-  const onImageRef = (img: HTMLImageElement | null) => {
-    if (img) {
-      setIsLoading(!img.complete)
-    }
+  if (src !== prevSrc) {
+    setPrevSrc(src)
+    setHasError(false)
+    setIsLoaded(false)
   }
 
-  const handleError = () => {
-    if (!hasError) {
-      setHasError(true)
-      setIsLoading(false)
-    }
-  }
-
-  const handleLoad = () => {
-    setIsLoading(false)
-  }
-
-  const showFallback = hasError || !src
-  const finalSrc = showFallback ? FALLBACK_URLS[type] : src
-  // A srcset wins over src, so it has to go as well for the fallback to show.
-  const finalSrcSet = showFallback ? undefined : srcSet
+  const fallback = FALLBACK_BY_TYPE[type]
+  const resolvedSrc = hasError || !src ? fallback : src
+  const resolvedSrcSet = hasError || !src ? undefined : srcSet
+  const isEager = loading === 'eager'
   const intrinsicDimensions = parseAspectDimensions(aspectRatio)
-  const isEager = props.loading === 'eager'
+
+  const handleLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    setIsLoaded(true)
+    onLoad?.(event)
+  }
+
+  const handleError = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    setHasError(true)
+    setIsLoaded(true)
+    onError?.(event)
+  }
+
+  const imgClasses = [
+    'img-fallback__img',
+    isEager ? 'is-eager' : '',
+    isLoaded || isEager ? 'is-loaded' : '',
+    type === 'profile' ? 'is-profile' : '',
+    imageClassName ?? '',
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   return (
-    <Box
-      sx={[
-        {
-          position: 'relative',
-          width: '100%',
-          aspectRatio,
-          overflow: 'hidden',
-        },
-        ...(Array.isArray(sx) ? sx : [sx]),
-      ]}
-    >
-      {isLoading && (
-        <Skeleton variant="rectangular" width="100%" height="100%" sx={{ position: 'absolute', top: 0, left: 0 }} />
-      )}
-      <Box
-        component="img"
-        src={finalSrc}
+    <div className={className ? `img-fallback ${className}` : 'img-fallback'} style={{ aspectRatio, ...style }}>
+      <img
+        {...props}
+        src={resolvedSrc}
+        srcSet={resolvedSrcSet}
         alt={alt}
         width={intrinsicDimensions.width}
         height={intrinsicDimensions.height}
-        onError={handleError}
+        loading={loading}
+        decoding={decoding}
         onLoad={handleLoad}
-        ref={onImageRef}
-        srcSet={finalSrcSet}
-        {...props}
-        sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          opacity: isEager || !isLoading ? 1 : 0,
-          transition: isEager ? 'none' : 'opacity 0.3s ease-in-out',
-        }}
+        onError={handleError}
+        className={imgClasses}
       />
-    </Box>
+    </div>
   )
 }
 

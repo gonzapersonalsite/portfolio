@@ -1,0 +1,35 @@
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.14rem;
+  background-color: var(--surface-sub);
+  border: 1px solid var(--border);
+  border-radius: 0.32rem;
+  gap: 0.12rem;
+}
+
+.lang-switch__btn {
+  appearance: none;
+  min-height: 2rem;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid transparent;
+  border-radius: 0.22rem;
+  background: transparent;
+  color: var(--ink-muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.lang-switch__btn:hover {
+  color: var(--ink);
+}
+
+.lang-switch__btn[aria-pressed='true'] {
+  background-color: var(--surface);
+  color: var(--ink);
+  border-color: var(--border);
+  box-shadow: var(--shadow-tactile);
+}

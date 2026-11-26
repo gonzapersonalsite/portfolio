@@ -1,63 +1,54 @@
-import React from 'react'
-import { Box, Typography, Button, Container, Stack } from '@mui/material'
-import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined'
-import { DEFAULT_LANGUAGE, i18n, localizedPath, toSupportedLanguage } from '@/shared/config'
+import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { i18n, localizedPath, pathnameLanguage, toSupportedLanguage } from '@/shared/config'
+import { AlertCircleIcon } from './Icons'
+import './ErrorBoundary.css'
 
 interface Props {
-  children: React.ReactNode
+  children: ReactNode
 }
 
 interface State {
   hasError: boolean
 }
 
-// The fallback replaces the whole router, layout included, so it brings its own <main> and <h1>
-// and a way out that does not depend on the broken tree: a plain link to the home page.
-class ErrorBoundary extends React.Component<Props, State> {
-  state: State = { hasError: false }
+class ErrorBoundary extends Component<Props, State> {
+  public state: State = {
+    hasError: false,
+  }
 
-  static getDerivedStateFromError(): State {
+  public static getDerivedStateFromError(): State {
     return { hasError: true }
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo)
   }
 
-  render() {
+  private handleReload = () => {
+    window.location.reload()
+  }
+
+  public render() {
     if (this.state.hasError) {
+      const language = pathnameLanguage(window.location.pathname) ?? toSupportedLanguage(i18n.language) ?? 'es'
+      const homeHref = localizedPath('/', language)
+
       return (
-        <Container component="main" maxWidth="sm" sx={{ py: 12 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 3,
-              textAlign: 'center',
-            }}
-          >
-            <ErrorOutlinedIcon aria-hidden="true" sx={{ fontSize: '5rem', color: 'error.main' }} />
-            <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
-              {i18n.t('common.errorBoundaryTitle')}
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              {i18n.t('common.errorBoundaryDescription')}
-            </Typography>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <Button variant="contained" color="primary" size="large" onClick={() => window.location.reload()}>
+        <main className="error-boundary wb-container">
+          <div className="wb-panel error-boundary__card">
+            <AlertCircleIcon className="error-boundary__icon" />
+            <h1 className="error-boundary__title">{i18n.t('common.errorBoundaryTitle')}</h1>
+            <p className="error-boundary__desc">{i18n.t('common.errorBoundaryDescription')}</p>
+            <div className="error-boundary__actions">
+              <button type="button" className="wb-btn-primary" onClick={this.handleReload}>
                 {i18n.t('common.errorBoundaryRefresh')}
-              </Button>
-              <Button
-                variant="outlined"
-                size="large"
-                href={localizedPath('/', toSupportedLanguage(i18n.resolvedLanguage) ?? DEFAULT_LANGUAGE)}
-              >
+              </button>
+              <a className="wb-btn-secondary" href={homeHref}>
                 {i18n.t('common.errorBoundaryHome')}
-              </Button>
-            </Stack>
-          </Box>
-        </Container>
+              </a>
+            </div>
+          </div>
+        </main>
       )
     }
 

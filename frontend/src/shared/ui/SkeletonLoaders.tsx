@@ -1,200 +1,236 @@
 import React from 'react'
-import { Box, Grid, Skeleton, Stack, Container } from '@mui/material'
+import './SkeletonLoaders.css'
 
-export const HeroSkeleton: React.FC = () => (
-  <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center' }}>
-    <Container maxWidth="lg">
-      <Grid container spacing={4} sx={{ alignItems: 'center' }}>
-        <Grid size={{ xs: 12, md: 7 }}>
-          <Skeleton animation="wave" width="150px" height={24} sx={{ mb: 2 }} />
-          <Skeleton animation="wave" width="80%" height={80} sx={{ mb: 2 }} />
-          <Skeleton animation="wave" width="60%" height={48} sx={{ mb: 4 }} />
-          <Skeleton animation="wave" width="90%" height={24} sx={{ mb: 1 }} />
-          <Skeleton animation="wave" width="85%" height={24} sx={{ mb: 4 }} />
-          <Stack direction="row" spacing={2}>
-            <Skeleton animation="wave" variant="rectangular" width={160} height={48} sx={{ borderRadius: 1 }} />
-            <Skeleton animation="wave" variant="rectangular" width={160} height={48} sx={{ borderRadius: 1 }} />
-          </Stack>
-        </Grid>
-        <Grid size={{ xs: 12, md: 5 }} sx={{ display: { xs: 'none', md: 'block' } }}>
-          <Skeleton animation="wave" variant="rectangular" width="100%" height={250} sx={{ borderRadius: 4 }} />
-        </Grid>
-      </Grid>
-    </Container>
-  </Box>
+// Each skeleton mirrors the layout of the page it stands in for, so the page replaces it
+// without moving what the reader is already looking at. They only use their own CSS and
+// the global layout classes: the page stylesheets are not loaded yet while they show.
+
+const Skeleton: React.FC<{ readonly className: string }> = ({ className }) => (
+  <div className={`ui-skeleton ${className}`} />
 )
 
-const ProjectCardSkeleton: React.FC = () => (
-  <Box sx={{ height: '100%', borderRadius: 4, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
-    <Skeleton animation="wave" variant="rectangular" width="100%" sx={{ pt: '56.25%' }} />
-    <Box sx={{ p: 3 }}>
-      <Skeleton animation="wave" width="60%" height={32} sx={{ mb: 1 }} />
-      <Skeleton animation="wave" width="100%" height={20} sx={{ mb: 0.5 }} />
-      <Skeleton animation="wave" width="90%" height={20} sx={{ mb: 2 }} />
-      <Stack direction="row" spacing={1}>
-        <Skeleton animation="wave" width={60} height={24} />
-        <Skeleton animation="wave" width={60} height={24} />
-        <Skeleton animation="wave" width={60} height={24} />
-      </Stack>
-    </Box>
-  </Box>
-)
-
-const PROJECT_SKELETON_COUNT = 6
-
-export const ProjectGridSkeleton: React.FC = () => (
-  <Grid container spacing={4}>
-    {Array.from({ length: PROJECT_SKELETON_COUNT }, (_, index) => (
-      <Grid size={{ xs: 12, md: 6, lg: 4 }} key={index}>
-        <ProjectCardSkeleton />
-      </Grid>
+const Lines: React.FC<{ readonly count: number }> = ({ count }) => (
+  <>
+    {Array.from({ length: count }, (_, index) => (
+      <Skeleton key={index} className={index === count - 1 ? 'ui-skeleton--short-line' : 'ui-skeleton--line'} />
     ))}
-  </Grid>
+  </>
+)
+
+const PageSkeleton: React.FC<{ readonly leadLines: number; readonly children: React.ReactNode }> = ({
+  leadLines,
+  children,
+}) => (
+  <div className="wb-page wb-container" aria-hidden="true">
+    <div className="ui-skeleton-header">
+      <Skeleton className="ui-skeleton--eyebrow" />
+      <Skeleton className="ui-skeleton--title" />
+      {leadLines > 0 ? (
+        <div className="ui-skeleton-lead">
+          <Lines count={leadLines} />
+        </div>
+      ) : null}
+    </div>
+    {children}
+  </div>
+)
+
+const ProjectCardSkeleton: React.FC<{ readonly layout: 'stacked' | 'split' }> = ({ layout }) => (
+  <div className="wb-panel ui-skeleton-card">
+    <div className="ui-skeleton-row ui-skeleton-row--spread">
+      <div className="ui-skeleton-row">
+        <Skeleton className="ui-skeleton--chip" />
+        <Skeleton className="ui-skeleton--chip" />
+      </div>
+      <Skeleton className="ui-skeleton--switch" />
+    </div>
+    <div className={`ui-skeleton-card__body ui-skeleton-card__body--${layout}`}>
+      <div className="ui-skeleton-stack">
+        <Skeleton className="ui-skeleton--subtitle" />
+        <Lines count={3} />
+      </div>
+      <Skeleton className="ui-skeleton--card-media" />
+    </div>
+    <div className="ui-skeleton-row">
+      <Skeleton className="ui-skeleton--chip" />
+      <Skeleton className="ui-skeleton--chip" />
+      <Skeleton className="ui-skeleton--chip" />
+    </div>
+    <div className="ui-skeleton-row">
+      <Skeleton className="ui-skeleton--btn" />
+      <Skeleton className="ui-skeleton--btn" />
+    </div>
+  </div>
+)
+
+export const HomeSkeleton: React.FC = () => (
+  <div aria-hidden="true">
+    <div className="wb-container ui-skeleton-section ui-skeleton-hero">
+      <div className="wb-panel ui-skeleton-hero__main">
+        <div className="ui-skeleton-row ui-skeleton-row--spread">
+          <Skeleton className="ui-skeleton--eyebrow" />
+          <Skeleton className="ui-skeleton--badge" />
+        </div>
+        <Skeleton className="ui-skeleton--title" />
+        <Skeleton className="ui-skeleton--title" />
+        <Skeleton className="ui-skeleton--title ui-skeleton--title-short" />
+        <Skeleton className="ui-skeleton--subtitle" />
+        <Lines count={2} />
+        <div className="ui-skeleton-row">
+          <Skeleton className="ui-skeleton--btn" />
+          <Skeleton className="ui-skeleton--btn" />
+          <Skeleton className="ui-skeleton--btn" />
+        </div>
+      </div>
+      <div className="wb-panel ui-skeleton-rig">
+        <Skeleton className="ui-skeleton--bay" />
+        <div className="ui-skeleton-rig__body">
+          <Skeleton className="ui-skeleton--rig-photo" />
+          <div className="ui-skeleton-stack">
+            {[1, 2, 3, 4].map((index) => (
+              <Skeleton key={index} className="ui-skeleton--tile" />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div className="wb-container ui-skeleton-section">
+      <div className="ui-skeleton-header">
+        <Skeleton className="ui-skeleton--eyebrow" />
+        <Skeleton className="ui-skeleton--subtitle" />
+        <div className="ui-skeleton-lead">
+          <Lines count={1} />
+        </div>
+      </div>
+      <ProjectCardSkeleton layout="split" />
+    </div>
+  </div>
 )
 
 export const AboutSkeleton: React.FC = () => (
-  <Grid container spacing={6}>
-    <Grid size={{ xs: 12, md: 5 }}>
-      <Skeleton animation="wave" variant="rectangular" width="100%" sx={{ pt: '125%', borderRadius: 4 }} />
-      <Stack direction="row" spacing={2} sx={{ mt: 4, justifyContent: 'center' }}>
-        <Skeleton animation="wave" variant="rectangular" width={180} height={48} sx={{ borderRadius: 1 }} />
-      </Stack>
-    </Grid>
-    <Grid size={{ xs: 12, md: 7 }}>
-      <Skeleton animation="wave" width="80%" height={40} sx={{ mb: 3 }} />
-      <Skeleton animation="wave" width="100%" height={24} sx={{ mb: 1 }} />
-      <Skeleton animation="wave" width="100%" height={24} sx={{ mb: 1 }} />
-      <Skeleton animation="wave" width="95%" height={24} sx={{ mb: 1 }} />
-      <Skeleton animation="wave" width="90%" height={24} sx={{ mb: 4 }} />
-
-      <Skeleton animation="wave" width="40%" height={32} sx={{ mb: 2 }} />
-      <Stack direction="row" spacing={1} sx={{ mb: 4 }}>
-        <Skeleton animation="wave" width={80} height={32} sx={{ borderRadius: 4 }} />
-        <Skeleton animation="wave" width={80} height={32} sx={{ borderRadius: 4 }} />
-        <Skeleton animation="wave" width={80} height={32} sx={{ borderRadius: 4 }} />
-      </Stack>
-
-      <Skeleton animation="wave" width="40%" height={32} sx={{ mb: 2 }} />
-      <Stack direction="row" spacing={2}>
-        <Skeleton animation="wave" width={120} height={32} sx={{ borderRadius: 4 }} />
-        <Skeleton animation="wave" width={120} height={32} sx={{ borderRadius: 4 }} />
-      </Stack>
-    </Grid>
-  </Grid>
+  <PageSkeleton leadLines={0}>
+    <div className="ui-skeleton-about">
+      <div className="wb-panel ui-skeleton-about__media">
+        <Skeleton className="ui-skeleton--portrait" />
+        <Skeleton className="ui-skeleton--btn" />
+      </div>
+      <div className="ui-skeleton-stack">
+        <Skeleton className="ui-skeleton--subtitle" />
+        <Lines count={5} />
+        <Lines count={3} />
+        <Skeleton className="ui-skeleton--quote" />
+      </div>
+    </div>
+  </PageSkeleton>
 )
 
 export const SkillsSkeleton: React.FC = () => (
-  <Grid container spacing={4}>
-    {[1, 2, 3, 4].map((i) => (
-      <Grid size={{ xs: 12, md: 6 }} key={i}>
-        <Box
-          sx={{
-            p: 4,
-            borderRadius: 4,
-            bgcolor: 'background.paper',
-            border: '1px solid',
-            borderColor: 'divider',
-            height: '100%',
-          }}
-        >
-          <Skeleton animation="wave" width="40%" height={32} sx={{ mb: 3 }} />
-          <Stack spacing={3}>
-            {[1, 2, 3, 4].map((j) => (
-              <Box key={j}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Skeleton animation="wave" width="30%" height={24} />
-                  <Skeleton animation="wave" width="10%" height={20} />
-                </Box>
-                <Skeleton animation="wave" height={8} sx={{ borderRadius: 4 }} />
-              </Box>
-            ))}
-          </Stack>
-        </Box>
-      </Grid>
-    ))}
-  </Grid>
+  <PageSkeleton leadLines={1}>
+    <div className="ui-skeleton-skills">
+      {[6, 5, 3, 2].map((items, index) => (
+        <div key={index} className="wb-panel ui-skeleton-card">
+          <Skeleton className="ui-skeleton--subtitle" />
+          {Array.from({ length: items }, (_, item) => (
+            <div key={item} className="ui-skeleton-stack ui-skeleton-stack--tight">
+              <Skeleton className="ui-skeleton--name" />
+              <Skeleton className="ui-skeleton--line" />
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  </PageSkeleton>
 )
 
 export const ExperienceSkeleton: React.FC = () => (
-  <Box sx={{ maxWidth: '800px', mx: 'auto' }}>
-    {[1, 2, 3].map((i) => (
-      <Box key={i} sx={{ display: 'flex', gap: 3, mb: 4 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Skeleton animation="wave" variant="circular" width={40} height={40} />
-          <Skeleton animation="wave" variant="rectangular" width={2} height="100%" sx={{ flexGrow: 1, my: 1 }} />
-        </Box>
-        <Box sx={{ flexGrow: 1, p: 3, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
-          <Skeleton animation="wave" width="30%" height={24} sx={{ mb: 1 }} />
-          <Skeleton animation="wave" width="50%" height={32} sx={{ mb: 1 }} />
-          <Skeleton animation="wave" width="40%" height={24} sx={{ mb: 2 }} />
-          <Skeleton animation="wave" width="100%" height={20} sx={{ mb: 0.5 }} />
-          <Skeleton animation="wave" width="90%" height={20} sx={{ mb: 2 }} />
-          <Stack direction="row" spacing={1}>
-            <Skeleton animation="wave" width={60} height={24} />
-            <Skeleton animation="wave" width={60} height={24} />
-          </Stack>
-        </Box>
-      </Box>
-    ))}
-  </Box>
+  <PageSkeleton leadLines={1}>
+    <Skeleton className="ui-skeleton--badge ui-skeleton--spaced" />
+    <div className="ui-skeleton-stack ui-skeleton-stack--loose">
+      {[1, 2].map((index) => (
+        <div key={index} className="wb-panel ui-skeleton-exp">
+          <div className="ui-skeleton-stack">
+            <Skeleton className="ui-skeleton--chip" />
+            <Skeleton className="ui-skeleton--name" />
+          </div>
+          <div className="ui-skeleton-stack">
+            <Skeleton className="ui-skeleton--subtitle" />
+            <Lines count={4} />
+            <div className="ui-skeleton-row">
+              <Skeleton className="ui-skeleton--chip" />
+              <Skeleton className="ui-skeleton--chip" />
+              <Skeleton className="ui-skeleton--chip" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </PageSkeleton>
 )
 
-export const PageHeaderSkeleton: React.FC = () => (
-  <Box sx={{ mb: 6 }}>
-    <Skeleton animation="wave" width="100px" height={24} sx={{ mb: 1 }} />
-    <Skeleton animation="wave" width="300px" height={60} />
-  </Box>
+export const ProjectsSkeleton: React.FC = () => (
+  <PageSkeleton leadLines={2}>
+    <div className="ui-skeleton-row ui-skeleton--spaced">
+      {[1, 2, 3, 4].map((index) => (
+        <Skeleton key={index} className="ui-skeleton--filter" />
+      ))}
+    </div>
+    <div className="ui-skeleton-stack ui-skeleton-stack--loose">
+      <ProjectCardSkeleton layout="split" />
+      <div className="ui-skeleton-grid-2">
+        <ProjectCardSkeleton layout="stacked" />
+        <ProjectCardSkeleton layout="stacked" />
+      </div>
+    </div>
+  </PageSkeleton>
 )
 
 export const ContactSkeleton: React.FC = () => (
-  <Grid container spacing={6}>
-    <Grid size={{ xs: 12, md: 5 }}>
-      <Skeleton animation="wave" width="60%" height={40} sx={{ mb: 2 }} />
-      <Skeleton animation="wave" width="100%" height={80} sx={{ mb: 4 }} />
-
-      <Stack spacing={3} sx={{ mb: 6 }}>
-        {[1, 2].map((i) => (
-          <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Skeleton animation="wave" variant="circular" width={40} height={40} />
-            <Box>
-              <Skeleton animation="wave" width={60} height={16} sx={{ mb: 0.5 }} />
-              <Skeleton animation="wave" width={150} height={24} />
-            </Box>
-          </Box>
-        ))}
-      </Stack>
-
-      <Skeleton animation="wave" width="40%" height={32} sx={{ mb: 2 }} />
-      <Stack direction="row" spacing={2}>
-        <Skeleton animation="wave" variant="circular" width={40} height={40} />
-        <Skeleton animation="wave" variant="circular" width={40} height={40} />
-      </Stack>
-    </Grid>
-    <Grid size={{ xs: 12, md: 7 }}>
-      <Skeleton animation="wave" variant="rectangular" width="100%" height={500} sx={{ borderRadius: 4 }} />
-    </Grid>
-  </Grid>
+  <PageSkeleton leadLines={0}>
+    <div className="ui-skeleton-contact">
+      <div className="ui-skeleton-stack ui-skeleton-stack--loose">
+        <div className="ui-skeleton-stack">
+          <Skeleton className="ui-skeleton--subtitle" />
+          <Lines count={2} />
+        </div>
+        <Skeleton className="ui-skeleton--channel" />
+        <Skeleton className="ui-skeleton--channel" />
+        <div className="ui-skeleton-row">
+          <Skeleton className="ui-skeleton--btn" />
+          <Skeleton className="ui-skeleton--btn" />
+        </div>
+      </div>
+      <div className="wb-panel ui-skeleton-rig">
+        <Skeleton className="ui-skeleton--bay" />
+        <div className="ui-skeleton-card">
+          {[1, 2].map((index) => (
+            <div key={index} className="ui-skeleton-stack ui-skeleton-stack--tight">
+              <Skeleton className="ui-skeleton--name" />
+              <Skeleton className="ui-skeleton--input" />
+            </div>
+          ))}
+          <div className="ui-skeleton-stack ui-skeleton-stack--tight">
+            <Skeleton className="ui-skeleton--name" />
+            <Skeleton className="ui-skeleton--textarea" />
+          </div>
+          <Skeleton className="ui-skeleton--btn" />
+        </div>
+      </div>
+    </div>
+  </PageSkeleton>
 )
 
 export const NotFoundSkeleton: React.FC = () => (
-  <Box
-    sx={{
-      minHeight: 'calc(100vh - 160px)',
-      display: 'flex',
-      alignItems: 'center',
-      py: { xs: 6, md: 10 },
-    }}
-  >
-    <Container maxWidth="md">
-      <Box sx={{ textAlign: 'center', mb: 5 }}>
-        <Skeleton animation="wave" variant="rounded" width={180} height={32} sx={{ mx: 'auto', mb: 2 }} />
-        <Skeleton animation="wave" variant="text" width={220} height={110} sx={{ mx: 'auto', mb: 1 }} />
-        <Skeleton animation="wave" variant="text" width="60%" height={48} sx={{ mx: 'auto', mb: 1.5 }} />
-        <Skeleton animation="wave" variant="text" width="75%" height={28} sx={{ mx: 'auto' }} />
-      </Box>
-      <Box sx={{ maxWidth: 640, mx: 'auto', mt: 6 }}>
-        <Skeleton animation="wave" variant="rectangular" width="100%" height={360} sx={{ borderRadius: 4 }} />
-      </Box>
-    </Container>
-  </Box>
+  <div className="wb-container ui-skeleton-section ui-skeleton-not-found" aria-hidden="true">
+    <Skeleton className="ui-skeleton--chip ui-skeleton--wide-chip" />
+    <Skeleton className="ui-skeleton--code" />
+    <Skeleton className="ui-skeleton--title" />
+    <Skeleton className="ui-skeleton--short-line" />
+    <div className="wb-panel ui-skeleton-rig ui-skeleton-terminal">
+      <Skeleton className="ui-skeleton--bay" />
+      <div className="ui-skeleton-card">
+        <Skeleton className="ui-skeleton--name" />
+        <Skeleton className="ui-skeleton--terminal" />
+      </div>
+    </div>
+  </div>
 )

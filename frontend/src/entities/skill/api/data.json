@@ -4,6 +4,8 @@
     "nameEn": "Java",
     "nameEs": "Java",
     "level": 75,
+    "appliedEn": "Globatecnic microservices (3 back ends) and Mistertransfer services",
+    "appliedEs": "Microservicios de Globatecnic (3 backends) y servicios de Mistertransfer",
     "category": "Backend",
     "order": 1
   },
@@ -12,6 +14,8 @@
     "nameEn": "Spring Boot",
     "nameEs": "Spring Boot",
     "level": 70,
+    "appliedEn": "Hexagonal REST services, JWT/RBAC IAM and Outbox with RabbitMQ at Globatecnic; JHipster microservices at Mistertransfer",
+    "appliedEs": "Servicios REST hexagonales, IAM con JWT/RBAC y Outbox con RabbitMQ en Globatecnic; microservicios JHipster en Mistertransfer",
     "category": "Backend",
     "order": 2
   },
@@ -20,6 +24,8 @@
     "nameEn": "JavaScript",
     "nameEs": "JavaScript",
     "level": 75,
+    "appliedEn": "Vue/Quasar front end at Mistertransfer",
+    "appliedEs": "Frontend Vue/Quasar en Mistertransfer",
     "category": "Frontend",
     "order": 3
   },
@@ -28,6 +34,8 @@
     "nameEn": "TypeScript",
     "nameEs": "TypeScript",
     "level": 70,
+    "appliedEn": "Globatecnic (2 PWAs), Mistertransfer, Kanban Board, Pokédex and this portfolio",
+    "appliedEs": "Globatecnic (2 PWA), Mistertransfer, tablero Kanban, Pokédex y este portafolio",
     "category": "Frontend",
     "order": 4
   },
@@ -36,6 +44,8 @@
     "nameEn": "HTML5",
     "nameEs": "HTML5",
     "level": 95,
+    "appliedEn": "Semantic templates of the Gonzalo Apps generator, and accessible markup and per-route HTML shells in this portfolio",
+    "appliedEs": "Plantillas semánticas del generador de Gonzalo Apps, y marcado accesible y shells HTML por ruta en este portafolio",
     "category": "Frontend",
     "order": 5
   },
@@ -44,6 +54,8 @@
     "nameEn": "CSS3",
     "nameEs": "CSS3",
     "level": 95,
+    "appliedEn": "Design tokens, responsive grids, print styles and native dialogs in this portfolio; hand-written styles for Gonzalo Apps",
+    "appliedEs": "Tokens de diseño, rejillas adaptables, estilos de impresión y diálogos nativos en este portafolio; estilos escritos a mano en Gonzalo Apps",
     "category": "Frontend",
     "order": 6
   },
@@ -52,6 +64,8 @@
     "nameEn": "Bootstrap",
     "nameEs": "Bootstrap",
     "level": 80,
+    "appliedEn": "Responsive web layouts in Web Application Development (DAW) coursework",
+    "appliedEs": "Maquetación web adaptable en proyectos del ciclo de Desarrollo de Aplicaciones Web (DAW)",
     "category": "Frontend",
     "order": 7
   },
@@ -60,6 +74,8 @@
     "nameEn": "Tailwind CSS",
     "nameEs": "Tailwind CSS",
     "level": 65,
+    "appliedEn": "Pokédex styling, with light and dark variants and responsive grids",
+    "appliedEs": "Estilos de Pokédex, con variantes clara y oscura y rejillas adaptables",
     "category": "Frontend",
     "order": 8
   },
@@ -68,6 +84,8 @@
     "nameEn": "React",
     "nameEs": "React",
     "level": 80,
+    "appliedEn": "Globatecnic (2 PWAs), Kanban Board, Pokédex and this portfolio",
+    "appliedEs": "Globatecnic (2 PWA), tablero Kanban, Pokédex y este portafolio",
     "category": "Frontend",
     "order": 9
   },
@@ -76,6 +94,8 @@
     "nameEn": "Quasar",
     "nameEs": "Quasar",
     "level": 65,
+    "appliedEn": "Maintenance and integration work on the Vue/Quasar front end at Mistertransfer",
+    "appliedEs": "Mantenimiento e integración en el frontend Vue/Quasar de Mistertransfer",
     "category": "Frontend",
     "order": 10
   },
@@ -84,6 +104,8 @@
     "nameEn": "Node.js",
     "nameEs": "Node.js",
     "level": 50,
+    "appliedEn": "The Node.js license verifier of License Generator, and build tooling and agent-file generation in React projects",
+    "appliedEs": "Verificador de licencias en Node.js de License Generator, y herramientas de build y generación de ficheros para agentes en proyectos React",
     "category": "Backend",
     "order": 11
   },
@@ -92,6 +114,8 @@
     "nameEn": "SQL",
     "nameEs": "SQL",
     "level": 70,
+    "appliedEn": "Relational schemas in Quotidia (SQLite/Drift), NutriManager (SQLite/EF Core) and Globatecnic (PostgreSQL)",
+    "appliedEs": "Esquemas relacionales en Quotidia (SQLite/Drift), NutriManager (SQLite/EF Core) y Globatecnic (PostgreSQL)",
     "category": "Database",
     "order": 12
   },
@@ -100,6 +124,8 @@
     "nameEn": "PostgreSQL",
     "nameEs": "PostgreSQL",
     "level": 60,
+    "appliedEn": "3 isolated PostgreSQL 17 instances for the Globatecnic microservices on Proxmox VE",
+    "appliedEs": "3 instancias aisladas de PostgreSQL 17 para los microservicios de Globatecnic en Proxmox VE",
     "category": "Database",
     "order": 13
   },
@@ -108,6 +134,8 @@
     "nameEn": "Git",
     "nameEs": "Git",
     "level": 85,
+    "appliedEn": "Daily branching at Mistertransfer, and verification Git hooks in Quotidia, Gonzalo Apps and this portfolio",
+    "appliedEs": "Trabajo diario con ramas en Mistertransfer, y hooks de Git de verificación en Quotidia, Gonzalo Apps y este portafolio",
     "category": "Tools",
     "order": 14
   },
@@ -116,6 +144,8 @@
     "nameEn": "CI/CD (GitHub Actions, Forgejo Actions)",
     "nameEs": "CI/CD (GitHub Actions, Forgejo Actions)",
     "level": 55,
+    "appliedEn": "Forgejo Actions pipeline built from scratch at Globatecnic: tests, multi-stage Docker builds, private registry and deployment",
+    "appliedEs": "Pipeline de Forgejo Actions hecho desde cero en Globatecnic: tests, builds Docker multi-stage, registro privado y despliegue",
     "category": "Tools",
     "order": 15
   },
@@ -124,6 +154,8 @@
     "nameEn": "Docker",
     "nameEs": "Docker",
     "level": 85,
+    "appliedEn": "Shared Docker network at Globatecnic, container deployments at Mistertransfer and containerized quality gates in this portfolio",
+    "appliedEs": "Red Docker compartida en Globatecnic, despliegues en contenedores en Mistertransfer y puertas de calidad en contenedores en este portafolio",
     "category": "Tools",
     "order": 16
   },
@@ -132,6 +164,8 @@
     "nameEn": "Agile methodologies",
     "nameEs": "Metodologías ágiles",
     "level": 50,
+    "appliedEn": "Sprint task tracking and ticket workflows with Jira and Git at Mistertransfer",
+    "appliedEs": "Seguimiento de tareas por sprints y flujo de tickets con Jira y Git en Mistertransfer",
     "category": "Other",
     "order": 17
   },
@@ -140,6 +174,8 @@
     "nameEn": "Hardware repair",
     "nameEs": "Reparación de hardware",
     "level": 70,
+    "appliedEn": "Diagnosis, component replacement and maintenance of desktops and laptops at Informática JJ",
+    "appliedEs": "Diagnóstico, sustitución de componentes y mantenimiento de equipos de sobremesa y portátiles en Informática JJ",
     "category": "Other",
     "order": 18
   },
@@ -148,6 +184,8 @@
     "nameEn": "Linux",
     "nameEs": "Linux",
     "level": 85,
+    "appliedEn": "Proxmox VE and Docker hosts at Globatecnic, and self-contained Linux builds of License Generator",
+    "appliedEs": "Hosts Proxmox VE y Docker en Globatecnic, y ejecutables Linux autocontenidos de License Generator",
     "category": "Tools",
     "order": 19
   },
@@ -156,6 +194,8 @@
     "nameEn": "Windows",
     "nameEs": "Windows",
     "level": 80,
+    "appliedEn": "Microsoft Store and self-contained releases of License Generator, NutriManager packaging and PC support at Informática JJ",
+    "appliedEs": "Publicación en Microsoft Store y ejecutables autocontenidos de License Generator, empaquetado de NutriManager y soporte de equipos en Informática JJ",
     "category": "Tools",
     "order": 20
   },
@@ -164,6 +204,8 @@
     "nameEn": "Networks",
     "nameEs": "Redes",
     "level": 70,
+    "appliedEn": "DMZ and internal VLAN segmentation on Proxmox VE at Globatecnic, and CFGM Systems and Networks training",
+    "appliedEs": "Segmentación VLAN (DMZ y red interna) en Proxmox VE en Globatecnic, y formación CFGM en Sistemas Microinformáticos y Redes",
     "category": "Other",
     "order": 21
   },
@@ -172,6 +214,8 @@
     "nameEn": "DNS",
     "nameEs": "DNS",
     "level": 65,
+    "appliedEn": "The gonzaloapps.es zone on Cloudflare DNS, with DNSSEC and mail records, and DNS services in network training",
+    "appliedEs": "La zona de gonzaloapps.es en el DNS de Cloudflare, con DNSSEC y registros de correo, y servicios DNS en la formación de redes",
     "category": "Other",
     "order": 22
   },
@@ -180,6 +224,8 @@
     "nameEn": "Routers/switches",
     "nameEs": "Routers/switches",
     "level": 70,
+    "appliedEn": "Local network and VLAN configuration in CFGM Systems and Networks",
+    "appliedEs": "Configuración de redes locales y VLAN en el CFGM de Sistemas Microinformáticos y Redes",
     "category": "Other",
     "order": 23
   },
@@ -188,6 +234,8 @@
     "nameEn": "VirtualBox",
     "nameEs": "VirtualBox",
     "level": 75,
+    "appliedEn": "Virtual labs of operating systems and network services during vocational training",
+    "appliedEs": "Laboratorios virtuales de sistemas operativos y servicios de red durante la formación profesional",
     "category": "Tools",
     "order": 24
   },
@@ -196,6 +244,8 @@
     "nameEn": "Nginx",
     "nameEs": "Nginx",
     "level": 70,
+    "appliedEn": "Reverse proxy at Globatecnic (Nginx Proxy Manager) and front-end deployments at Mistertransfer",
+    "appliedEs": "Proxy inverso en Globatecnic (Nginx Proxy Manager) y despliegue de frontends en Mistertransfer",
     "category": "Backend",
     "order": 25
   },
@@ -204,6 +254,8 @@
     "nameEn": "Apache",
     "nameEs": "Apache",
     "level": 75,
+    "appliedEn": "Virtual hosts and web server administration in systems and DAW coursework",
+    "appliedEs": "Virtual hosts y administración de servidores web en las prácticas de sistemas y de DAW",
     "category": "Backend",
     "order": 26
   },
@@ -212,6 +264,8 @@
     "nameEn": "Tomcat",
     "nameEs": "Tomcat",
     "level": 60,
+    "appliedEn": "Java web application deployments on a servlet container in DAW",
+    "appliedEs": "Despliegue de aplicaciones web Java en un contenedor de servlets en DAW",
     "category": "Backend",
     "order": 27
   },
@@ -220,6 +274,8 @@
     "nameEn": "Basic security",
     "nameEs": "Seguridad básica",
     "level": 50,
+    "appliedEn": "JWT/RBAC, rate limiting and brute-force protection at Globatecnic; RSA-2048 license signing in License Generator and a strict CSP in this portfolio",
+    "appliedEs": "JWT/RBAC, limitación de peticiones y protección contra fuerza bruta en Globatecnic; firma de licencias RSA-2048 en License Generator y una CSP estricta en este portafolio",
     "category": "Other",
     "order": 28
   },
@@ -228,6 +284,8 @@
     "nameEn": "Incident diagnosis",
     "nameEs": "Diagnóstico de incidencias",
     "level": 55,
+    "appliedEn": "Remote troubleshooting with AnyDesk and customer support at Informática JJ",
+    "appliedEs": "Resolución remota con AnyDesk y atención al cliente en Informática JJ",
     "category": "Other",
     "order": 29
   },
@@ -236,6 +294,8 @@
     "nameEn": "OS installation",
     "nameEs": "Instalación de sistemas operativos",
     "level": 90,
+    "appliedEn": "Computer setup at Informática JJ and virtual machine provisioning on Proxmox VE",
+    "appliedEs": "Preparación de equipos en Informática JJ y aprovisionamiento de máquinas virtuales en Proxmox VE",
     "category": "Tools",
     "order": 30
   },
@@ -244,6 +304,8 @@
     "nameEn": "Hibernate ORM",
     "nameEs": "Hibernate ORM",
     "level": 70,
+    "appliedEn": "Entity mapping and repositories in Spring Boot back ends",
+    "appliedEs": "Mapeo de entidades y repositorios en backends Spring Boot",
     "category": "Backend",
     "order": 31
   },
@@ -252,6 +314,8 @@
     "nameEn": "MongoDB",
     "nameEs": "MongoDB",
     "level": 50,
+    "appliedEn": "Document database behind the microservices maintained at Mistertransfer",
+    "appliedEs": "Base de datos documental de los microservicios mantenidos en Mistertransfer",
     "category": "Database",
     "order": 32
   },
@@ -260,6 +324,8 @@
     "nameEn": "Proxmox VE",
     "nameEs": "Proxmox VE",
     "level": 50,
+    "appliedEn": "On-premise virtualization hosting the DMZ, database VMs and Docker services at Globatecnic",
+    "appliedEs": "Virtualización on-premise con la DMZ, las máquinas de bases de datos y los servicios Docker en Globatecnic",
     "category": "Tools",
     "order": 33
   },
@@ -268,6 +334,8 @@
     "nameEn": "Flutter",
     "nameEs": "Flutter",
     "level": 70,
+    "appliedEn": "Quotidia, an Android planner published on Google Play (Riverpod, Drift and go_router)",
+    "appliedEs": "Quotidia, planificador Android publicado en Google Play (Riverpod, Drift y go_router)",
     "category": "Mobile",
     "order": 34
   },
@@ -276,6 +344,8 @@
     "nameEn": "Dart",
     "nameEs": "Dart",
     "level": 70,
+    "appliedEn": "Quotidia and the static-site generator that publishes Gonzalo Apps",
+    "appliedEs": "Quotidia y el generador de sitios estáticos que publica Gonzalo Apps",
     "category": "Mobile",
     "order": 35
   },
@@ -284,6 +354,8 @@
     "nameEn": "Kotlin",
     "nameEs": "Kotlin",
     "level": 55,
+    "appliedEn": "Native Android alarm screen and scheduling, bridged with Pigeon in Quotidia",
+    "appliedEs": "Pantalla nativa de alarmas de Android y su programación, conectadas con Pigeon en Quotidia",
     "category": "Mobile",
     "order": 36
   },
@@ -292,6 +364,8 @@
     "nameEn": "C# / .NET",
     "nameEs": "C# / .NET",
     "level": 70,
+    "appliedEn": "License Generator (.NET 10, RSA-2048) and NutriManager (.NET 8, EF Core 8, QuestPDF)",
+    "appliedEs": "License Generator (.NET 10, RSA-2048) y NutriManager (.NET 8, EF Core 8, QuestPDF)",
     "category": "Desktop",
     "order": 37
   },
@@ -300,6 +374,8 @@
     "nameEn": "Avalonia UI",
     "nameEs": "Avalonia UI",
     "level": 65,
+    "appliedEn": "Cross-platform MVVM desktop UIs for License Generator (Windows and Linux) and NutriManager",
+    "appliedEs": "Interfaces de escritorio MVVM multiplataforma para License Generator (Windows y Linux) y NutriManager",
     "category": "Desktop",
     "order": 38
   }

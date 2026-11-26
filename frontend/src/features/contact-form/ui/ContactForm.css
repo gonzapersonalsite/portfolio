@@ -1,0 +1,56 @@
+.contact-form {
+  display: grid;
+  gap: 1.15rem;
+}
+
+.contact-form__field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.contact-form__label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.contact-form__input,
+.contact-form__textarea {
+  width: 100%;
+  padding: 0.65rem 0.78rem;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 0.375rem;
+  background-color: var(--surface-sub);
+  color: var(--ink);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.45;
+  transition: border-color 0.16s ease;
+}
+
+.contact-form__textarea {
+  resize: vertical;
+  min-height: 7.5rem;
+}
+
+.contact-form__input:focus,
+.contact-form__textarea:focus {
+  border-color: var(--accent);
+}
+
+.contact-form__input[aria-invalid='true'],
+.contact-form__textarea[aria-invalid='true'] {
+  border-color: var(--error-ink);
+}
+
+.contact-form__error {
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--error-ink);
+}
+
+.contact-form__submit {
+  width: 100%;
+  margin-top: 0.25rem;
+}

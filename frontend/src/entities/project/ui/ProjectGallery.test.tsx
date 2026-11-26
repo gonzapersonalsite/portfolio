@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { i18n } from '@/shared/config'
 import ProjectGallery, { type GallerySlide } from './ProjectGallery'
 
@@ -101,14 +101,12 @@ describe('ProjectGallery', () => {
     expect(screen.getByRole('button', { name: 'Zoom in' }).hasAttribute('disabled')).toBe(true)
   })
 
-  it('offers a manual retry with the same URL and preserves keyboard focus through it', async () => {
+  it('offers a manual retry with the same URL and preserves keyboard focus through it', () => {
     renderGallery()
     const failedImage = currentImage()
     fireEvent.error(failedImage)
     const retry = screen.getByRole('button', { name: 'Try again' })
-    // MUI mounts its ripples lazily and starts or stops one when a promise
-    // settles, so every move of the focus here waits for those promises.
-    await act(async () => retry.focus())
+    retry.focus()
     fireEvent.click(retry)
     const retriedImage = currentImage()
 
@@ -118,7 +116,7 @@ describe('ProjectGallery', () => {
     expect(document.activeElement).toBe(retry)
     fireEvent.click(retry)
     expect(currentImage()).toBe(retriedImage)
-    await act(async () => finishLoading(retriedImage))
+    finishLoading(retriedImage)
 
     expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull()
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Close gallery' }))
@@ -224,5 +222,97 @@ describe('ProjectGallery', () => {
 
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(document.activeElement).toBe(opener)
+  })
+
+  it('zooms with keyboard and pans the viewer instead of switching slides', () => {
+    renderGallery()
+    finishLoading()
+
+    const viewer = screen.getByRole('region', { name: 'Image viewer' })
+    const scrollBy = vi.fn()
+    Object.defineProperty(viewer, 'scrollBy', { value: scrollBy, configurable: true })
+
+    fireEvent.keyDown(window, { key: '+' })
+    expect(screen.getByRole('button', { name: 'Reset zoom' }).hasAttribute('disabled')).toBe(false)
+    expect(viewer.tabIndex).toBe(0)
+
+    fireEvent.keyDown(window, { key: 'ArrowRight' })
+    expect(scrollBy).toHaveBeenCalledWith({ left: 80, top: 0 })
+    expect(currentImage().getAttribute('src')).toBe(slides[0].src)
+
+    fireEvent.keyDown(window, { key: '-' })
+    expect(screen.getByRole('button', { name: 'Reset zoom' }).hasAttribute('disabled')).toBe(true)
+    expect(viewer.tabIndex).toBe(-1)
+
+    fireEvent.keyDown(window, { key: '+' })
+    fireEvent.keyDown(window, { key: '0' })
+    expect(screen.getByRole('button', { name: 'Reset zoom' }).hasAttribute('disabled')).toBe(true)
+  })
+
+  it('switches slides on unzoomed horizontal touch swipe without triggering click-to-zoom', () => {
+    renderGallery()
+    finishLoading()
+
+    const viewer = screen.getByRole('region', { name: 'Image viewer' })
+    fireEvent.pointerDown(viewer, { pointerType: 'touch', clientX: 280, clientY: 160 })
+    fireEvent.pointerUp(viewer, { pointerType: 'touch', clientX: 180, clientY: 165 })
+    fireEvent.click(currentImage())
+
+    expect(currentImage().getAttribute('src')).toBe(slides[1].src)
+    expect(screen.getByRole('button', { name: 'Reset zoom' }).hasAttribute('disabled')).toBe(true)
+
+    fireEvent.pointerDown(viewer, { pointerType: 'touch', clientX: 140, clientY: 160 })
+    fireEvent.pointerUp(viewer, { pointerType: 'touch', clientX: 250, clientY: 165 })
+    expect(currentImage().getAttribute('src')).toBe(slides[0].src)
+  })
+
+  it('closes on native cancel and backdrop fallback click and restores focus to the opener', async () => {
+    function Example() {
+      const [open, setOpen] = useState(false)
+      return (
+        <>
+          <button onClick={() => setOpen(true)}>Open gallery</button>
+          {open && <ProjectGallery title="Example project" slides={slides} onClose={() => setOpen(false)} />}
+        </>
+      )
+    }
+
+    render(<Example />)
+    const opener = screen.getByRole('button', { name: 'Open gallery' })
+    opener.focus()
+    fireEvent.click(opener)
+    fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(document.activeElement).toBe(opener)
+
+    const closedByDescriptor = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, 'closedBy')
+    if (closedByDescriptor) {
+      // Simulate browsers without closedby="any" support where pointer fallback handles outside clicks.
+      Reflect.deleteProperty(HTMLDialogElement.prototype, 'closedBy')
+    }
+    try {
+      opener.focus()
+      fireEvent.click(opener)
+      const dialog = screen.getByRole('dialog')
+      vi.spyOn(dialog, 'getBoundingClientRect').mockReturnValue({
+        left: 20,
+        right: 320,
+        top: 20,
+        bottom: 520,
+        width: 300,
+        height: 500,
+        x: 20,
+        y: 20,
+        toJSON: () => ({}),
+      })
+      fireEvent.pointerDown(dialog, { clientX: 5, clientY: 5 })
+      fireEvent.pointerUp(dialog, { clientX: 5, clientY: 5 })
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+      expect(document.activeElement).toBe(opener)
+    } finally {
+      if (closedByDescriptor) Object.defineProperty(HTMLDialogElement.prototype, 'closedBy', closedByDescriptor)
+    }
   })
 })

@@ -1,320 +1,242 @@
-import React, { useId, useState } from 'react'
-import { Box, Card, CardContent, Typography, Button, Chip, Stack, CardActions, Tooltip } from '@mui/material'
-import type { ButtonProps } from '@mui/material'
-import GitHubIcon from '@mui/icons-material/GitHub'
-import LaunchIcon from '@mui/icons-material/Launch'
-import DownloadIcon from '@mui/icons-material/Download'
-import ShopIcon from '@mui/icons-material/Shop'
-import MenuBookIcon from '@mui/icons-material/MenuBook'
-import StarIcon from '@mui/icons-material/Star'
-import LanguageIcon from '@mui/icons-material/Language'
-import DesktopWindowsIcon from '@mui/icons-material/DesktopWindows'
-import SmartphoneIcon from '@mui/icons-material/Smartphone'
-import CodeIcon from '@mui/icons-material/Code'
-import VisibilityIcon from '@mui/icons-material/Visibility'
-import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary'
-import type { Project, ProjectImage } from '../model/types'
-import { PROJECT_LINK_KINDS, type ProjectLinkEmphasis, type ProjectLinkKind } from '../model/projectLinks'
-import { PROJECT_COVER_RATIO, projectCoverSources, projectImageUrl } from '../model/projectImages'
-import { splitDescription } from '../lib/splitDescription'
+import React, { useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toSupportedLanguage } from '@/shared/config'
 import { getLocalizedText, useFindableDisclosure } from '@/shared/lib'
-import { ImageWithFallback, RichTextRenderer } from '@/shared/ui'
-import ProjectGallery from './ProjectGallery'
+import {
+  BookIcon,
+  CodeIcon,
+  DesktopIcon,
+  DownloadIcon,
+  EyeIcon,
+  GalleryIcon,
+  GitHubIcon,
+  GlobeIcon,
+  ImageWithFallback,
+  LaunchIcon,
+  PhoneIcon,
+  RichTextRenderer,
+  StarIcon,
+  StoreIcon,
+} from '@/shared/ui'
+import { PROJECT_LINK_KINDS, isPrimaryLink, type ProjectLinkKind } from '../model/projectLinks'
+import { PROJECT_COVER_RATIO, projectCoverSources, projectImageUrl } from '../model/projectImages'
+import type { Project } from '../model/types'
+import { splitDescription } from '../lib/splitDescription'
+import ProjectGallery, { type GallerySlide } from './ProjectGallery'
+import './ProjectCard.css'
 
-const TYPE_ICONS: Record<Project['type'], React.ReactElement> = {
-  WEB: <LanguageIcon fontSize="small" />,
-  DESKTOP: <DesktopWindowsIcon fontSize="small" />,
-  MOBILE: <SmartphoneIcon fontSize="small" />,
-  OTHER: <CodeIcon fontSize="small" />,
-}
-
-// Label and emphasis come from PROJECT_LINK_KINDS; only the icon is a UI concern.
 const LINK_ICONS: Record<ProjectLinkKind, React.ReactElement> = {
   site: <LaunchIcon />,
   download: <DownloadIcon />,
-  googlePlay: <ShopIcon />,
+  googlePlay: <StoreIcon />,
+  microsoftStore: <StoreIcon />,
   repository: <GitHubIcon />,
-  documentation: <MenuBookIcon />,
+  documentation: <BookIcon />,
 }
 
-// The overlay of the cover is positioned, so the browser paints it above the button's own
-// outline and dims that ring with it: the focused cover draws its ring on the overlay instead.
-// White at the edge and a dark band inside it, so one of the two stands out at more than 3:1
-// from whatever the screenshot shows, a white one included. Forced colours drop the band and
-// give the outline the system's colour.
-const FOCUS_RING_OF_THE_COVER = {
-  outline: '3px solid white',
-  outlineOffset: '-3px',
-  boxShadow: 'inset 0 0 0 5px rgba(0, 0, 0, 0.87)',
+const TYPE_ICONS: Record<Project['type'], React.ReactElement> = {
+  WEB: <GlobeIcon />,
+  DESKTOP: <DesktopIcon />,
+  MOBILE: <PhoneIcon />,
+  OTHER: <CodeIcon />,
 }
 
-const LINK_EMPHASIS_PROPS: Record<ProjectLinkEmphasis, Pick<ButtonProps, 'variant' | 'sx'>> = {
-  primary: { variant: 'contained', sx: { fontWeight: 600, px: 2 } },
-  secondary: { variant: 'text', sx: { fontWeight: 600 } },
+export interface ProjectCardProps {
+  readonly project: Project
+  readonly priority?: boolean
+  readonly eager?: boolean
+  readonly titleComponent?: 'h2' | 'h3'
+  readonly variant?: 'default' | 'flagship'
 }
 
-interface ProjectCardProps {
-  project: Project
-  // The first card of a page whose cover is the likely LCP element.
-  priority?: boolean
-  // Cards in the first above-the-fold row on desktop load eagerly without competing for high fetchPriority.
-  eager?: boolean
-  // h3 under a section heading (Home); h2 when the cards sit right under the page h1 (Projects).
-  titleComponent?: 'h2' | 'h3'
-}
+type CardStageView = 'view' | 'architecture'
 
 const ProjectCard: React.FC<ProjectCardProps> = ({
   project,
   priority = false,
-  eager = false,
-  titleComponent = 'h3',
+  eager = priority,
+  titleComponent = 'h2',
+  variant = 'default',
 }) => {
-  // The language i18n resolved (only 'en' or 'es'), the same one the pages read from the context.
   const { t, i18n } = useTranslation()
-  const language = i18n.resolvedLanguage ?? 'en'
-  const [galleryOpen, setGalleryOpen] = useState(false)
+  const language = toSupportedLanguage(i18n.language) ?? 'es'
   const { expanded, toggle, contentRef } = useFindableDisclosure<HTMLDivElement>()
+  const [stageView, setStageView] = useState<CardStageView>('view')
+  const [galleryOpen, setGalleryOpen] = useState(false)
   const titleId = useId()
-  const moreId = useId()
 
   const title = getLocalizedText(language, project.titleEn, project.titleEs)
-  const { lead, rest } = splitDescription(getLocalizedText(language, project.descriptionEn, project.descriptionEs))
-  const altOf = (image: ProjectImage) => getLocalizedText(language, image.altEn, image.altEs)
-  const cover = projectCoverSources(project)
-  const featuredLabel = t('projects.featuredBadge')
+  const description = getLocalizedText(language, project.descriptionEn, project.descriptionEs)
+  const { lead, rest } = splitDescription(description)
+  const architectureSpecs = language === 'en' ? project.architectureEn : project.architectureEs
+  const cover = project.images[0]
+  const coverSources = cover ? projectCoverSources(project) : { src: undefined, srcSet: undefined, sizes: undefined }
+  const coverAlt = cover ? getLocalizedText(language, cover.altEn, cover.altEs) : title
+  const orderIndex = String(project.order).padStart(2, '0')
+  const HeadingTag = titleComponent
+
+  const slides: GallerySlide[] = useMemo(
+    () =>
+      project.images.map((image) => ({
+        src: projectImageUrl(image, 'full'),
+        thumbSrc: projectImageUrl(image, 'thumb'),
+        alt: getLocalizedText(language, image.altEn, image.altEs),
+      })),
+    [project.images, language],
+  )
+
+  const openGallery = () => {
+    if (slides.length === 0) return
+    setGalleryOpen(true)
+  }
 
   return (
-    <Card
-      component="article"
+    <article
       aria-labelledby={titleId}
-      sx={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        borderRadius: 3,
-        overflow: 'hidden',
-        transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        '&:hover': {
-          transform: 'translateY(-8px)',
-          boxShadow: (theme) =>
-            theme.palette.mode === 'light' ? '0 12px 24px rgba(0,0,0,0.15)' : '0 12px 24px rgba(0,0,0,0.4)',
-        },
-        '&:hover .preview-overlay': {
-          opacity: 1,
-        },
-      }}
+      className={variant === 'flagship' ? 'project-card wb-panel project-card--flagship' : 'project-card wb-panel'}
     >
-      <Box sx={{ position: 'relative' }}>
-        <ImageWithFallback
-          src={cover.src}
-          srcSet={cover.srcSet}
-          sizes={cover.sizes}
-          alt={altOf(project.images[0])}
-          type="project"
-          aspectRatio={`${PROJECT_COVER_RATIO.width}/${PROJECT_COVER_RATIO.height}`}
-          loading={priority || eager ? 'eager' : 'lazy'}
-          fetchPriority={priority ? 'high' : undefined}
-          sx={{
-            width: '100%',
-            backgroundColor: 'rgba(0,0,0,0.05)',
-            transition: 'transform 0.3s',
-            '&:hover': {
-              transform: 'scale(1.02)',
-            },
-          }}
-        />
+      <div className="project-card__top">
+        <div className="project-card__badges">
+          <span className="project-card__index">{orderIndex}</span>
+          <span className="project-card__type-chip">
+            {TYPE_ICONS[project.type]}
+            <span>{t(`projects.types.${project.type}`)}</span>
+          </span>
+          {project.featured ? (
+            <span className="project-card__featured-chip">
+              <StarIcon />
+              <span>{t('projects.featuredBadge')}</span>
+            </span>
+          ) : null}
+        </div>
 
-        <Box
-          component="button"
-          type="button"
-          aria-label={t('projects.openGallery', { title })}
-          onClick={() => setGalleryOpen(true)}
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            cursor: 'pointer',
-            zIndex: 1,
-            border: 0,
-            padding: 0,
-            appearance: 'none',
-            backgroundColor: 'transparent',
-            '&:focus-visible': {
-              outline: 'none',
-              '& .preview-overlay': { opacity: 1, ...FOCUS_RING_OF_THE_COVER },
-            },
-          }}
-        >
-          <Box
-            className="preview-overlay"
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.4)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: 0,
-              transition: 'opacity 0.3s',
-            }}
+        <div className="project-card__view-switch wb-no-print" role="group" aria-label={t('projects.viewModeLabel')}>
+          <button
+            type="button"
+            className="project-card__view-btn"
+            aria-pressed={stageView === 'view'}
+            onClick={() => setStageView('view')}
           >
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                borderRadius: '50%',
-                width: 56,
-                height: 56,
-              }}
-            >
-              <VisibilityIcon fontSize="large" aria-hidden="true" />
-            </Box>
-          </Box>
-        </Box>
-        {/* Always visible, so touch screens (no hover) also show that the cover opens a gallery. */}
-        <Box
-          aria-hidden="true"
-          sx={{
-            position: 'absolute',
-            left: 10,
-            bottom: 10,
-            zIndex: 2,
-            pointerEvents: 'none',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 0.5,
-            px: 1,
-            py: 0.25,
-            borderRadius: 1,
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-            color: 'common.white',
-            typography: 'caption',
-            fontWeight: 600,
-          }}
-        >
-          <PhotoLibraryIcon sx={{ fontSize: '1rem' }} />
-          {project.images.length}
-        </Box>
+            {t('projects.viewTab')}
+          </button>
+          <button
+            type="button"
+            className="project-card__view-btn"
+            aria-pressed={stageView === 'architecture'}
+            onClick={() => setStageView('architecture')}
+          >
+            {t('projects.archTab')}
+          </button>
+        </div>
+      </div>
 
-        <Chip
-          label={t(`projects.types.${project.type}`)}
-          icon={TYPE_ICONS[project.type]}
-          size="small"
-          sx={{
-            position: 'absolute',
-            top: 10,
-            right: 10,
-            // Cover images can be white; a solid surface keeps the label readable in glass.
-            bgcolor: (theme) => (theme.palette.mode === 'light' ? theme.palette.common.white : theme.palette.grey[900]),
-            color: 'text.primary',
-            fontWeight: 600,
-            boxShadow: 2,
-            '& .MuiChip-icon': {
-              color: 'primary.main',
-            },
-            '.MuiChip-label': {
-              px: 1,
-            },
-          }}
-        />
-      </Box>
-      <CardContent sx={{ flexGrow: 1, p: 3, display: 'flex', flexDirection: 'column' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, mb: 1.5 }}>
-          {/* Two reserved lines keep descriptions aligned across a row of cards. */}
-          <Typography
-            id={titleId}
-            variant="h5"
-            component={titleComponent}
-            sx={{ fontWeight: 700, minHeight: { md: '2.67em' } }}
-          >
+      <div className="project-card__body">
+        <div className="project-card__reading">
+          <HeadingTag id={titleId} className="project-card__title">
             {title}
-          </Typography>
-          {project.featured && (
-            <Tooltip title={featuredLabel}>
-              <Box
-                component="span"
-                role="img"
-                aria-label={featuredLabel}
-                sx={{ display: 'inline-flex', flexShrink: 0, color: 'warning.main' }}
-              >
-                <StarIcon sx={{ fontSize: '1.5rem' }} />
-              </Box>
-            </Tooltip>
-          )}
-        </Box>
-        <Box sx={{ mb: 3 }}>
+          </HeadingTag>
+
           <RichTextRenderer text={lead} variant="body2" />
-          {rest && (
+
+          {rest ? (
             <>
-              <Box id={moreId} ref={contentRef}>
+              <div ref={contentRef} className="project-card__disclosure">
                 <RichTextRenderer text={rest} variant="body2" />
-              </Box>
-              <Button
-                size="small"
-                onClick={toggle}
+              </div>
+              <button
+                type="button"
+                className="project-card__read-more wb-no-print"
                 aria-expanded={expanded}
-                aria-controls={moreId}
-                aria-describedby={titleId}
-                sx={{ fontWeight: 600, px: 1 }}
+                onClick={toggle}
               >
                 {expanded ? t('projects.showLess') : t('projects.readMore')}
-              </Button>
+              </button>
             </>
+          ) : null}
+        </div>
+
+        <div className="project-card__stage">
+          {stageView === 'view' ? (
+            <button
+              type="button"
+              className="project-card__cover-btn"
+              aria-label={t('projects.openGallery', { title })}
+              aria-describedby={titleId}
+              onClick={openGallery}
+            >
+              <ImageWithFallback
+                src={coverSources.src}
+                srcSet={coverSources.srcSet}
+                sizes={coverSources.sizes}
+                alt={coverAlt}
+                type="project"
+                aspectRatio={`${PROJECT_COVER_RATIO.width}/${PROJECT_COVER_RATIO.height}`}
+                loading={eager ? 'eager' : 'lazy'}
+                fetchPriority={priority ? 'high' : undefined}
+                imageClassName="project-card__cover-img"
+              />
+              <div className="preview-overlay" aria-hidden="true">
+                <span className="project-card__preview-pill">
+                  <EyeIcon />
+                </span>
+              </div>
+              {project.images.length > 0 ? (
+                <span className="project-card__gallery-badge wb-no-print" aria-hidden="true">
+                  <GalleryIcon className="project-card__gallery-icon" />
+                  <span>{project.images.length}</span>
+                </span>
+              ) : null}
+            </button>
+          ) : (
+            <div className="project-card__specs">
+              <p className="project-card__specs-title">{t('projects.specsTitle')}</p>
+              <dl className="project-card__specs-list">
+                {architectureSpecs.map((spec) => (
+                  <div key={spec.label} className="project-card__spec-item">
+                    <dt>{spec.label}</dt>
+                    <dd>{spec.detail}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
           )}
-        </Box>
-        <Stack direction="row" sx={{ mt: 'auto', flexWrap: 'wrap', gap: 1 }}>
+        </div>
+      </div>
+
+      <div className="project-card__footer">
+        <div className="project-card__tags">
           {project.technologies.map((tech) => (
-            <Chip
-              key={tech}
-              label={tech}
-              size="small"
-              sx={{
-                borderRadius: 1.5,
-                fontWeight: 500,
-                bgcolor: (theme) =>
-                  theme.palette.mode === 'light' ? 'rgba(25, 118, 210, 0.08)' : 'rgba(144, 202, 249, 0.08)',
-                border: 'none',
-              }}
-            />
+            <span key={tech} className="wb-chip">
+              {tech}
+            </span>
           ))}
-        </Stack>
-      </CardContent>
-      {project.links.length > 0 && (
-        <CardActions disableSpacing sx={{ p: 3, pt: 0, justifyContent: 'flex-start', flexWrap: 'wrap', gap: 1 }}>
-          {project.links.map((link) => {
-            const { labelKey, emphasis } = PROJECT_LINK_KINDS[link.kind]
-            return (
-              <Button
-                key={link.url}
-                size="small"
-                startIcon={LINK_ICONS[link.kind]}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-describedby={titleId}
-                {...LINK_EMPHASIS_PROPS[emphasis]}
-              >
-                {t(labelKey)}
-              </Button>
-            )
-          })}
-        </CardActions>
-      )}
-      {galleryOpen && (
-        <ProjectGallery
-          title={title}
-          slides={project.images.map((image) => ({
-            src: projectImageUrl(image, 'full'),
-            thumbSrc: projectImageUrl(image, 'thumb'),
-            alt: altOf(image),
-          }))}
-          onClose={() => setGalleryOpen(false)}
-        />
-      )}
-    </Card>
+        </div>
+
+        <div className="project-card__actions">
+          {project.links.map((link) => (
+            <a
+              key={link.kind}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-describedby={titleId}
+              className={`${isPrimaryLink(link) ? 'wb-btn-primary' : 'wb-btn-secondary'} project-card__action-btn`}
+            >
+              {LINK_ICONS[link.kind]}
+              <span>{t(PROJECT_LINK_KINDS[link.kind].labelKey)}</span>
+            </a>
+          ))}
+          {slides.length > 0 && stageView === 'architecture' ? (
+            <button type="button" className="wb-btn-secondary project-card__action-btn" onClick={openGallery}>
+              <GalleryIcon />
+              <span>{t('projects.openGalleryCta', { count: slides.length })}</span>
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      {galleryOpen ? <ProjectGallery title={title} slides={slides} onClose={() => setGalleryOpen(false)} /> : null}
+    </article>
   )
 }
 

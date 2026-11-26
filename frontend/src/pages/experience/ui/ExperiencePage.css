@@ -1,0 +1,80 @@
+.experience-badge {
+  margin-bottom: 1.5rem;
+}
+
+.experience-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1.15rem;
+}
+
+.exp-card {
+  padding: clamp(1.1rem, 2.5vw, 1.6rem);
+  display: grid;
+  grid-template-columns: minmax(0, 14rem) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 52rem) {
+  .exp-card {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
+.exp-card__meta {
+  display: grid;
+  gap: 0.45rem;
+  padding-right: 1rem;
+  border-right: 1px solid var(--border);
+}
+
+@media (max-width: 52rem) {
+  .exp-card__meta {
+    padding-right: 0;
+    padding-bottom: 0.65rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+.exp-card__period {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.exp-card__company {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.exp-card__main {
+  display: grid;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.exp-card__role {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 2.2vw, 1.4rem);
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.exp-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+}

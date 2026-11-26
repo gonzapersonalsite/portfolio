@@ -8,6 +8,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    css: true,
     // A test that checks nothing fails instead of passing in silence.
     expect: { requireAssertions: true },
     // A committed .only would skip the rest of the suite in silence; skip and todo are the lint's.

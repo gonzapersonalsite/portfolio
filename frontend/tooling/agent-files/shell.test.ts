@@ -145,6 +145,23 @@ describe('buildRouteShell', () => {
     expect(shell).not.toContain('og:locale:alternate')
   })
 
+  it('describes the social image in the language of the shell', () => {
+    const alts = Object.fromEntries(
+      LOCALES.map((locale) => [
+        locale,
+        metaContent(buildRouteShell(INDEX_HTML, HOME_ROUTE, locale), 'property', 'og:image:alt'),
+      ]),
+    )
+
+    expect(alts.es).toEqual([
+      'Tarjeta oscura de mesa de taller: Gonzalo Martínez, Full Stack Developer, con React, TypeScript, Spring Boot, .NET y Flutter',
+    ])
+    expect(alts.en).toEqual([
+      'Dark workbench card: Gonzalo Martínez, Full Stack Developer, with React, TypeScript, Spring Boot, .NET and Flutter',
+    ])
+    expect(metaContent(buildNotFoundPage(INDEX_HTML), 'property', 'og:image:alt')).toEqual(alts.es)
+  })
+
   it('declares_the_real_width_and_height_of_the_social_image_when_the_shell_is_built', () => {
     const shell = buildRouteShell(INDEX_HTML, HOME_ROUTE)
     const [imagePath] = metaContent(shell, 'property', 'og:image')

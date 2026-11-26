@@ -4,7 +4,7 @@ import { lazy, Suspense } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, render, within } from '@testing-library/react'
 import { getProfile } from '../../src/entities/profile/api/profileApi.ts'
-import { HeroSkeleton } from '../../src/shared/ui/SkeletonLoaders'
+import { HomeSkeleton } from '../../src/shared/ui/SkeletonLoaders'
 
 const template = readFileSync(resolve(import.meta.dirname, '../../index.html'), 'utf8')
 
@@ -39,13 +39,13 @@ describe('initial HTML loading state', () => {
     const PendingPage = lazy(() => new Promise<{ default: () => null }>(() => {}))
 
     render(
-      <Suspense fallback={<HeroSkeleton />}>
+      <Suspense fallback={<HomeSkeleton />}>
         <PendingPage />
       </Suspense>,
       { container: root },
     )
 
     expect(root.querySelector('.app-startup')).toBeNull()
-    expect(root.querySelectorAll('.MuiSkeleton-root').length).toBeGreaterThan(0)
+    expect(root.querySelectorAll('.ui-skeleton').length).toBeGreaterThan(0)
   })
 })

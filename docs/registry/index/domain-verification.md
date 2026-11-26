@@ -1,10 +1,14 @@
 # Puertas, pruebas, herramientas y su medición (índice)
 
 GENERADO por tools/board desde `docs/registry/decisions/` y `docs/registry/lessons/`. No editar a mano: se reescribe.
-board-fingerprint:bfd17bc7ab0e8509 — su contenido cambió por última vez el 2026-11-24.
+board-fingerprint:3a8fef9acc93d8b3 — su contenido cambió por última vez el 2026-11-25.
 
 Cada decisión y cada lección del dominio `verification`, por identidad; todas rigen hoy. Antes de tocar este
 sistema se consulta esta página. El índice principal es `docs/registry/DECISIONS.md`.
+
+## ABIERTAS (1)
+
+- `#typing-does-not-check-indexed-access-or-type-aware-lint` — El tipado aún no comprueba el acceso indexado ni el lint con información de tipos (OPEN 2026-11-26) · none
 
 ## CONFIRMADAS (2)
 

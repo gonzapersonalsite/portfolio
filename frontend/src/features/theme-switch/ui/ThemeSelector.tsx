@@ -1,135 +1,83 @@
-import React, { useId, useState } from 'react'
-import { Button, Divider, Menu, MenuItem, Typography, Box, useMediaQuery } from '@mui/material'
-import LightModeIcon from '@mui/icons-material/LightMode'
-import DarkModeIcon from '@mui/icons-material/DarkMode'
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
-import CheckIcon from '@mui/icons-material/Check'
+import React, { useId } from 'react'
 import { useTranslation } from 'react-i18next'
-import { COLOR_MODES, type ColorMode } from '@/shared/config'
+import { type ColorMode } from '@/shared/config'
+import { usePrefersReducedMotion } from '@/shared/lib'
+import { MoonIcon, MotionPauseIcon, MotionPlayIcon, SunIcon } from '@/shared/ui'
 import { useColorMode } from '../model/ThemeContext'
+import './ThemeSelector.css'
 
-const MODE_ICONS: Record<ColorMode, React.ReactElement> = {
-  light: <LightModeIcon fontSize="small" />,
-  dark: <DarkModeIcon fontSize="small" />,
-  glass: <AutoAwesomeIcon fontSize="small" />,
-}
+type AnimationsControlState = 'running' | 'paused' | 'pausedBySystem'
 
 const ThemeSelector: React.FC = () => {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const { mode, setColorMode, animationsPaused, setAnimationsPaused } = useColorMode()
-  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
-  const animationsEnabled = !animationsPaused && !reducedMotion
+  const reducedMotion = usePrefersReducedMotion()
   const { t } = useTranslation()
-  const buttonId = useId()
-  const menuId = useId()
-  const animationsStatusId = useId()
-  const open = Boolean(anchorEl)
+  const reducedMotionReasonId = useId()
 
-  const modeLabels: Record<ColorMode, string> = {
-    light: t('common.theme.light'),
-    dark: t('common.theme.dark'),
-    glass: t('common.theme.glass'),
-  }
+  const nextMode: ColorMode = mode === 'light' ? 'dark' : 'light'
+  const currentLabel = mode === 'light' ? t('common.theme.light') : t('common.theme.dark')
+  const nextLabel = nextMode === 'light' ? t('common.theme.light') : t('common.theme.dark')
 
-  const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget)
+  const animationsState: AnimationsControlState = reducedMotion
+    ? 'pausedBySystem'
+    : animationsPaused
+      ? 'paused'
+      : 'running'
+  // The visible word is part of the accessible name in every state (WCAG 2.5.3, label in name).
+  const animationsText: Record<AnimationsControlState, { label: string; visible: string }> = {
+    running: { label: t('common.animations.pause'), visible: t('common.animations.pauseShort') },
+    paused: { label: t('common.animations.resume'), visible: t('common.animations.resumeShort') },
+    pausedBySystem: { label: t('common.animations.paused'), visible: t('common.animations.pausedShort') },
   }
-
-  const handleClose = () => {
-    setAnchorEl(null)
-  }
-
-  const handleThemeChange = (selectedMode: ColorMode) => {
-    if (mode !== selectedMode) {
-      setColorMode(selectedMode)
-    }
-    handleClose()
-  }
+  const animationsControl = animationsText[animationsState]
 
   return (
-    <>
-      {/* Below sm only the icon is shown, so the aria-label is the name; it keeps the visible label. */}
-      <Button
-        id={buttonId}
-        onClick={handleOpen}
-        color="inherit"
-        startIcon={MODE_ICONS[mode]}
-        aria-label={t('common.themeButton', { mode: modeLabels[mode] })}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-controls={open ? menuId : undefined}
-        sx={{
-          minWidth: 'auto',
-          px: 1,
-          // MUI's default icon margins (-4px / 8px) only make sense next to the text.
-          '& .MuiButton-startIcon': { ml: { xs: 0, sm: -0.5 }, mr: { xs: 0, sm: 1 } },
+    <div className="theme-controls">
+      <button
+        type="button"
+        className="theme-control-btn"
+        onClick={() => setColorMode(nextMode)}
+        aria-label={t('common.themeSwitchTo', { current: currentLabel, next: nextLabel })}
+        title={t('common.themeSwitchTo', { current: currentLabel, next: nextLabel })}
+      >
+        {mode === 'light' ? (
+          <SunIcon className="theme-control-btn__icon" />
+        ) : (
+          <MoonIcon className="theme-control-btn__icon" />
+        )}
+        <span className="theme-control-btn__label--desktop">{currentLabel}</span>
+      </button>
+
+      <button
+        type="button"
+        className="theme-control-btn"
+        aria-label={animationsControl.label}
+        aria-disabled={reducedMotion ? 'true' : undefined}
+        aria-describedby={reducedMotion ? reducedMotionReasonId : undefined}
+        title={
+          reducedMotion
+            ? `${animationsControl.label}: ${t('common.animations.reducedSystem')}`
+            : animationsControl.label
+        }
+        onClick={() => {
+          if (reducedMotion) return
+          setAnimationsPaused(!animationsPaused)
         }}
       >
-        <Typography
-          component="span"
-          variant="caption"
-          sx={{
-            color: 'inherit',
-            fontWeight: 'bold',
-            textTransform: 'uppercase',
-            display: { xs: 'none', sm: 'inline' },
-          }}
-        >
-          {modeLabels[mode]}
-        </Typography>
-      </Button>
-      <Menu
-        id={menuId}
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-        slotProps={{ list: { 'aria-labelledby': buttonId, disabledItemsFocusable: true } }}
-      >
-        {COLOR_MODES.map((option) => (
-          <MenuItem
-            key={option}
-            role="menuitemradio"
-            aria-checked={mode === option}
-            selected={mode === option}
-            onClick={() => handleThemeChange(option)}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              {MODE_ICONS[option]}
-              {modeLabels[option]}
-            </Box>
-          </MenuItem>
-        ))}
-        <Divider component="li" role="separator" />
-        <MenuItem
-          role="menuitemcheckbox"
-          aria-label={t('common.animations.label')}
-          aria-describedby={animationsStatusId}
-          aria-checked={animationsEnabled}
-          disabled={reducedMotion}
-          // It still takes the keyboard focus (the menu keeps disabled items reachable), so it
-          // stays at full opacity for its focus indicator and its reason; only its label dims.
-          sx={{ gap: 1, '&.Mui-disabled': { opacity: 1 } }}
-          onClick={() => {
-            setAnimationsPaused(!animationsPaused)
-            handleClose()
-          }}
-        >
-          <CheckIcon fontSize="small" sx={{ visibility: animationsEnabled ? 'visible' : 'hidden' }} />
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-            <Typography component="span" variant="body2" color={reducedMotion ? 'text.disabled' : undefined}>
-              {t('common.animations.label')}
-            </Typography>
-            <Typography id={animationsStatusId} component="span" variant="caption" color="text.secondary">
-              {reducedMotion
-                ? t('common.animations.reducedSystem')
-                : animationsPaused
-                  ? t('common.animations.paused')
-                  : t('common.animations.enabled')}
-            </Typography>
-          </Box>
-        </MenuItem>
-      </Menu>
-    </>
+        {animationsState === 'running' ? (
+          <MotionPauseIcon className="theme-control-btn__icon" />
+        ) : (
+          <MotionPlayIcon className="theme-control-btn__icon" />
+        )}
+        <span className="theme-control-btn__label--desktop">{animationsControl.visible}</span>
+      </button>
+
+      {reducedMotion ? (
+        <span id={reducedMotionReasonId} className="sr-only">
+          {t('common.animations.reducedSystem')}
+        </span>
+      ) : null}
+    </div>
   )
 }
 

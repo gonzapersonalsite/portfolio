@@ -8,6 +8,7 @@ export interface TwinLabels {
   pages: string
   openToWork: string
   nav: Record<RouteId, string>
+  focusAreas: string
   featuredProjects: string
   links: Record<ProjectLinkKind, string>
   types: Record<Project['type'], string>
@@ -42,11 +43,13 @@ export const TWIN_LABELS: Record<Locale, TwinLabels> = {
       projects: 'Projects',
       contact: 'Contact',
     },
+    focusAreas: 'Focus Areas',
     featuredProjects: 'Featured Projects',
     links: {
       site: 'Visit Site',
       download: 'Download',
       googlePlay: 'Google Play',
+      microsoftStore: 'Microsoft Store',
       repository: 'Repository',
       documentation: 'Documentation',
     },
@@ -58,7 +61,7 @@ export const TWIN_LABELS: Record<Locale, TwinLabels> = {
     },
     aboutCoreCompetencies: 'Core Competencies',
     aboutLanguages: 'Languages',
-    aboutSentenceTitle: 'A sentence that defines me',
+    aboutSentenceTitle: 'A Sentence That Defines Me',
     downloadCv: 'Download CV',
     skillsHeading: 'Technical Expertise',
     skillCategories: {
@@ -78,7 +81,7 @@ export const TWIN_LABELS: Record<Locale, TwinLabels> = {
       'I am open to new professional opportunities. If you have a project or a job offer, I would love to hear from you.',
     contactEmail: 'Email',
     contactLocation: 'Location',
-    contactSocial: 'FOLLOW ME',
+    contactSocial: 'Follow Me',
   },
   es: {
     technologies: 'Tecnologías',
@@ -92,11 +95,13 @@ export const TWIN_LABELS: Record<Locale, TwinLabels> = {
       projects: 'Proyectos',
       contact: 'Contacto',
     },
+    focusAreas: 'Áreas de trabajo',
     featuredProjects: 'Proyectos destacados',
     links: {
       site: 'Visitar web',
       download: 'Descargar',
       googlePlay: 'Google Play',
+      microsoftStore: 'Microsoft Store',
       repository: 'Repositorio',
       documentation: 'Documentación',
     },
@@ -128,6 +133,6 @@ export const TWIN_LABELS: Record<Locale, TwinLabels> = {
       'Estoy abierto a nuevas oportunidades profesionales. Si tienes un proyecto o una oferta de trabajo, me encantaría escucharte.',
     contactEmail: 'Correo',
     contactLocation: 'Ubicación',
-    contactSocial: 'SÍGUEME',
+    contactSocial: 'Sígueme',
   },
 }

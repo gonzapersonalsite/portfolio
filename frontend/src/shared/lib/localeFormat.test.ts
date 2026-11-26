@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatMonthYear, formatPercent, formatPeriod } from './localeFormat'
+import { formatMonthYear, formatPeriod } from './localeFormat'
 
 describe('formatMonthYear', () => {
   it('writes the short month and the year in each language', () => {
@@ -21,12 +21,5 @@ describe('formatPeriod', () => {
 
   it('ends an open period with the present label', () => {
     expect(formatPeriod('2026-06-10', undefined, 'es', 'Actualidad')).toBe('jun 2026 – Actualidad')
-  })
-})
-
-describe('formatPercent', () => {
-  it('follows each language: no space in English, a non-breaking space in Spanish', () => {
-    expect(formatPercent(80, 'en')).toBe('80%')
-    expect(formatPercent(80, 'es')).toBe('80\u00a0%')
   })
 })

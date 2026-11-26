@@ -426,16 +426,16 @@
         "altEs": "Ficha de un paciente de NutriManager durante una visita: la cabecera muestra peso, IMC, peso ideal, patologías e intolerancias, y la visita compara el peso de hoy con el anterior junto a sus observaciones (datos de demostración)."
       },
       {
-        "base": "/images/projects/nutrimanager/01-nutrimanager_person-details",
-        "fullWidth": 1440,
-        "altEn": "A patient's details in NutriManager: identifying and contact data, occupation, anthropometric measurements (height, usual and ideal weight, wrist circumference) and activity level (demo data).",
-        "altEs": "Datos de un paciente en NutriManager: identificación y contacto, ocupación, medidas antropométricas (altura, peso habitual e ideal, perímetro de muñeca) y nivel de actividad (datos de demostración)."
-      },
-      {
-        "base": "/images/projects/nutrimanager/02-nutrimanager_activation",
+        "base": "/images/projects/nutrimanager/01-nutrimanager_activation",
         "fullWidth": 602,
         "altEn": "NutriManager activation window: the computer's request code and a field to enter the license key.",
         "altEs": "Ventana de activación de NutriManager: el código de solicitud del equipo y un campo para introducir la clave de licencia."
+      },
+      {
+        "base": "/images/projects/nutrimanager/02-nutrimanager_person-details",
+        "fullWidth": 1440,
+        "altEn": "A patient's details in NutriManager: identifying and contact data, occupation, anthropometric measurements (height, usual and ideal weight, wrist circumference) and activity level (demo data).",
+        "altEs": "Datos de un paciente en NutriManager: identificación y contacto, ocupación, medidas antropométricas (altura, peso habitual e ideal, perímetro de muñeca) y nivel de actividad (datos de demostración)."
       },
       {
         "base": "/images/projects/nutrimanager/03-nutrimanager_diet-assignment",

@@ -420,28 +420,34 @@
     ],
     "images": [
       {
-        "base": "/images/projects/nutrimanager/00-nutrimanager_patients",
-        "fullWidth": 1280,
-        "altEn": "NutriManager patient list with one patient's record open: personal data and calculated nutritional data such as BMI, nutritional status and daily calorie needs.",
-        "altEs": "Lista de pacientes de NutriManager con la ficha de un paciente abierta: datos personales y datos nutricionales calculados como el IMC, el estado nutricional y las necesidades calóricas diarias."
+        "base": "/images/projects/nutrimanager/00-nutrimanager_patient-visit",
+        "fullWidth": 1440,
+        "altEn": "A patient record in NutriManager during a visit: the header shows weight, BMI, ideal weight, pathologies and intolerances, and the visit compares today's weight with the previous one next to its observations (demo data).",
+        "altEs": "Ficha de un paciente de NutriManager durante una visita: la cabecera muestra peso, IMC, peso ideal, patologías e intolerancias, y la visita compara el peso de hoy con el anterior junto a sus observaciones (datos de demostración)."
       },
       {
-        "base": "/images/projects/nutrimanager/01-nutrimanager_welcome-screen",
-        "fullWidth": 600,
-        "altEn": "NutriManager activation window: the computer's request code and a field to enter the license key (interface in Spanish).",
-        "altEs": "Ventana de activación de NutriManager: el código de solicitud del equipo y un campo para introducir la clave de licencia (interfaz en español)."
+        "base": "/images/projects/nutrimanager/01-nutrimanager_person-details",
+        "fullWidth": 1440,
+        "altEn": "A patient's details in NutriManager: identifying and contact data, occupation, anthropometric measurements (height, usual and ideal weight, wrist circumference) and activity level (demo data).",
+        "altEs": "Datos de un paciente en NutriManager: identificación y contacto, ocupación, medidas antropométricas (altura, peso habitual e ideal, perímetro de muñeca) y nivel de actividad (datos de demostración)."
       },
       {
-        "base": "/images/projects/nutrimanager/02-nutrimanager_diets",
-        "fullWidth": 1280,
-        "altEn": "NutriManager diet assignment: a dialog to start the diet from a template or create a new one.",
-        "altEs": "Asignación de dietas en NutriManager: un diálogo para partir de una plantilla o crear una dieta nueva."
+        "base": "/images/projects/nutrimanager/02-nutrimanager_activation",
+        "fullWidth": 602,
+        "altEn": "NutriManager activation window: the computer's request code and a field to enter the license key.",
+        "altEs": "Ventana de activación de NutriManager: el código de solicitud del equipo y un campo para introducir la clave de licencia."
       },
       {
-        "base": "/images/projects/nutrimanager/03-nutrimanager-diet",
-        "fullWidth": 1280,
-        "altEn": "Creating a weekly diet in NutriManager: recipes for each meal and day with their calories and macronutrients, and a weekly summary of daily averages.",
-        "altEs": "Creación de una dieta semanal en NutriManager: recetas para cada comida y día con sus calorías y macronutrientes, y un resumen semanal de medias diarias."
+        "base": "/images/projects/nutrimanager/03-nutrimanager_diet-assignment",
+        "fullWidth": 1440,
+        "altEn": "Assigning a diet to a patient in NutriManager: a choice between starting from a template and creating a new diet.",
+        "altEs": "Asignación de una dieta a un paciente en NutriManager: se elige entre partir de una plantilla y crear una dieta nueva."
+      },
+      {
+        "base": "/images/projects/nutrimanager/04-nutrimanager_weekly-diet",
+        "fullWidth": 1440,
+        "altEn": "Creating a weekly diet in NutriManager from a template: a recipe for each meal and day, a notice with the patient's intolerances and pathologies, and a weekly summary with the daily average of calories, proteins, carbohydrates and fats.",
+        "altEs": "Creación de una dieta semanal en NutriManager desde una plantilla: una receta por comida y día, un aviso con las intolerancias y patologías del paciente y un resumen semanal con la media diaria de calorías, proteínas, hidratos y grasas."
       }
     ],
     "links": [

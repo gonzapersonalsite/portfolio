@@ -13,3 +13,8 @@
 *.ico binary
 *.woff2 binary
 *.pdf binary
+
+# The scaffold under tools/ is development tooling written in Python, not the product:
+# without this GitHub counts it and reports the repository as a Python project.
+tools/** linguist-vendored
+verify.py linguist-vendored

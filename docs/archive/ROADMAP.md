@@ -51,3 +51,11 @@ marcador y la lápida que apunta aquí. Solo crece por el final.
   (`en`, `es`, `x-default` apuntando a la raíz en español) y entradas en
   `sitemap.xml` (`#localized-spanish-routes-and-shells`,
   `#2026-10-20-localized-spanish-routes-and-shells`).
+
+## F3 — Rediseño visual («Mesa de Taller») y retirada incremental de Material UI (DONE)
+
+- **F3.1 — Galería nativa de proyectos — DONE.** Integración de `ProjectGallery` sobre `<dialog>` nativo con estilos propios y cero dependencias de Material UI o Emotion en `../../frontend/src/entities/project/ui/` (`#visual-redesign-workbench-two-themes`, `#2026-11-25-native-dialog-project-gallery`).
+- **F3.2 — Migración completa de `frontend/src/` a «Mesa de Taller» sin Material UI — DONE.** Tokens claro/oscuro (`tokens.css`) con respaldo pasivo ante `glass`, controles directos HTML de idioma y tema/animaciones (opción 2), cajón móvil nativo sobre `<dialog>`, tarjetas `Vista`/`Arquitectura`, skills con ejemplos aplicados, formulario y avisos propios (`#2026-11-25-mesa-de-taller-redesign-and-mui-source-removal`).
+- **F3.3 — Identidad visual («Mesa de Taller» en favicon y tarjeta social), ajuste tipográfico y retirada de dependencias MUI/Emotion — DONE.** Iconos `g-workbench.*` y tarjeta social `frontend/public/og-cover-mesa-taller-gonzalo-martinez.jpg` alineados con «Mesa de Taller» (`#icon-keeps-the-g-monogram-dot`, `#github-social-preview-is-a-tolerated-copy`), rasgos OpenType técnicos de `Inter Variable` y cifras tabulares en `frontend/src/app/styles/index.css` (`#workbench-type-is-self-hosted-inter-with-technical-features`) y retirada definitiva de `@mui/*` y `@emotion/*` en `frontend/package.json` y `frontend/pnpm-lock.yaml` (`#2026-11-25-workbench-branding-and-mui-package-removal`).
+- **F3.4 — Revisión transversal y acabado de «Mesa de Taller» — DONE.** Textos de toda la web contrastados con los repositorios y la experiencia real, datos JSON estrechados en su borde con tipos cerrados, esqueleto propio por página, áreas de trabajo en Inicio, enlace a Microsoft Store, alt social por idioma e impresión sin controles (`#2026-11-26-workbench-cross-review-and-finish`).
+- **Cierre:** el dueño dio por buena la revisión visual de las superficies actualizadas y confirmó la tipografía (`#workbench-type-is-self-hosted-inter-with-technical-features`, `#2026-11-26-f3-closed-with-the-typeface-confirmed`).

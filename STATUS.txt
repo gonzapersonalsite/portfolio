@@ -1,19 +1,16 @@
 ESTADO DEL PROYECTO
 GENERADO por tools/board desde el repositorio. No editar a mano: se reescribe.
-board-fingerprint:d4a8866f39d22925 — su contenido cambió por última vez el 2026-11-26.
+board-fingerprint:403f476f51b53047 — su contenido cambió por última vez el 2026-11-26.
 Esto es un resumen derivado. Manda el documento o el registro, no este fichero.
 ------------------------------------------------------------------------------
 PUERTAS      9 de 9 en verde (sin cambios desde 2026-11-26)
-ORDEN F      F0 ✔ > F1 ✔ > F2 ✔ > F3 (en curso)
+ORDEN F      F0 ✔ > F1 ✔ > F2 ✔ > F3 ✔
 ORDEN H      H0 ✔ > H1 ✔
-
-EN CURSO — F3: Rediseño visual («Mesa de Taller») y retirada incremental de Material UI
 
 FRENTES ABIERTOS  1 vivos (4 registros salieron por docs/registry/retired.txt)
   Cada frente es una decision abierta; la fase es la que su registro declara. La
   lista entera, en el indice de decisiones (seccion ABIERTAS).
-  DE LA FASE EN CURSO (0) — lo que arrastra de verdad:
-  DEL RESTO, POR FASE (0): ninguno
+  POR FASE (0):
   SIN FASE PENDIENTE (1) — su registro dice `none`, o solo nombra fases ya hechas:
     · El tipado aún no comprueba el acceso indexado ni el lint con información de tipos
 

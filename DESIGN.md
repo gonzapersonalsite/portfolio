@@ -69,7 +69,7 @@ otra, con su porqué largo, y aquí queda la línea que la enuncia con su cita.
   `#pixel-goblin-portals-and-contact-panel`); y las rutas por idioma
   (`#localized-spanish-routes-and-shells`).
 - **Tipografía técnica autoalojada sobre `@fontsource-variable/inter` fijada,
-  pendiente de que el dueño la confirme.** El sitio mantiene Inter Variable
+  confirmada por el dueño.** El sitio mantiene Inter Variable
   autoalojada en su versión fijada, activando las variantes estilísticas
   técnicas (`cv02`, `cv03`, `cv04`, `cv11`), ajuste óptico y cifras tabulares
   en marcas de tiempo, etiquetas y chips
@@ -157,10 +157,9 @@ otra, con su porqué largo, y aquí queda la línea que la enuncia con su cita.
 
 La dirección «Mesa de Taller», la identidad de iconos y vista previa social, las
 variantes tipográficas sobre `Inter Variable` y la retirada definitiva de
-`@mui/*` y `@emotion/*` en código, manifiesto y lockfile ya están aplicadas.
-Queda la revisión visual final del dueño para cerrar la fase `F3`, en la que
-confirma o cambia la tipografía, que eligió el agente por delegación
-(`#workbench-type-is-self-hosted-inter-with-technical-features`).
+`@mui/*` y `@emotion/*` en código, manifiesto y lockfile ya están aplicadas. El
+dueño dio por buena la revisión visual y confirmó la tipografía, que eligió el
+agente por delegación (`#workbench-type-is-self-hosted-inter-with-technical-features`), y la fase `F3` está cerrada.
 
 ## Dónde está hecho
 

@@ -1,18 +1,17 @@
 ---
 title: La tipografía de «Mesa de Taller» es Inter Variable autoalojada con rasgos técnicos
-state: provisional
+state: confirmed
 date: 2026-11-26
 domain: interface
 phase: F3
-criterion: En la revisión visual final de F3 el dueño confirma esta tipografía o pide otra antes de cerrar la fase.
 ---
 **La interfaz usa Inter Variable autoalojada y fijada (`@fontsource-variable/inter` en
 `frontend/package.json`), con las variantes técnicas `cv02`, `cv03`, `cv04` y `cv11`
 y cifras tabulares en fechas, etiquetas y chips
 (`frontend/src/app/styles/index.css`); las etiquetas técnicas y el código usan la pila
 monoespaciada del sistema (`frontend/src/app/styles/tokens.css`).** El dueño delegó la
-elección («de fuentes te dejo elegir lo que encaje mejor») y la hizo el agente, así
-que es una propuesta hasta que el dueño la confirme (regla dura 9).
+elección («de fuentes te dejo elegir lo que encaje mejor»), la hizo el agente y el
+dueño la confirmó con la refutación delante («si, se queda inter»).
 
 Se elige porque no añade dependencias ni orígenes: el paquete ya estaba fijado en el
 lockfile, `vite-plugin-font-preload` lo precarga y la CSP no tiene que abrir otro

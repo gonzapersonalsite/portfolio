@@ -22,6 +22,6 @@ En concreto, rige todo esto en las partes que lo implementan:
 - **Animaciones decorativas:** la pausa de animaciones sigue fácil de encontrar y
   respeta la preferencia de movimiento reducido del sistema operativo.
 
-La tipografía no forma parte de esta decisión: el dueño delegó su elección y la
-propuesta del agente vive aparte, pendiente de su confirmación
+La tipografía no forma parte de esta decisión: el dueño delegó su elección y
+confirmó la propuesta del agente, que vive aparte
 (`#workbench-type-is-self-hosted-inter-with-technical-features`).

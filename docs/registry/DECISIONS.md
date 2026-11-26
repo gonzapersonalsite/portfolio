@@ -1,7 +1,7 @@
 # Registro de decisiones (índice)
 
 GENERADO por tools/board desde `docs/registry/decisions/`. No editar a mano: se reescribe.
-board-fingerprint:9039ca16c99e129d — su contenido cambió por última vez el 2026-11-25.
+board-fingerprint:b9182bf149ed94be — su contenido cambió por última vez el 2026-11-26.
 
 Cada decisión es un fichero `docs/registry/decisions/<identidad>.md` con su cabecera de campos y su
 texto; una cita `#<identidad>` resuelve abriendo ese fichero. Cómo se escribe una y cómo
@@ -18,13 +18,12 @@ estado, están en la página de su dominio.
 ## DEUDAS VIVAS (0)
 
 
-## PROVISIONALES (1)
+## PROVISIONALES (0)
 
-- `#workbench-type-is-self-hosted-inter-with-technical-features` — La tipografía de «Mesa de Taller» es Inter Variable autoalojada con rasgos técnicos (PROVISIONAL 2026-11-26) · F3
 
-## EL RESTO (19), SOLO CONTADAS
+## EL RESTO (20), SOLO CONTADAS
 
-CONFIRMADAS 19 · DESCARTADAS 0
+CONFIRMADAS 20 · DESCARTADAS 0
 
 ## Por dominio (7 índices)
 
